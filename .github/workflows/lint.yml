@@ -1,0 +1,24 @@
+---
+name: lint
+on:
+  push:
+    branches: [main, "*"]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          for f in dot_config/opencode/cli.json; do
+            python3 -c "import json; json.load(open('$f'))" && echo "  $f: valid"
+          done
+
+      - name: Shellcheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          severity: warning
+          ignore_paths: .git
