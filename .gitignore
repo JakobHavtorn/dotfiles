@@ -1,0 +1,5 @@
+# chezmoi state
+.chezmoi.toml
+
+# OS artifacts
+.DS_Store

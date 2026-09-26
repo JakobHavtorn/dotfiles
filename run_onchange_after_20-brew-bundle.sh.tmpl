@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# run_onchange_after_20-brew-bundle.sh.tmpl
+set -euo pipefail
+
+{{ if eq .chezmoi.os "darwin" -}}
+
+# Install all formulae, casks, and extensions from the Brewfile.
+# Re-runs when this script or the Brewfile changes.
+
+# Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}
+
+BREWFILE="{{ .chezmoi.sourceDir }}/manifests/Brewfile"
+
+if ! command -v brew >/dev/null 2>&1; then
+    echo "=== skipping brew bundle (homebrew not installed) ==="
+    exit 0
+fi
+
+echo "=== brew bundle install ==="
+brew bundle install --file "$BREWFILE"
+echo "=== brew bundle done ==="
+
+{{ else -}}
+
+echo "=== skipping brew bundle (not darwin) ==="
+
+{{ end -}}
