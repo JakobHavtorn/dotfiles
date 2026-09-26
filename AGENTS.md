@@ -17,7 +17,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 .chezmoidata.yaml                      # non-secret shared facts for templates
 dot_config/                            # maps to ~/.config/
 dot_config/fish/                        # fish shell config, functions, conf.d
-dot_config/git/config                  # git global config
+dot_config/git/config.tmpl              # git global config (insteadOf excluded for remote)
 dot_config/opencode/cli.json           # opencode TUI settings (symlinked)
 dot_config/opencode/opencode.jsonc     # opencode base config (managed by run_onchange script)
 manifests/                             # readable in git, never written to $HOME
