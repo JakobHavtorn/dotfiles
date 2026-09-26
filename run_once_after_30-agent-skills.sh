@@ -18,7 +18,11 @@ else
 fi
 
 # Link skills (config linking is handled by chezmoi/dotfiles)
-python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent opencode --force
+if command -v python3 >/dev/null 2>&1; then
+    python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent opencode --force
+else
+    echo "  WARNING: python3 not found — skipping skill linking. Install via uv to enable."
+fi
 
 # Link agents directory
 if [[ -d "$AGENT_SKILLS_DIR/agents" ]]; then
