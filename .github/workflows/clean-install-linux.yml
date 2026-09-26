@@ -35,4 +35,11 @@ jobs:
           done
 
       - name: chezmoi apply (idempotency check)
-        run: chezmoi apply
+        run: |
+          # Force scripts to re-run, then verify they're safe against installed state
+          chezmoi state delete-bucket --bucket=scriptState
+          chezmoi apply
+          for bin in uv rg jq gh; do
+            test -x "$HOME/.local/bin/$bin" || { echo "MISSING after re-run: $bin"; exit 1; }
+            echo "  $bin: OK after re-run"
+          done

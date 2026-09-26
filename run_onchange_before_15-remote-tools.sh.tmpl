@@ -11,6 +11,7 @@ set -euo pipefail
 # remote-tools.txt hash: {{ include "manifests/remote-tools.txt" | sha256sum }}
 
 LOCAL_BIN="$HOME/.local/bin"
+VERSION_DIR="$HOME/.local/share/remote-tools-versions"
 MANIFEST="{{ .chezmoi.sourceDir }}/manifests/remote-tools.txt"
 ARCH="$(uname -m)"
 
@@ -19,7 +20,7 @@ if [[ "$ARCH" != "x86_64" ]]; then
     echo "=== Some tools may fail to install. Add $ARCH entries to remote-tools.txt. ==="
 fi
 
-mkdir -p "$LOCAL_BIN"
+mkdir -p "$LOCAL_BIN" "$VERSION_DIR"
 
 # Per-run download cache (keyed by URL hash, so multiple entries from the same archive don't re-download)
 CACHE_DIR="$(mktemp -d)"
@@ -29,9 +30,11 @@ while IFS='|' read -r name url path_in_archive; do
     # Skip comments and empty lines
     [[ "$name" =~ ^[[:space:]]*# || -z "$name" ]] && continue
 
-    # Idempotent: skip if already installed
-    if [[ -x "$LOCAL_BIN/$name" ]]; then
-        echo "  $name: already installed, skipping"
+    # Idempotent: skip if the pinned version is already installed
+    installed_url=""
+    [[ -f "$VERSION_DIR/$name" ]] && installed_url="$(cat "$VERSION_DIR/$name")"
+    if [[ "$installed_url" == "$url" ]]; then
+        echo "  $name: up to date, skipping"
         continue
     fi
 
@@ -70,6 +73,7 @@ while IFS='|' read -r name url path_in_archive; do
     fi
 
     echo "  $name: installed"
+    echo "$url" > "$VERSION_DIR/$name"
 done < "$MANIFEST"
 
 # Install a Python interpreter via uv
