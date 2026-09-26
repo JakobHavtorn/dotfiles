@@ -9,6 +9,11 @@ OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 
 echo "=== agent-skills bootstrap ==="
 
+if ! command -v git >/dev/null 2>&1; then
+    echo "  WARNING: git not found — skipping agent-skills. Install git to enable."
+    exit 0
+fi
+
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     echo "  updating $AGENT_SKILLS_DIR ..."
     git -C "$AGENT_SKILLS_DIR" pull --ff-only
