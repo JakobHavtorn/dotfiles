@@ -61,7 +61,6 @@ brew "htop"
 brew "glances"
 
 # OpenCode
-brew "anomalyco/tap/opencode", link: false, trusted: true
 brew "anomalyco/tap/opencode-v2", trusted: true
 
 # SOFKA (k9s alternative)
