@@ -20,6 +20,8 @@ dot_config/fish/                        # fish shell config, functions, conf.d
 dot_config/git/config.tmpl              # git global config (insteadOf excluded for remote)
 dot_config/opencode/cli.json           # opencode TUI settings (symlinked)
 dot_config/opencode/opencode.jsonc     # opencode base config (managed by run_onchange script)
+dot_omp/private_agent/private_config.yml  # omp settings (~/.omp/agent/config.yml, 0600; omp rewrites it — `chezmoi re-add` after in-app changes)
+dot_omp/private_agent/models.yml       # omp custom providers: corti (key via CORTI_BEARER env)
 manifests/                             # readable in git, never written to $HOME
 manifests/Brewfile                     # hand-curated homebrew bundle (darwin)
 manifests/remote-tools.txt             # pinned release URLs for rootless install (remote/linux)
@@ -42,7 +44,7 @@ PLAN.md                                # full implementation plan
 - `uv` owns Python interpreters. Do not `brew install python`.
 - The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate.
 - `remote-tools.txt` is a pipe-delimited manifest: `name|url|path_in_archive`. `path_in_archive` is the relative path to the binary inside the archive, or `-` for direct binary download. Architecture is x86_64; add aarch64 entries when needed.
-- Remote role is subtractive: gets fish config, git config, opencode, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s.
+- Remote role is subtractive: gets fish config, git config, opencode, omp config, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s.
 
 ## Editing run_once scripts
 

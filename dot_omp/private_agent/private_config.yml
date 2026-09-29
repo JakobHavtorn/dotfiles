@@ -1,0 +1,85 @@
+setupVersion: 2
+retry:
+  enabled: true
+  maxRetries: 20
+  maxDelayMs: 600000
+modelRoles:
+  default: corti/corti-s1-instant
+  slow: corti/corti-s1:max
+  smol: corti/corti-s1-mini-beta:xhigh
+  plan: corti/corti-s1:max
+  task: corti/corti-s1:max
+  commit: corti/corti-s1-tiny-instant
+  tiny: corti/corti-s1-tiny-instant
+  advisor: corti/corti-s1:max
+  vision: corti/corti-s1-mini
+tools:
+  approvalMode: yolo
+  approval:
+    bash: allow
+lsp:
+  enabled: true
+  lazy: true
+  diagnosticsOnWrite: true
+  formatOnWrite: true
+  diagnosticsOnEdit: true
+bash:
+  enabled: true
+  direnv: auto
+ask:
+  notify: "on"
+  enabled: true
+theme:
+  dark: everforest
+symbolPreset: nerd
+statusLine:
+  preset: default
+  separator: powerline-thin
+  sessionAccent: true
+  transparent: true
+defaultThinkingLevel: auto
+compaction:
+  enabled: true
+  autoContinue: true
+  thresholdTokens: 200000
+  thresholdPercent: 80
+  methodOrder:
+    - remote
+    - soft
+eval:
+  py: true
+  js: true
+memory:
+  backend: mnemopi
+power:
+  sleepPrevention: idle
+github:
+  enabled: true
+providers:
+  tinyModel: online
+  memoryModel: online
+disabledProviders:
+  - github
+hideThinkingBlock: false
+advisor:
+  enabled: true
+python:
+  kernelMode: session
+inspect_image:
+  mode: auto
+task:
+  eager: preferred
+  enableEffort: true
+  maxEffort: max
+error:
+  notify: "on"
+startup:
+  checkUpdate: false
+features:
+  unexpectedStopDetection: smart
+composer:
+  shape: claude
+todo:
+  enabled: true
+web_search:
+  enabled: true 
