@@ -1,0 +1,12 @@
+[user]
+    name = Jakob Havtorn
+    email = jdh@corti.ai
+
+[init]
+    defaultBranch = main
+
+[url "git@github.com:"]
+    insteadOf = https://github.com/
+
+[safe]
+    directory = /Users/jdh/Documents/repos/ml-service-speech-quality-assessment/
