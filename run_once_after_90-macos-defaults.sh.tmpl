@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# run_once_after_90-macos-defaults.sh.tmpl
+set -euo pipefail
+
+{{ if eq .chezmoi.os "darwin" -}}
+
+echo "=== setting macOS defaults ==="
+
+# Finder
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder ShowStatusBar -bool true
+
+# Dock
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock show-recents -bool false
+
+# Apply changes
+killall Dock 2>/dev/null || true
+killall Finder 2>/dev/null || true
+
+echo "=== macOS defaults set ==="
+
+{{ else -}}
+
+echo "=== skipping macOS defaults (not darwin) ==="
+
+{{ end -}}

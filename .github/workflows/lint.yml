@@ -23,6 +23,17 @@ jobs:
           severity: warning
           ignore_paths: .git
 
+      - name: Verify set -euo pipefail in all scripts
+        run: |
+          for f in run_once_* run_onchange_* scripts/*.sh; do
+            [[ -f "$f" ]] || continue
+            grep -q 'set -euo pipefail' "$f" || {
+              echo "MISSING 'set -euo pipefail': $f"
+              exit 1
+            }
+          done
+          echo "All scripts have 'set -euo pipefail'"
+
       - name: Install chezmoi
         run: |
           curl -fsLS get.chezmoi.io | sh

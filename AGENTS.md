@@ -25,11 +25,19 @@ dot_omp/private_agent/models.yml       # omp custom providers: corti (key via CO
 manifests/                             # readable in git, never written to $HOME
 manifests/Brewfile                     # hand-curated homebrew bundle (darwin)
 manifests/remote-tools.txt             # pinned release URLs for rootless install (remote/linux)
+manifests/omf.txt                      # OMF packages and themes (hand-curated)
+manifests/pipx.txt                     # pipx package names
 run_once_before_10-install-homebrew.sh.tmpl   # darwin only
 run_onchange_before_15-remote-tools.sh.tmpl   # remote/linux only — installs to ~/.local/bin
 run_onchange_after_20-brew-bundle.sh.tmpl      # darwin only
 run_onchange_after_20-opencode-config.sh.tmpl  # copies base + corti models init
 run_once_after_30-agent-skills.sh              # clones + links agent-skills
+run_onchange_after_60-omf.sh.tmpl              # installs OMF packages from manifest
+run_onchange_after_70-pipx.sh.tmpl              # installs pipx packages from manifest
+run_onchange_after_80-launchd-load.sh.tmpl      # darwin only — loads dump.sh launchd job
+run_once_after_90-macos-defaults.sh.tmpl       # darwin only — sets Finder/Dock defaults
+dot_Library/LaunchAgents/              # launchd plist for weekly dump.sh
+dot_config/k9s/config.yaml             # minimal k9s config
 scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd)
 .github/workflows/                     # CI
 PLAN.md                                # full implementation plan

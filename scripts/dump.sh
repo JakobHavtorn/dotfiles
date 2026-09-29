@@ -13,16 +13,13 @@ if command -v brew >/dev/null 2>&1; then
     brew bundle dump --force --file manifests/Brewfile
 fi
 
-# Fisher plugins
-if command -v fish >/dev/null 2>&1; then
-    echo "  fisher list..."
-    fish -c 'fisher list' > manifests/fisher.txt 2>/dev/null || true
-fi
+# Fisher plugins — replaced by OMF (Oh My Fish) on this machine
+# OMF packages are hand-curated in manifests/omf.txt (omf list output is not machine-parseable)
 
 # pipx packages
 if command -v pipx >/dev/null 2>&1; then
     echo "  pipx list..."
-    pipx list --short > manifests/pipx.txt 2>/dev/null || true
+    pipx list --short | awk '{print $1}' > manifests/pipx.txt 2>/dev/null || true
 fi
 
 echo ""

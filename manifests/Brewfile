@@ -21,7 +21,6 @@ brew "cmake"
 brew "make"
 brew "coreutils"
 brew "gcc"
-brew "llvm@12"
 brew "boost"
 brew "protobuf"
 
@@ -71,10 +70,6 @@ brew "rtk"
 
 # Fonts
 cask "font-fira-code-nerd-font"
-
-# Editors
-cask "mark-text"
-cask "zettlr"
 
 # VS Code extensions
 vscode "anseki.vscode-color"
@@ -155,7 +150,6 @@ vscode "takumii.markdowntable"
 vscode "tamasfe.even-better-toml"
 vscode "tcwalther.cython"
 vscode "tomoki1207.pdf"
-vscode "valentjn.vscode-ltex"
 vscode "viktorqvarfordt.vscode-pitch-black-theme"
 vscode "yzhang.markdown-all-in-one"
 vscode "zhuangtongfa.material-theme"

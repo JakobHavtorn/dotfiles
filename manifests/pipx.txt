@@ -1,0 +1,5 @@
+# pipx packages — one package name per line
+# Lines starting with # are comments
+markitdown
+poetry
+taxhelper
