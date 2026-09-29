@@ -21,7 +21,10 @@ cp "$BASE_CONFIG" "$LIVE_CONFIG"
 echo "  applied base opencode.jsonc"
 
 # Generate model specs via corti CLI
-if command -v npx &>/dev/null; then
+# Skipped in CI — requires interactive auth (CORTI_CLIENT_ID + CORTI_BEARER)
+if [[ -n "${CI:-}" ]]; then
+    echo "  skipping corti models init (CI environment)"
+elif command -v npx &>/dev/null; then
     echo "  running corti models init..."
     npx @corti/cli@latest models init \
         --tools opencode --scope global --yes --no-shell-rc \

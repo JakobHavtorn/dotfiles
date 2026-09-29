@@ -15,6 +15,8 @@ brew "tmux"
 brew "go"
 brew "node"
 brew "python@3.13"  # system convenience; uv owns interpreter versions
+brew "uv"               # Python package/project manager
+brew "poetry"            # Python dependency management
 
 # Build tools
 brew "cmake"

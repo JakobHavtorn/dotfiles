@@ -14,7 +14,9 @@ fi
 # Install OMF itself if missing
 if ! fish -c 'type -q omf' 2>/dev/null; then
     echo "  installing Oh My Fish..."
-    curl -fsSL https://get.oh-my.fish | fish
+    curl -fsSL https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install -o /tmp/omf-install.fish
+    fish /tmp/omf-install.fish --noninteractive --yes
+    rm -f /tmp/omf-install.fish
 fi
 
 MANIFEST="{{ .chezmoi.sourceDir }}/manifests/omf.txt"

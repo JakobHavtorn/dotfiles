@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# run_onchange_after_80-taxhelper.sh.tmpl
+set -euo pipefail
+
+# Install taxhelper agent skills for opencode.
+# Taxhelper itself is installed via pipx (see manifests/pipx.txt).
+# Re-runs when this script changes.
+
+if [[ -n "${CI:-}" ]]; then
+    echo "=== skipping taxhelper skills (CI environment) ==="
+    exit 0
+fi
+
+if ! command -v taxhelper >/dev/null 2>&1; then
+    echo "=== skipping taxhelper skills (taxhelper not installed) ==="
+    exit 0
+fi
+
+echo "=== taxhelper skills ==="
+taxhelper install-skills --target agents --force 2>/dev/null || {
+    echo "  WARNING: taxhelper install-skills failed"
+}
+echo "=== taxhelper skills done ==="
