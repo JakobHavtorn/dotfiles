@@ -22,3 +22,24 @@ jobs:
         with:
           severity: warning
           ignore_paths: .git
+
+      - name: Install chezmoi
+        run: |
+          curl -fsLS get.chezmoi.io | sh
+          install -m 755 bin/chezmoi /usr/local/bin/chezmoi
+
+      - name: Render templates for all roles
+        run: |
+          for role in work personal remote; do
+            echo "=== role=$role ==="
+            mkdir -p "$HOME/.config/chezmoi"
+            printf 'sourceDir = "%s"\n[data]\nrole = "%s"\n' "$GITHUB_WORKSPACE" "$role" > "$HOME/.config/chezmoi/chezmoi.toml"
+            for f in $(find . -name '*.tmpl' -not -path './.git/*' -not -name '.chezmoi.toml.tmpl'); do
+              chezmoi execute-template < "$f" > /dev/null 2>&1 || {
+                echo "FAILED: $f (role=$role)"
+                chezmoi execute-template < "$f"
+                exit 1
+              }
+            done
+          done
+          echo "All templates rendered successfully for all roles"

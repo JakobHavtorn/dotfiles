@@ -1,0 +1,45 @@
+---
+name: clean-install-linux
+on:
+  push:
+    branches: [main, "*"]
+  pull_request:
+
+jobs:
+  clean-install:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git
+
+      - name: Install chezmoi
+        run: |
+          curl -fsLS get.chezmoi.io | sh
+          install -m 755 bin/chezmoi /usr/local/bin/chezmoi
+
+      - name: chezmoi apply (role=remote)
+        run: |
+          mkdir -p "$HOME/.config/chezmoi"
+          printf 'sourceDir = "%s"\n[data]\nrole = "remote"\n' "$GITHUB_WORKSPACE" > "$HOME/.config/chezmoi/chezmoi.toml"
+          chezmoi apply
+
+      - name: Verify expected binaries
+        run: |
+          for bin in uv rg jq gh; do
+            test -x "$HOME/.local/bin/$bin" || { echo "MISSING: $bin"; exit 1; }
+            echo "  $bin: OK"
+          done
+
+      - name: chezmoi apply (idempotency check)
+        run: |
+          # Force scripts to re-run, then verify they're safe against installed state
+          chezmoi state delete-bucket --bucket=scriptState
+          chezmoi apply
+          for bin in uv rg jq gh; do
+            test -x "$HOME/.local/bin/$bin" || { echo "MISSING after re-run: $bin"; exit 1; }
+            echo "  $bin: OK after re-run"
+          done

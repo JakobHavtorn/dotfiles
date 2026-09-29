@@ -17,12 +17,14 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 .chezmoidata.yaml                      # non-secret shared facts for templates
 dot_config/                            # maps to ~/.config/
 dot_config/fish/                        # fish shell config, functions, conf.d
-dot_config/git/config                  # git global config
+dot_config/git/config.tmpl              # git global config (insteadOf excluded for remote)
 dot_config/opencode/cli.json           # opencode TUI settings (symlinked)
 dot_config/opencode/opencode.jsonc     # opencode base config (managed by run_onchange script)
 manifests/                             # readable in git, never written to $HOME
-manifests/Brewfile                     # hand-curated homebrew bundle
+manifests/Brewfile                     # hand-curated homebrew bundle (darwin)
+manifests/remote-tools.txt             # pinned release URLs for rootless install (remote/linux)
 run_once_before_10-install-homebrew.sh.tmpl   # darwin only
+run_onchange_before_15-remote-tools.sh.tmpl   # remote/linux only — installs to ~/.local/bin
 run_onchange_after_20-brew-bundle.sh.tmpl      # darwin only
 run_onchange_after_20-opencode-config.sh.tmpl  # copies base + corti models init
 run_once_after_30-agent-skills.sh              # clones + links agent-skills
@@ -39,6 +41,8 @@ PLAN.md                                # full implementation plan
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.
 - `uv` owns Python interpreters. Do not `brew install python`.
 - The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate.
+- `remote-tools.txt` is a pipe-delimited manifest: `name|url|path_in_archive`. `path_in_archive` is the relative path to the binary inside the archive, or `-` for direct binary download. Architecture is x86_64; add aarch64 entries when needed.
+- Remote role is subtractive: gets fish config, git config, opencode, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s.
 
 ## Editing run_once scripts
 
