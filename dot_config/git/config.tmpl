@@ -4,3 +4,10 @@
 
 [init]
     defaultBranch = main
+
+{{ if not (env "CI") -}}
+# Rewrite HTTPS to SSH for GitHub — uses SSH keys on real machines,
+# skipped in CI where no SSH keys are available.
+[url "git@github.com:"]
+    insteadOf = https://github.com/
+{{ end -}}

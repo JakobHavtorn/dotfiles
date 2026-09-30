@@ -2,7 +2,7 @@
 
 # Taps
 tap "anomalyco/tap"
-tap "azure/kubelogin", "https://github.com/Azure/homebrew-kubelogin"
+tap "azure/kubelogin", "https://github.com/Azure/homebrew-kubelogin", trusted: true
 tap "derailed/k9s"
 tap "nklmilojevic/sofka"
 
@@ -50,7 +50,7 @@ brew "awscli"
 brew "azure-cli"
 brew "helm"
 brew "kubectx"
-brew "kubelogin"  # via azure/kubelogin tap
+brew "azure/kubelogin/kubelogin"  # via azure/kubelogin tap
 
 # Audio/media
 brew "ffmpeg"
