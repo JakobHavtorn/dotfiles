@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# run_onchange_after_10-git-config.sh.tmpl
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+
+log_section "git config"
+
+# Set individual keys via `git config --global` — never overwrite the
+# whole config file. Existing credentials, hosts, aliases, and [url]
+# sections on the machine are preserved.
+
+git config --global user.name "Jakob Havtorn"
+git config --global user.email "jdh@corti.ai"
+git config --global init.defaultBranch main
+
+if [[ -f "$HOME/.ssh/id_github" || -f "$HOME/.ssh/id_rsa" || -f "$HOME/.ssh/id_ed25519" ]]; then
+    git config --global url."git@github.com:".insteadOf "https://github.com/"
+    log_ok "insteadOf set (SSH keys present)"
+else
+    git config --global --unset url."git@github.com:".insteadOf 2>/dev/null || true
+    log_info "insteadOf skipped (no SSH keys)"
+fi
+
+log_ok "git config done"
