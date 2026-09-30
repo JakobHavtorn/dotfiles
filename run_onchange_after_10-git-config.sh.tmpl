@@ -13,12 +13,10 @@ git config --global user.name "Jakob Havtorn"
 git config --global user.email "jdh@corti.ai"
 git config --global init.defaultBranch main
 
-if [[ -f "$HOME/.ssh/id_github" || -f "$HOME/.ssh/id_rsa" || -f "$HOME/.ssh/id_ed25519" ]]; then
+# insteadOf rewrites https -> ssh for github.com. Skipped in CI: keyless
+# runners would fail every HTTPS clone (brew clones taps over git).
+if [[ -z "${CI:-}" ]]; then
     git config --global url."git@github.com:".insteadOf "https://github.com/"
-    log_ok "insteadOf set (SSH keys present)"
-else
-    git config --global --unset url."git@github.com:".insteadOf 2>/dev/null || true
-    log_info "insteadOf skipped (no SSH keys)"
 fi
 
 log_ok "git config done"
