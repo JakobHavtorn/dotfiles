@@ -24,6 +24,11 @@ if [[ -n "${CI:-}" ]]; then
     exit 0
 fi
 
+# No interactive prompts in bootstrap scripts: credential and host-key
+#prompts must fail fast (caught below) instead of hanging the apply.
+export GIT_TERMINAL_PROMPT=0
+export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
+
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     log_info "updating $AGENT_SKILLS_DIR..."
     if ! output="$(git -C "$AGENT_SKILLS_DIR" pull --ff-only 2>&1)"; then

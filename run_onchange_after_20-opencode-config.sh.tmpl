@@ -28,11 +28,14 @@ log_ok "applied base opencode.jsonc"
 if [[ -n "${CI:-}" ]]; then
     log_skip "corti models init (CI environment)"
 elif command -v npx &>/dev/null; then
+    # --yes: auto-confirm npx's package-install prompt (it hangs otherwise
+    # on boxes with a cold npm cache and no interactive answer); stdin
+    # from /dev/null turns any future interactive prompt into a fail-fast.
     log_info "running corti models init..."
-    if ! output="$(npx @corti/cli@latest models init \
+    if ! output="$(npx --yes @corti/cli@latest models init \
         --tools opencode --scope global --yes --no-shell-rc \
         --model corti-s1,corti-s1-instant,corti-s1-mini,corti-s1-mini-instant,corti-s1-beta,corti-s1-embedding,corti-s1-ultra-beta,corti-s1-tiny,corti-s1-tiny-instant \
-        2>&1)"; then
+        2>&1 </dev/null)"; then
         log_err "corti models init failed (non-fatal) — bootstrap continues:"
         printf '%s\n' "$output" >&2
     else
