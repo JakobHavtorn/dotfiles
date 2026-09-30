@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 # run_onchange_after_80-launchd-load.sh.tmpl
 set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 {{ if eq .chezmoi.os "darwin" -}}
 
 PLIST="$HOME/Library/LaunchAgents/com.jakobhavtorn.dotfiles-dump.plist"
 
 if [[ ! -f "$PLIST" ]]; then
-    echo "=== skipping launchd load (plist not present) ==="
+    log_skip "launchd load (plist not present)"
     exit 0
 fi
 
-echo "=== loading dump.sh launchd job ==="
+log_section "loading dump.sh launchd job"
 
 # Unload if already loaded, then load fresh
 launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 
-echo "  loaded: $PLIST"
-echo "  schedule: Sundays 10:00 (catch-up if missed)"
-echo "=== launchd done ==="
+log_ok "loaded: $PLIST"
+log_info "schedule: Sundays 10:00 (catch-up if missed)"
 
 {{ else -}}
 
-echo "=== skipping launchd load (not darwin) ==="
+log_skip "launchd load (not darwin)"
 
 {{ end -}}

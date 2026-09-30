@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
+# run_once_after_30-agent-skills.sh.tmpl
 set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # Clone agent-skills and link skills into opencode.
 # Config linking is handled by dotfiles/chezmoi, not agent-skills.
@@ -7,24 +9,24 @@ set -euo pipefail
 AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/.agent-skills}"
 OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 
-echo "=== agent-skills bootstrap ==="
+log_section "agent-skills bootstrap"
 
 if ! command -v git >/dev/null 2>&1; then
-    echo "  WARNING: git not found — skipping agent-skills. Install git to enable."
+    log_warn "git not found — skipping agent-skills"
     exit 0
 fi
 
 # Private repo — skip in CI (no auth available).
 if [[ -n "${CI:-}" ]]; then
-    echo "  skipping agent-skills (CI environment)"
+    log_skip "agent-skills (CI environment)"
     exit 0
 fi
 
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
-    echo "  updating $AGENT_SKILLS_DIR ..."
+    log_info "updating $AGENT_SKILLS_DIR..."
     git -C "$AGENT_SKILLS_DIR" pull --ff-only
 else
-    echo "  cloning to $AGENT_SKILLS_DIR ..."
+    log_info "cloning to $AGENT_SKILLS_DIR..."
     git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"
 fi
 
@@ -32,7 +34,7 @@ fi
 if command -v python3 >/dev/null 2>&1; then
     python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent opencode --force
 else
-    echo "  WARNING: python3 not found — skipping skill linking. Install via uv to enable."
+    log_warn "python3 not found — skipping skill linking"
 fi
 
 # Link agents directory
@@ -42,7 +44,7 @@ if [[ -d "$AGENT_SKILLS_DIR/agents" ]]; then
         [[ -e "$OPENCODE_CONFIG_DIR/agents" && ! -L "$OPENCODE_CONFIG_DIR/agents" ]] && mv "$OPENCODE_CONFIG_DIR/agents" "$OPENCODE_CONFIG_DIR/agents.bak"
         ln -sf "$AGENT_SKILLS_DIR/agents" "$OPENCODE_CONFIG_DIR/agents"
     }
-    echo "  linked agents/"
+    log_ok "linked agents/"
 fi
 
-echo "=== done ==="
+log_ok "agent-skills done"

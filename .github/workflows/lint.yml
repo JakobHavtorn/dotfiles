@@ -25,8 +25,9 @@ jobs:
 
       - name: Verify set -euo pipefail in all scripts
         run: |
-          for f in run_once_* run_onchange_* scripts/*.sh; do
+          for f in run_once_* run_onchange_* scripts/*.sh shared/*.sh; do
             [[ -f "$f" ]] || continue
+            [[ "$f" == "shared/log.sh" ]] && continue  # sourced, not executed
             grep -q 'set -euo pipefail' "$f" || {
               echo "MISSING 'set -euo pipefail': $f"
               exit 1

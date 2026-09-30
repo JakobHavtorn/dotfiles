@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # run_once_before_10-install-homebrew.sh.tmpl
 set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 {{ if eq .chezmoi.os "darwin" -}}
 
@@ -8,11 +9,11 @@ set -euo pipefail
 # Guard: official installer errors if brew already installed.
 
 if command -v brew >/dev/null 2>&1; then
-    echo "=== homebrew already installed, skipping ==="
+    log_skip "homebrew already installed"
     exit 0
 fi
 
-echo "=== installing homebrew ==="
+log_section "installing homebrew"
 NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Add brew to PATH for this script's remainder
@@ -22,10 +23,10 @@ elif [[ -x /usr/local/bin/brew ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-echo "=== homebrew installed ==="
+log_ok "homebrew installed"
 
 {{ else -}}
 
-echo "=== skipping homebrew install (not darwin) ==="
+log_skip "homebrew install (not darwin)"
 
 {{ end -}}
