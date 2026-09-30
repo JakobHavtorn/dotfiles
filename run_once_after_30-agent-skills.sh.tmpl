@@ -16,7 +16,9 @@ if ! command -v git >/dev/null 2>&1; then
     exit 0
 fi
 
-# Private repo — skip in CI (no auth available).
+# Private repo — skip in CI (no auth available). On real machines a
+# clone/update failure (missing GitHub auth) is logged and never stops
+# the bootstrap.
 if [[ -n "${CI:-}" ]]; then
     log_skip "agent-skills (CI environment)"
     exit 0
@@ -24,10 +26,18 @@ fi
 
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     log_info "updating $AGENT_SKILLS_DIR..."
-    git -C "$AGENT_SKILLS_DIR" pull --ff-only
+    if ! output="$(git -C "$AGENT_SKILLS_DIR" pull --ff-only 2>&1)"; then
+        log_err "agent-skills update failed (non-fatal):"
+        printf '%s\n' "$output" >&2
+    fi
 else
     log_info "cloning to $AGENT_SKILLS_DIR..."
-    git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"
+    if ! output="$(git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR" 2>&1)"; then
+        log_err "agent-skills clone failed (non-fatal) — bootstrap continues:"
+        printf '%s\n' "$output" >&2
+        exit 0
+    fi
+    log_ok "cloned agent-skills"
 fi
 
 # Link skills (config linking is handled by chezmoi/dotfiles)

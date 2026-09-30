@@ -50,6 +50,7 @@ PLAN.md                                # full implementation plan
 - `run_onchange_*` — re-executes when the script's own content changes. Embed manifest hashes as comments to trigger on manifest edits: `# Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}`
 - `before_` / `after_` — relative to file application. The number controls ordering within a phase.
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.
+- corti models init (opencode config script) and agent-skills are optional personal-layer steps: a missing-auth failure there is logged non-fatally and must never abort the rest of the bootstrap — catch the failure, print the tool's own error, exit 0. Platform/resource guards (`command -v`, os checks) handle the rest.
 - `uv` owns Python interpreters. Do not `brew install python`.
 - The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate.
 - `remote-tools.txt` is a pipe-delimited manifest: `name|url|path_in_archive`. `path_in_archive` is the relative path to the binary inside the archive, or `-` for direct binary download. Architecture is x86_64; add aarch64 entries when needed.
