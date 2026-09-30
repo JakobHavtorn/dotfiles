@@ -5,10 +5,12 @@ chezmoi-based dotfiles. Private repo.
 ## Bootstrap
 
 ```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jakobhavtorn/dotfiles
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --ssh jakobhavtorn/dotfiles
 ```
 
-You'll be prompted for a machine role (`work` / `personal` / `remote`).
+The repo is private: the machine needs SSH auth against GitHub. Either give the box its own key, or bootstrap through one agent-forwarded session (`ssh -A <host>` first). You'll be prompted for a machine role (`work` / `personal` / `remote`).
+
+Optional personal-layer steps (`corti models init`, agent-skills clone) are non-fatal: without their credentials they log an error and the bootstrap continues. Re-run them manually once credentials are in place, or `chezmoi update`.
 
 ## Usage
 
