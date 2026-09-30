@@ -17,7 +17,19 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 
 echo "=== brew bundle install ==="
-brew bundle install --file "$BREWFILE"
+
+# In CI, skip VS Code extensions — marketplace 503s are transient and
+# extensions aren't part of the system bootstrap we're testing.
+if [[ -n "${CI:-}" ]]; then
+    echo "  skipping VS Code extensions (CI environment)"
+    BREWFILE_FILTERED="$(mktemp)"
+    grep -v '^vscode_extensions ' "$BREWFILE" > "$BREWFILE_FILTERED"
+    brew bundle install --file "$BREWFILE_FILTERED"
+    rm -f "$BREWFILE_FILTERED"
+else
+    brew bundle install --file "$BREWFILE"
+fi
+
 echo "=== brew bundle done ==="
 
 {{ else -}}
