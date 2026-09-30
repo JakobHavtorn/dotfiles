@@ -1,0 +1,5 @@
+# pipx packages — one package name per line
+# Lines starting with # are comments
+# For git installs: name|git-url
+# Currently empty — pipx kept available for ad-hoc Python CLI tools
+taxhelper|git+https://github.com/rasmusrbj/taxhelper.git

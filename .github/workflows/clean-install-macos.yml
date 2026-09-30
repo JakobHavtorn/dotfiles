@@ -1,0 +1,38 @@
+---
+name: clean-install-macos
+on:
+  pull_request:
+
+jobs:
+  clean-install:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: |
+          curl -fsLS get.chezmoi.io | sh
+          install -m 755 bin/chezmoi /usr/local/bin/chezmoi
+
+      - name: chezmoi apply (role=work)
+        run: |
+          mkdir -p "$HOME/.config/chezmoi"
+          printf 'sourceDir = "%s"\n[data]\nrole = "work"\n' "$GITHUB_WORKSPACE" > "$HOME/.config/chezmoi/chezmoi.toml"
+          chezmoi apply
+
+      - name: Verify fish
+        run: fish -c 'echo ok'
+
+      - name: Verify expected tools
+        run: |
+          for bin in fish go node tmux shellcheck shfmt yq tree wget pandoc parallel uv poetry htop rg jq gh ffmpeg sox argocd helm kubectx kubelogin; do
+            command -v "$bin" || { echo "MISSING: $bin"; exit 1; }
+            echo "  $bin: OK"
+          done
+          fish -c 'type -q omf' || { echo "MISSING: omf"; exit 1; }
+          echo "  omf: OK"
+
+      - name: chezmoi apply (idempotency check)
+        run: |
+          chezmoi state delete-bucket --bucket=scriptState
+          chezmoi apply

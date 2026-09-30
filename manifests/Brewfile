@@ -2,7 +2,7 @@
 
 # Taps
 tap "anomalyco/tap"
-tap "azure/kubelogin", "https://github.com/Azure/homebrew-kubelogin"
+tap "azure/kubelogin", "https://github.com/Azure/homebrew-kubelogin", trusted: true
 tap "derailed/k9s"
 tap "nklmilojevic/sofka"
 
@@ -15,13 +15,14 @@ brew "tmux"
 brew "go"
 brew "node"
 brew "python@3.13"  # system convenience; uv owns interpreter versions
+brew "uv"               # Python package/project manager
+brew "poetry"            # Python dependency management
 
 # Build tools
 brew "cmake"
 brew "make"
 brew "coreutils"
 brew "gcc"
-brew "llvm@12"
 brew "boost"
 brew "protobuf"
 
@@ -49,7 +50,7 @@ brew "awscli"
 brew "azure-cli"
 brew "helm"
 brew "kubectx"
-brew "kubelogin"  # via azure/kubelogin tap
+brew "azure/kubelogin/kubelogin"  # via azure/kubelogin tap
 
 # Audio/media
 brew "ffmpeg"
@@ -71,10 +72,6 @@ brew "rtk"
 
 # Fonts
 cask "font-fira-code-nerd-font"
-
-# Editors
-cask "mark-text"
-cask "zettlr"
 
 # VS Code extensions
 vscode "anseki.vscode-color"
@@ -155,7 +152,6 @@ vscode "takumii.markdowntable"
 vscode "tamasfe.even-better-toml"
 vscode "tcwalther.cython"
 vscode "tomoki1207.pdf"
-vscode "valentjn.vscode-ltex"
 vscode "viktorqvarfordt.vscode-pitch-black-theme"
 vscode "yzhang.markdown-all-in-one"
 vscode "zhuangtongfa.material-theme"

@@ -1,0 +1,7 @@
+# k9s config — minimal defaults
+# k9s generates a full config on first run; this just sets sensible starting values.
+k9s:
+  refreshRate: 2
+  maxConnRetry: 5
+  enableMouse: true
+  headless: false

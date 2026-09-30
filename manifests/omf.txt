@@ -1,0 +1,5 @@
+# OMF packages and themes
+# Format: type|name  (type is "plugin" or "theme")
+# Hand-curated — omf list output is human-readable, not machine-parseable.
+plugin|fish-spec
+theme|bobthefish

@@ -14,20 +14,18 @@ if ! command -v git >/dev/null 2>&1; then
     exit 0
 fi
 
-# Private repo — verify auth before attempting clone.
-# On remote/CI without SSH keys or token, skip gracefully.
+# Private repo — skip in CI (no auth available).
+if [[ -n "${CI:-}" ]]; then
+    echo "  skipping agent-skills (CI environment)"
+    exit 0
+fi
+
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     echo "  updating $AGENT_SKILLS_DIR ..."
-    git -C "$AGENT_SKILLS_DIR" pull --ff-only || {
-        echo "  WARNING: pull failed — keeping existing checkout."
-    }
+    git -C "$AGENT_SKILLS_DIR" pull --ff-only
 else
     echo "  cloning to $AGENT_SKILLS_DIR ..."
-    if ! git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR" 2>&1; then
-        echo "  WARNING: clone failed (private repo, no auth) — skipping agent-skills."
-        echo "  To enable: set up SSH keys or configure a GitHub token."
-        exit 0
-    fi
+    git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"
 fi
 
 # Link skills (config linking is handled by chezmoi/dotfiles)
