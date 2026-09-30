@@ -5,6 +5,11 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 log_section "git config"
 
+if ! command -v git >/dev/null 2>&1; then
+    log_warn "git not found — skipping git config"
+    exit 0
+fi
+
 # Set individual keys via `git config --global` — never overwrite the
 # whole config file. Existing credentials, hosts, aliases, and [url]
 # sections on the machine are preserved.
