@@ -5,43 +5,23 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 log_section "ssh config"
 
-# Switch ~/.ssh/config to an Include-based layout. The github.com host
-# block is chezmoi-managed at ~/.ssh/config.d/github. All other hosts
-# (machine-specific certs/proxies) move to a machine-local fragment at
-# ~/.ssh/config.d/corti. The main config is never overwritten with
-# foreign content — only restructured, with a backup taken first.
+# Ensure ~/.ssh/config includes the chezmoi-managed fragments
+# (~/.ssh/config.d/github). Existing content — machine-specific hosts,
+# az-generated entries — is never moved or rewritten; the Include line
+# is prepended if missing and the config is created if absent.
 
-SSH_DIR="$HOME/.ssh"
-SSH_CONFIG="$SSH_DIR/config"
-CONFIG_D="$SSH_DIR/config.d"
-
-mkdir -p "$CONFIG_D"
+SSH_CONFIG="$HOME/.ssh/config"
 
 if [[ -f "$SSH_CONFIG" ]] && grep -qF 'Include config.d/*' "$SSH_CONFIG"; then
     log_skip "Include already present"
 else
+    mkdir -p "$HOME/.ssh"
     if [[ -f "$SSH_CONFIG" ]]; then
-        cp "$SSH_CONFIG" "$SSH_DIR/config.bak"
-        # Extract all Host blocks except github.com into the
-        # machine-local fragment. github.com comes from chezmoi instead.
-        awk '
-          /^[Hh]ost[ \t]/ {
-              if (block != "" && !is_github) printf "%s", block
-              is_github = ($2 == "github.com")
-              block = $0 "\n"
-              next
-          }
-          { block = block $0 "\n" }
-          END { if (block != "" && !is_github) printf "%s", block }
-        ' "$SSH_CONFIG" > "$CONFIG_D/corti"
-        if [[ -s "$CONFIG_D/corti" ]]; then
-            chmod 600 "$CONFIG_D/corti"
-            log_ok "moved existing hosts to ~/.ssh/config.d/corti"
-        else
-            rm -f "$CONFIG_D/corti"
-        fi
+        printf 'Include config.d/*\n' | cat - "$SSH_CONFIG" > "$SSH_CONFIG.tmp"
+        mv "$SSH_CONFIG.tmp" "$SSH_CONFIG"
+    else
+        printf 'Include config.d/*\n' > "$SSH_CONFIG"
     fi
-    printf 'Include config.d/*\n' > "$SSH_CONFIG"
     chmod 600 "$SSH_CONFIG"
     log_ok "Include config.d/* in ~/.ssh/config"
 fi

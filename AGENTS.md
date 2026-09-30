@@ -27,7 +27,7 @@ manifests/Brewfile                     # hand-curated homebrew bundle (darwin)
 manifests/remote-tools.txt             # pinned release URLs for rootless install (remote/linux)
 manifests/omf.txt                      # OMF packages and themes (hand-curated)
 manifests/pipx.txt                     # pipx package names
-run_once_after_05-ssh-config.sh.tmpl           # switches ~/.ssh/config to Include layout, moves existing hosts to ~/.ssh/config.d/corti
+run_once_after_05-ssh-config.sh.tmpl           # ensures Include config.d/* in ~/.ssh/config (prepends if missing, never rewrites existing content)
 run_onchange_after_10-git-config.sh.tmpl        # sets git keys via `git config --global` (insteadOf gated on SSH key presence)
 run_once_before_10-install-homebrew.sh.tmpl   # darwin only
 run_onchange_before_15-remote-tools.sh.tmpl   # remote/linux only — installs to ~/.local/bin
