@@ -17,9 +17,9 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 .chezmoidata.yaml                      # non-secret shared facts for templates
 dot_config/                            # maps to ~/.config/
 dot_config/fish/                        # fish shell config, functions, conf.d
-dot_config/git/config.tmpl              # git global config (insteadOf excluded for remote)
 dot_config/opencode/cli.json           # opencode TUI settings (symlinked)
 dot_config/opencode/opencode.jsonc     # opencode base config (managed by run_onchange script)
+dot_ssh/config.d/github.tmpl            # github.com SSH host block (UseKeychain excluded on remote)
 dot_omp/private_agent/private_config.yml  # omp settings (~/.omp/agent/config.yml, 0600; omp rewrites it — `chezmoi re-add` after in-app changes)
 dot_omp/private_agent/models.yml       # omp custom providers: corti (key via CORTI_BEARER env)
 manifests/                             # readable in git, never written to $HOME
@@ -27,16 +27,17 @@ manifests/Brewfile                     # hand-curated homebrew bundle (darwin)
 manifests/remote-tools.txt             # pinned release URLs for rootless install (remote/linux)
 manifests/omf.txt                      # OMF packages and themes (hand-curated)
 manifests/pipx.txt                     # pipx package names
+run_once_after_05-ssh-config.sh.tmpl           # ensures Include config.d/* in ~/.ssh/config (prepends if missing, never rewrites existing content)
+run_onchange_after_10-git-config.sh.tmpl        # sets git keys via `git config --global` (insteadOf skipped in CI)
 run_once_before_10-install-homebrew.sh.tmpl   # darwin only
 run_onchange_before_15-remote-tools.sh.tmpl   # remote/linux only — installs to ~/.local/bin
 run_onchange_after_20-brew-bundle.sh.tmpl      # darwin only
 run_onchange_after_20-opencode-config.sh.tmpl  # copies base + corti models init
-run_once_after_30-agent-skills.sh              # clones + links agent-skills
 run_onchange_after_60-omf.sh.tmpl              # installs OMF packages from manifest
 run_onchange_after_70-pipx.sh.tmpl              # installs pipx packages from manifest
 run_onchange_after_80-launchd-load.sh.tmpl      # darwin only — loads dump.sh launchd job
 run_once_after_90-macos-defaults.sh.tmpl       # darwin only — sets Finder/Dock defaults
-dot_Library/LaunchAgents/              # launchd plist for weekly dump.sh
+Library/LaunchAgents/                   # launchd plist for weekly dump.sh (no dot_ prefix — Library is not hidden)
 dot_config/k9s/config.yaml             # minimal k9s config
 scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd)
 .github/workflows/                     # CI

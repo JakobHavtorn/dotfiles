@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# run_once_after_05-ssh-config.sh.tmpl
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+
+log_section "ssh config"
+
+# Ensure ~/.ssh/config includes the chezmoi-managed fragments
+# (~/.ssh/config.d/github). Existing content — machine-specific hosts,
+# az-generated entries — is never moved or rewritten; the Include line
+# is prepended if missing and the config is created if absent.
+
+SSH_CONFIG="$HOME/.ssh/config"
+
+if [[ -f "$SSH_CONFIG" ]] && grep -qF 'Include config.d/*' "$SSH_CONFIG"; then
+    log_skip "Include already present"
+else
+    mkdir -p "$HOME/.ssh"
+    if [[ -f "$SSH_CONFIG" ]]; then
+        printf 'Include config.d/*\n' | cat - "$SSH_CONFIG" > "$SSH_CONFIG.tmp"
+        mv "$SSH_CONFIG.tmp" "$SSH_CONFIG"
+    else
+        printf 'Include config.d/*\n' > "$SSH_CONFIG"
+    fi
+    chmod 600 "$SSH_CONFIG"
+    log_ok "Include config.d/* in ~/.ssh/config"
+fi
+
+log_ok "ssh config done"

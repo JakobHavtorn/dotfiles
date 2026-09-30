@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# run_onchange_after_10-git-config.sh.tmpl
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+
+log_section "git config"
+
+# Set individual keys via `git config --global` — never overwrite the
+# whole config file. Existing credentials, hosts, aliases, and [url]
+# sections on the machine are preserved.
+
+git config --global user.name "Jakob Havtorn"
+git config --global user.email "jdh@corti.ai"
+git config --global init.defaultBranch main
+
+# insteadOf rewrites https -> ssh for github.com. Skipped in CI: keyless
+# runners would fail every HTTPS clone (brew clones taps over git).
+if [[ -z "${CI:-}" ]]; then
+    git config --global url."git@github.com:".insteadOf "https://github.com/"
+fi
+
+log_ok "git config done"
