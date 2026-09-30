@@ -3,7 +3,7 @@
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
-# Clone agent-skills and link skills into opencode.
+# Clone agent-skills and link skills into opencode and omp.
 # Config linking is handled by dotfiles/chezmoi, not agent-skills.
 
 AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/.agent-skills}"
@@ -48,6 +48,7 @@ fi
 # Link skills (config linking is handled by chezmoi/dotfiles)
 if command -v python3 >/dev/null 2>&1; then
     python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent opencode --force
+    python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent omp --force
 else
     log_warn "python3 not found — skipping skill linking"
 fi
