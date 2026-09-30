@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # run_onchange_before_15-remote-tools.sh.tmpl
 set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 {{ if and (eq .role "remote") (eq .chezmoi.os "linux") -}}
 
@@ -16,8 +17,8 @@ MANIFEST="{{ .chezmoi.sourceDir }}/manifests/remote-tools.txt"
 ARCH="$(uname -m)"
 
 if [[ "$ARCH" != "x86_64" ]]; then
-    echo "=== WARNING: remote-tools.txt has x86_64 URLs, but arch is $ARCH ==="
-    echo "=== Some tools may fail to install. Add $ARCH entries to remote-tools.txt. ==="
+    log_warn "remote-tools.txt has x86_64 URLs, but arch is $ARCH"
+    log_info "some tools may fail to install. Add $ARCH entries to remote-tools.txt."
 fi
 
 mkdir -p "$LOCAL_BIN" "$VERSION_DIR"
@@ -34,11 +35,11 @@ while IFS='|' read -r name url path_in_archive; do
     installed_url=""
     [[ -f "$VERSION_DIR/$name" ]] && installed_url="$(cat "$VERSION_DIR/$name")"
     if [[ "$installed_url" == "$url" ]]; then
-        echo "  $name: up to date, skipping"
+        log_ok "$name: up to date"
         continue
     fi
 
-    echo "  installing $name ..."
+    log_info "installing $name..."
 
     cache_key="$(printf '%s' "$url" | sha256sum | cut -d' ' -f1)"
     cached="$CACHE_DIR/$cache_key"
@@ -57,7 +58,7 @@ while IFS='|' read -r name url path_in_archive; do
 
     if [[ "$path_in_archive" == "-" ]]; then
         if [[ ! -s "$cached/$name" ]]; then
-            echo "  ERROR: $name download failed" >&2
+            log_err "$name download failed"
             exit 1
         fi
         chmod +x "$cached/$name"
@@ -65,27 +66,27 @@ while IFS='|' read -r name url path_in_archive; do
     else
         src="$cached/$path_in_archive"
         if [[ ! -f "$src" ]]; then
-            echo "  ERROR: $name not found at $path_in_archive in archive" >&2
+            log_err "$name not found at $path_in_archive in archive"
             exit 1
         fi
         chmod +x "$src"
         mv "$src" "$LOCAL_BIN/$name"
     fi
 
-    echo "  $name: installed"
+    log_ok "$name installed"
     echo "$url" > "$VERSION_DIR/$name"
 done < "$MANIFEST"
 
 # Install a Python interpreter via uv
 if [[ -x "$LOCAL_BIN/uv" ]]; then
-    echo "  installing Python 3.12 via uv ..."
-    "$LOCAL_BIN/uv" python install 3.12 || echo "  WARNING: uv python install failed"
+    log_info "installing Python 3.12 via uv..."
+    "$LOCAL_BIN/uv" python install 3.12 || log_warn "uv python install failed"
 fi
 
-echo "=== remote tools done ==="
+log_ok "remote tools done"
 
 {{ else -}}
 
-echo "=== skipping remote tools (not remote/linux) ==="
+log_skip "remote tools (not remote/linux)"
 
 {{ end -}}

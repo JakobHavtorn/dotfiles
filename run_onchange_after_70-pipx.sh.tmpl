@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 # run_onchange_after_70-pipx.sh.tmpl
 set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # Install pipx packages from manifest.
 # Re-runs when this script or the manifest changes.
 # pipx hash: {{ include "manifests/pipx.txt" | sha256sum }}
 
 if ! command -v pipx >/dev/null 2>&1; then
-    echo "=== skipping pipx (not installed) ==="
+    log_skip "pipx (not installed)"
     exit 0
 fi
 
 MANIFEST="{{ .chezmoi.sourceDir }}/manifests/pipx.txt"
 
-echo "=== pipx packages ==="
+log_section "pipx packages"
 while IFS='|' read -r pkg source; do
     # skip comments and empty lines
     [[ "$pkg" =~ ^# ]] && continue
@@ -21,10 +22,10 @@ while IFS='|' read -r pkg source; do
     # source is optional: defaults to PyPI package name
     install_target="${source:-$pkg}"
     if pipx list --short 2>/dev/null | awk '{print $1}' | grep -qx "$pkg"; then
-        echo "  $pkg: already installed"
+        log_ok "$pkg: already installed"
     else
-        echo "  installing $pkg..."
+        log_info "installing $pkg..."
         pipx install "$install_target"
     fi
 done < "$MANIFEST"
-echo "=== pipx done ==="
+log_ok "pipx done"

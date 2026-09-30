@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # opencode.jsonc base — hash triggers re-run on config changes
 # opencode.jsonc hash: {{ include "dot_config/opencode/opencode.jsonc" | sha256sum }}
@@ -12,26 +13,26 @@ SOURCE_DIR="{{ .chezmoi.sourceDir }}"
 BASE_CONFIG="$SOURCE_DIR/dot_config/opencode/opencode.jsonc"
 LIVE_CONFIG="$OPENCODE_CONFIG_DIR/opencode.jsonc"
 
-echo "=== opencode config + corti models ==="
+log_section "opencode config + corti models"
 
 mkdir -p "$OPENCODE_CONFIG_DIR"
 
 # Copy base config (without generated model specs)
 cp "$BASE_CONFIG" "$LIVE_CONFIG"
-echo "  applied base opencode.jsonc"
+log_ok "applied base opencode.jsonc"
 
 # Generate model specs via corti CLI
 # Skipped in CI — requires interactive auth (CORTI_CLIENT_ID + CORTI_BEARER)
 if [[ -n "${CI:-}" ]]; then
-    echo "  skipping corti models init (CI environment)"
+    log_skip "corti models init (CI environment)"
 elif command -v npx &>/dev/null; then
-    echo "  running corti models init..."
+    log_info "running corti models init..."
     npx @corti/cli@latest models init \
         --tools opencode --scope global --yes --no-shell-rc \
         --model corti-s1,corti-s1-instant,corti-s1-mini,corti-s1-mini-instant,corti-s1-beta,corti-s1-embedding,corti-s1-ultra-beta,corti-s1-tiny,corti-s1-tiny-instant \
         2>&1 | sed 's/^/    /'
 else
-    echo "  WARNING: npx not found — skipping model init. Models will be bare stubs."
+    log_warn "npx not found — skipping model init. Models will be bare stubs."
 fi
 
-echo "=== done ==="
+log_ok "opencode config done"

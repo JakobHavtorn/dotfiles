@@ -1,32 +1,43 @@
 #!/usr/bin/env bash
 # run_onchange_after_60-omf.sh.tmpl
 set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # Install OMF packages and themes from manifest.
 # Re-runs when this script or the manifest changes.
 # omf hash: {{ include "manifests/omf.txt" | sha256sum }}
 
 if ! command -v fish >/dev/null 2>&1; then
-    echo "=== skipping OMF (fish not installed) ==="
+    log_skip "OMF (fish not installed)"
     exit 0
 fi
 
 # Install OMF itself if missing
 if ! fish -c 'type -q omf' 2>/dev/null; then
-    echo "  installing Oh My Fish..."
+    log_info "installing Oh My Fish..."
     curl -fsSL https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install -o /tmp/omf-install.fish
-    fish /tmp/omf-install.fish --noninteractive --yes
+    if fish /tmp/omf-install.fish --noninteractive --yes >/dev/null 2>&1; then
+        log_ok "Oh My Fish installed"
+    else
+        log_err "Oh My Fish install failed"
+        rm -f /tmp/omf-install.fish
+        exit 1
+    fi
     rm -f /tmp/omf-install.fish
 fi
 
 MANIFEST="{{ .chezmoi.sourceDir }}/manifests/omf.txt"
 
-echo "=== OMF packages ==="
+log_section "OMF packages"
 while IFS='|' read -r type name; do
     # skip comments and empty lines
     [[ "$type" =~ ^# ]] && continue
     [[ -z "$type" ]] && continue
-    echo "  $type: $name"
-    fish -c "omf install $name" 2>/dev/null || true
+    log_info "$type: $name"
+    if fish -c "omf install $name" >/dev/null 2>&1; then
+        log_ok "$name"
+    else
+        log_warn "$name install failed"
+    fi
 done < "$MANIFEST"
-echo "=== OMF done ==="
+log_ok "OMF done"
