@@ -3,10 +3,12 @@ if status is-interactive
 end
 
 # Created by `pipx` on 2024-12-09 10:59:26
-set PATH $PATH /Users/jdh/.local/bin
+set PATH $PATH $HOME/.local/bin
 
-# Export go path
-set PATH $PATH:$(go env GOPATH)/bin
+# Export go path (skip when go is not installed)
+if command -v go >/dev/null
+    set PATH $PATH:$(go env GOPATH)/bin
+end
 
 pyenv init - | source
 # >>> corti-cli >>>
