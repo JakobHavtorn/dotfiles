@@ -248,7 +248,8 @@ Generated files are **observed state**. Anatomy of the split:
 | `Brewfile` | observed, curation gate in review | yes |
 | `omf.txt` | install declaration, observed state converges to it | yes |
 | `go-tools.txt`, `npm-globals.txt`, `macos-defaults.txt` | observed only (no consumer script yet) | yes |
-| `pipx.txt`, `remote-tools.txt` | install **declarations** | **no** — dumping would resurrect deliberately-removed packages and reinstall them next apply |
+| `pipx.txt` | install declaration, dumped from the venvs' pipx metadata (curation gate in review) | yes |
+| `remote-tools.txt` | install declaration | **no** — dumping would resurrect deliberately-removed packages and reinstall them next apply |
 
 `dump.sh` is PATH-hardened (launchd ships `/usr/bin:/bin` only) and runs under macOS `/bin/bash` 3.2 — keep it free of bash 4+ constructs (`mapfile`, associative arrays).
 
