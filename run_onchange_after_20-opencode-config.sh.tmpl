@@ -17,9 +17,7 @@ log_section "opencode config + corti models"
 
 mkdir -p "$OPENCODE_CONFIG_DIR"
 
-# Copy base config. The base now also tracks model specs: models init
-# refreshes in-tenant limits from the tenant API and keeps out-of-tenant
-# models (corti-s1-beta, etc.) as-is, labeled unverified.
+# Copy base config (without generated model specs)
 cp "$BASE_CONFIG" "$LIVE_CONFIG"
 log_ok "applied base opencode.jsonc"
 
