@@ -1,0 +1,8 @@
+# go tools in /Users/jdh/go/bin — reinstall via 'go install <line>@<version>' (dumped by scripts/dump.sh)
+github.com/daixiang0/gci@v0.14.0
+github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
+golang.org/x/tools/cmd/deadcode@v0.46.0
+golang.org/x/tools/gopls@v0.22.0
+google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+google.golang.org/protobuf/cmd/protoc-gen-go@v1.35.2
+honnef.co/go/tools/cmd/staticcheck@v0.5.1

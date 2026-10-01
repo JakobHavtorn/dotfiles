@@ -1,0 +1,6 @@
+# macOS defaults — observed values for the keys run_once_after_90-macos-defaults.sh.tmpl declares (dumped by scripts/dump.sh)
+NSGlobalDomain AppleShowAllExtensions = 1
+com.apple.dock autohide = 1
+com.apple.dock show-recents = 0
+com.apple.finder ShowPathbar = 1
+com.apple.finder ShowStatusBar = 1

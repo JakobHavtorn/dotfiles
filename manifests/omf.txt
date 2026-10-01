@@ -1,5 +1,3 @@
-# OMF packages and themes
-# Format: type|name  (type is "plugin" or "theme")
-# Hand-curated — omf list output is human-readable, not machine-parseable.
+# omf packages and themes — lines: 'plugin|name' / 'theme|name' (dumped by scripts/dump.sh)
 plugin|fish-spec
 theme|bobthefish
