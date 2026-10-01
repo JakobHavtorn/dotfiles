@@ -10,7 +10,7 @@
       }
     }
   },
-  "model": "corti/corti-s1",
+  "model": "corti/corti-s1-beta",
   "permissions": [
     { "action": "notion_notion-create-*", "resource": "*", "effect": "deny" },
     { "action": "notion_notion-update-folder", "resource": "*", "effect": "deny" },
