@@ -231,14 +231,30 @@ discover, since their tool list is declared rather than dumped. Writes manifests
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
+
 cd "$(chezmoi source-path)"
 
-brew bundle dump --force --describe --file manifests/Brewfile
-fish -c 'fisher list' > manifests/fisher.txt
-pipx list --short     > manifests/pipx.txt
-
-git diff --stat
+brew bundle dump --force --file manifests/Brewfile
+fish -c 'omf list'        | parse  > manifests/omf.txt        # plugin|name / theme|name
+go version -m \$gobin/\$bin | parse     > manifests/go-tools.txt        # package@version
+npm ls -g --depth=0 --json | parse  > manifests/npm-globals.txt    # name@version
+awk declared keys; defaults read ?  > manifests/macos-defaults.txt  # domain key = value
 ```
+
+Generated files are **observed state**. Anatomy of the split:
+
+| Manifest | Role | Dumped? |
+|---|---|---|
+| `Brewfile` | observed, curation gate in review | yes |
+| `omf.txt` | install declaration, observed state converges to it | yes |
+| `go-tools.txt`, `npm-globals.txt`, `macos-defaults.txt` | observed only (no consumer script yet) | yes |
+| `pipx.txt`, `remote-tools.txt` | install **declarations** | **no** — dumping would resurrect deliberately-removed packages and reinstall them next apply |
+
+`dump.sh` is PATH-hardened (launchd ships `/usr/bin:/bin` only) and runs under macOS `/bin/bash` 3.2 — keep it free of bash 4+ constructs (`mapfile`, associative arrays).
+
+Manual System Settings edits outside the declared defaults keys are not captured —
+the declared key list in `run_once_after_90` is the boundary. Extend the script
+before the dump can see the value.
 
 **No auto-commit.** An unattended job that commits whatever is on the machine is exactly
 the mechanism by which a token ends up in git history — and it produces constant diff
