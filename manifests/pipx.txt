@@ -1,5 +1,4 @@
-# pipx install declaration — consumed by run_onchange_after_70-script
-# Lines: 'name' or 'name|git-url'. Lines starting with # are comments.
-# Hand-curated, NOT dumped: dump regen would resurrect deliberately-removed
-# packages (markitdown, poetry still linger in venvs) and reinstall them.
+# pipx install declaration — consumed by run_onchange_after_70-pipx.sh
+# Lines: 'name' or 'name|source'. Dumped from the venvs' pipx metadata
+# by scripts/dump.sh; lines starting with # are comments.
 taxhelper|git+https://github.com/rasmusrbj/taxhelper.git

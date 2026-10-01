@@ -38,6 +38,30 @@ chezmoi state delete-bucket --bucket=scriptState
 
 This bites everyone exactly once.
 
+## Brew repair
+
+When `chezmoi apply` fails inside `20-brew-bundle`, or the weekly dump reports
+`brew bundle check` failing, repair by hand. `brew update` alone does not fix
+it. The two failure classes previously seen:
+
+1. **Stale keg-tab metadata** — `brew bundle check --verbose` shows circular
+   dependency warnings between unrelated formulae (e.g., libtiff/webp listing
+   each other). The fix is `brew reinstall <offending-formula>`, which
+   regenerates the tab's `INSTALL_RECEIPT.json`.
+2. **Orphaned manually-installed formulae** — a keg not declared in
+   `manifests/Brewfile` can still own files other formulae want; e.g., a
+   pre-repo `anomalyco/tap/opencode` 1.x held `bin/opencode` and every
+   `opencode-v2` upgrade then failed to link. Uninstall the orphan (or adopt
+   it into the Brewfile).
+
+Then re-run and expect a quiet check before applying:
+
+```sh
+brew bundle install --file manifests/Brewfile
+brew bundle check
+chezmoi diff && chezmoi apply
+```
+
 ## Roles
 
 | Role | Gets |
