@@ -3,12 +3,13 @@
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
-{{ if eq .chezmoi.os "darwin" -}}
-
+# Reload the dump schedule into launchd; re-fires whenever the plist itself
+# changes. chezmoi's re-run trigger is this script's rendered content, so the
+# plist hash lives inside the script — without it, a plist-only edit would
+# leave launchd serving the stale schedule.
 # plist hash: {{ include "Library/LaunchAgents/com.jakobhavtorn.dotfiles-dump.plist.tmpl" | sha256sum }}
-# Makes this run_onchange re-fire whenever the plist itself changes: chezmoi's
-# re-run trigger is this script's rendered content, so without the embedded hash
-# a plist-only edit would leave launchd serving the stale schedule.
+
+{{ if eq .chezmoi.os "darwin" -}}
 
 PLIST="$HOME/Library/LaunchAgents/com.jakobhavtorn.dotfiles-dump.plist"
 
