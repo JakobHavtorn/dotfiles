@@ -20,7 +20,9 @@ fi
 
 log_section "herdr plugins"
 
+# --yes: auto-confirm the install prompt (it hangs chezmoi apply otherwise);
+# </dev/null: turn any future interactive prompt into a fail-fast.
 log_run --non-fatal "herdr plugin install herdr-annotate" \
-    herdr plugin install plannotator/herdr-annotate || true
+    herdr plugin install --yes plannotator/herdr-annotate </dev/null || true
 
 log_ok "herdr plugins done"
