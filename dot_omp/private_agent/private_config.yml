@@ -4,7 +4,7 @@ retry:
   maxRetries: 20
   maxDelayMs: 600000
 modelRoles:
-  default: corti/corti-s1-instant
+  default: corti/corti-s1:max
   slow: corti/corti-s1:max
   smol: corti/corti-s1-mini-beta:xhigh
   plan: corti/corti-s1:max
