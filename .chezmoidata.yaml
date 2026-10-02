@@ -1,1 +1,81 @@
-# Non-secret shared facts. Available in templates as .chezmoidata.*.
+# Non-secret shared facts. Available in templates as .chezmoidata.*
+# Single source of truth for notion deny-list, MCP servers, corti model list.
+
+# Canonical notion deny-list — union of all actions denied across opencode.jsonc
+# and private_config.yml. Each entry is an explicit notion tool suffix (without
+# the notion_ prefix). Hyphenated in canonical form; omp templates replace
+# hyphens with underscores.
+notion:
+  deny_actions:
+    - create-attachment
+    - create-comment
+    - create-database
+    - create-file-upload
+    - create-folder
+    - create-pages
+    - create-view
+    - update-folder
+    - update-view
+    - update-data-source
+    - duplicate-page
+    - download-attachment
+    - move-pages
+    - get-comments
+    - get-users
+    - get-teams
+    - get-session-status
+    - list-favorite-pages
+    - list-private-pages
+    - list-recent-pages
+    - list-shared-pages
+    - list-session-events
+    - query-meeting-notes
+    - query-sessions
+    - search-sessions
+    - search-agents
+    - spawn-session
+    - stop-session
+    - send-message-to-session
+    - wait-session
+    - read-session-event
+    - notion-convert-page-to-skill
+  # opencode supports wildcard actions; emit these in addition to the explicit
+  # list (they subsume the create-* and list-* entries above).
+  deny_wildcards:
+    - create-*
+    - list-*
+
+# MCP server definitions shared across opencode.jsonc and mcp.json.
+# Stores format-agnostic data; each template renders its own key names and
+# env-var syntax ({env:...} for opencode, ${...} for omp).
+mcp:
+  servers:
+    linear:
+      url: "https://mcp.linear.app/mcp"
+    slack:
+      url: "https://mcp.slack.com/mcp"
+      scope: "search:read.public search:read.private search:read.mpim search:read.im search:read.files files:read search:read.users chat:write users:read users:read.email channels:history groups:history mpim:history im:history"
+      callback_port: 19876
+      redirect_uri: "http://127.0.0.1:19876/mcp/oauth/callback"
+      auth_token_url: "https://slack.com/api/oauth.v2.user.access"
+    synapse:
+      url: "https://mcp.synapse.corti.app/mcp"
+      oauth_client_id: "synapse-mcp"
+      oauth_scope: "openid email profile offline_access"
+    notion:
+      url: "https://mcp.notion.com/mcp"
+
+# Corti model list — matches models.yml provider.corti.models[].id
+# and the onchange script's --model flag.
+corti:
+  default_model: "corti-s1-beta"
+  models:
+    - corti-s1
+    - corti-s1-instant
+    - corti-s1-mini
+    - corti-s1-mini-beta
+    - corti-s1-mini-instant
+    - corti-s1-mini-instant-beta
+    - corti-s1-tiny
+    - corti-s1-tiny-instant
+    - corti-s1-embedding

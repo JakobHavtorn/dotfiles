@@ -2,23 +2,23 @@
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
-# opencode.jsonc base — hash triggers re-run on config changes
-# opencode.jsonc hash: {{ include "dot_config/opencode/opencode.jsonc" | sha256sum }}
+# opencode.jsonc.tmpl — hash triggers re-run on config changes
+# opencode.jsonc.tmpl hash: {{ include "dot_config/opencode/opencode.jsonc.tmpl" | sha256sum }}
 
 # to generate model specs into the live config.
 # Re-runs when this script or the base config changes.
 
 OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 SOURCE_DIR="{{ .chezmoi.sourceDir }}"
-BASE_CONFIG="$SOURCE_DIR/dot_config/opencode/opencode.jsonc"
+BASE_CONFIG="$SOURCE_DIR/dot_config/opencode/opencode.jsonc.tmpl"
 LIVE_CONFIG="$OPENCODE_CONFIG_DIR/opencode.jsonc"
 
 log_section "opencode config + corti models"
 
 mkdir -p "$OPENCODE_CONFIG_DIR"
 
-# Copy base config (without generated model specs)
-cp "$BASE_CONFIG" "$LIVE_CONFIG"
+# Render base config from template (without generated model specs)
+chezmoi execute-template < "$BASE_CONFIG" > "$LIVE_CONFIG"
 log_ok "applied base opencode.jsonc"
 
 # Generate model specs via corti CLI.
@@ -34,7 +34,7 @@ elif command -v npx &>/dev/null; then
     log_info "running corti models init..."
     if ! output="$(npx --yes @corti/cli@latest models init \
         --tools opencode --scope global --yes --no-shell-rc \
-        --model corti-s1,corti-s1-instant,corti-s1-mini,corti-s1-mini-instant,corti-s1-beta,corti-s1-embedding,corti-s1-ultra-beta,corti-s1-tiny,corti-s1-tiny-instant \
+        --model {{ .corti.models | join "," }} \
         2>&1 </dev/null)"; then
         log_err "corti models init failed (non-fatal) — bootstrap continues:"
         printf '%s\n' "$output" >&2
