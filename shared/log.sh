@@ -48,14 +48,13 @@ log_skip() {
 # On success: logs "✓ label" and returns 0.
 # On failure: logs "✗ label", prints captured output to stderr.
 #   - Default (fatal): returns 1 — caller should let it propagate under
-#     `set -e`, or guard with `|| true` to continue.
-#   - With --non-fatal: returns 1 but callers typically use `|| true`
-#     to swallow the exit code so `set -e` does not fire.
+#     `set -e`, or guard with `if !`/`||` to handle the failure.
+#   - With --non-fatal: logs the error and output to stderr but returns
+#     0, so the caller continues under `set -e` without `|| true`.
 log_run() {
-    local _label
-    # --non-fatal is a documentation marker: callers use `|| true` to
-    # continue under set -e. The return value is the same either way.
+    local _label _non_fatal=0
     if [[ "$1" == "--non-fatal" ]]; then
+        _non_fatal=1
         shift
     fi
     _label="$1"
@@ -66,6 +65,7 @@ log_run() {
     else
         log_err "$_label"
         printf '%s\n' "$_output" >&2
+        [[ "$_non_fatal" -eq 1 ]] && return 0
         return 1
     fi
 }
