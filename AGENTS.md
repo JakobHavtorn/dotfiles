@@ -43,9 +43,12 @@ run_onchange_after_20-opencode-config.sh.tmpl  # renders opencode.jsonc.tmpl + c
 run_onchange_after_60-omf.sh.tmpl              # installs OMF packages from manifest
 run_onchange_after_70-pipx.sh.tmpl              # installs pipx packages from manifest
 run_onchange_after_80-launchd-load.sh.tmpl      # darwin only — loads dump.sh launchd job
+run_onchange_after_80-taxhelper.sh.tmpl          # installs taxhelper agent skills for opencode
+run_onchange_after_85-herdr-plugins.sh.tmpl      # installs herdr-annotate plugin (Full variant)
 run_once_after_90-macos-defaults.sh.tmpl       # darwin only — sets Finder/Dock defaults
 Library/LaunchAgents/                   # launchd plist for weekly dump.sh (no dot_ prefix — Library is not hidden)
 dot_config/k9s/config.yaml             # minimal k9s config
+dot_config/herdr/config.toml           # herdr keybindings for herdr-annotate (Full install)
 scripts/check-bootstrap.sh             # platform-agnostic interrupted-apply detector; called from dump.sh and CI
 scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults. PATH-hardened for launchd (which ships /usr/bin:/bin only)
 .github/workflows/                     # CI
@@ -57,7 +60,7 @@ scripts/dump.sh                        # weekly dump to manifests/ (macOS, launc
 - `run_onchange_*` — re-executes when the script's own content changes. Embed manifest hashes as comments to trigger on manifest edits: `# Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}`
 - `before_` / `after_` — relative to file application. The number controls ordering within a phase.
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.
-- Shared helpers (`shared/`): `log.sh` for colored logging, `env.sh` for runtime checks (`is_ci`, `is_darwin`, `is_linux`), `manifest.sh` for `manifest_each`. Source these instead of reimplementing the same capture/loop/gate patterns. `log_run "label" cmd…` replaces inline `output="$()"` capture-and-log; `log_run --non-fatal` logs the error but returns 1 (use `|| true` under `set -e`).
+- Shared helpers (`shared/`): `log.sh` for colored logging, `env.sh` for runtime checks (`is_ci`, `is_darwin`, `is_linux`), `manifest.sh` for `manifest_each`. Source these instead of reimplementing the same capture/loop/gate patterns. `log_run "label" cmd…` replaces inline `output="$()"` capture-and-log; `log_run --non-fatal` logs the error but returns 0 (no `|| true` needed under `set -e`).
 - corti models init (opencode config script) and agent-skills are optional personal-layer steps: a missing-auth failure there is logged non-fatally and must never abort the rest of the bootstrap — catch the failure, print the tool's own error, exit 0. Platform/resource guards (`command -v`, os checks) handle the rest.
 - `uv` owns Python interpreters. Do not `brew install python`.
 - The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate. Same gate applies to all dump-generated manifests; pipx.txt is dumped from the venvs' pipx metadata (`package_or_url`) so install sources survive regeneration.

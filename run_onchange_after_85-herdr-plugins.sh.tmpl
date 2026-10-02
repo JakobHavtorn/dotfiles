@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# run_onchange_after_85-herdr-plugins.sh.tmpl
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# Install the herdr-annotate plugin (Full variant) into Herdr.
+# Herdr itself is installed via brew (darwin) or remote-tools.txt (remote linux).
+# Re-runs when this script changes.
+
+if is_ci; then
+    log_skip "herdr plugins (CI environment)"
+    exit 0
+fi
+
+if ! command -v herdr >/dev/null 2>&1; then
+    log_skip "herdr plugins (herdr not installed)"
+    exit 0
+fi
+
+log_section "herdr plugins"
+
+log_run --non-fatal "herdr plugin install herdr-annotate" \
+    herdr plugin install plannotator/herdr-annotate || true
+
+log_ok "herdr plugins done"
