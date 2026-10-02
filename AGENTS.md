@@ -16,7 +16,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 .chezmoiignore.tmpl                    # excludes non-chezmoi files + role-specific paths
 .chezmoidata.yaml                      # non-secret shared facts for templates
 dot_config/                            # maps to ~/.config/
-dot_config/fish/                        # fish shell config, functions, conf.d
+dot_config/fish/config.fish             # PATH setup, corti-cli env, gpu/oc abbreviations (interactive only)
 dot_config/opencode/cli.json           # opencode TUI settings (symlinked)
 dot_config/opencode/opencode.jsonc     # opencode base config (managed by run_onchange script)
 dot_ssh/config.d/github.tmpl            # github.com SSH host block (UseKeychain excluded on remote)
@@ -44,7 +44,6 @@ Library/LaunchAgents/                   # launchd plist for weekly dump.sh (no d
 dot_config/k9s/config.yaml             # minimal k9s config
 scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd): brew, omf, go tools, npm globals, macOS defaults. PATH-hardened for launchd (which ships /usr/bin:/bin only)
 .github/workflows/                     # CI
-PLAN.md                                # full implementation plan
 ```
 
 ## Conventions
