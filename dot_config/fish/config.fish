@@ -1,8 +1,12 @@
 if status is-interactive
-    # Commands to run in interactive sessions can go here
+    # Azure Arc GPU SSH — resource-group stated once; gpu1..gpu4 expand to gpu00N
+    for i in 1 2 3 4
+        abbr --position command gpu$i "az ssh arc --resource-group cph-datacenter-arc-gpu --vm-name gpu00$i"
+    end
+
+    abbr -a oc opencode
 end
 
-# Created by `pipx` on 2024-12-09 10:59:26
 set PATH $PATH $HOME/.local/bin
 
 # Export go path (skip when go is not installed)
@@ -10,7 +14,6 @@ if command -v go >/dev/null
     set PATH $PATH:$(go env GOPATH)/bin
 end
 
-pyenv init - | source
 # >>> corti-cli >>>
 # managed by corti-cli - safe to remove; loads CORTI_* from ~/.env into new shells
 if test -f ~/.env
@@ -19,4 +22,3 @@ if test -f ~/.env
     end
 end
 # <<< corti-cli <<<
-

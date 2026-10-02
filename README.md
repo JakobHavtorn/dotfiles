@@ -72,4 +72,4 @@ chezmoi diff && chezmoi apply
 
 ## Layout
 
-See [PLAN.md](PLAN.md) for the full design. See [AGENTS.md](AGENTS.md) for agent guidelines.
+See [AGENTS.md](AGENTS.md) for the repo layout, conventions, and agent guidelines.
