@@ -3,16 +3,20 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
-# opencode.jsonc.tmpl — hash triggers re-run on config changes
 # opencode.jsonc.tmpl hash: {{ include "dot_config/opencode/opencode.jsonc.tmpl" | sha256sum }}
+# cli.json.tmpl hash: {{ include "dot_config/opencode/cli.json.tmpl" | sha256sum }}
 
-# to generate model specs into the live config.
-# Re-runs when this script or the base config changes.
+# Renders both opencode.jsonc and cli.json from templates.
+# cli.json base has user preferences but NOT the herdr plugin entry —
+# run_after_85-herdr-plugins.sh.tmpl adds that via `herdr integration install opencode`.
+# Re-runs when this script or either config template changes.
 
 OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 SOURCE_DIR="{{ .chezmoi.sourceDir }}"
 BASE_CONFIG="$SOURCE_DIR/dot_config/opencode/opencode.jsonc.tmpl"
 LIVE_CONFIG="$OPENCODE_CONFIG_DIR/opencode.jsonc"
+CLI_TEMPLATE="$SOURCE_DIR/dot_config/opencode/cli.json.tmpl"
+CLI_CONFIG="$OPENCODE_CONFIG_DIR/cli.json"
 
 log_section "opencode config + corti models"
 
@@ -21,6 +25,11 @@ mkdir -p "$OPENCODE_CONFIG_DIR"
 # Render base config from template (without generated model specs)
 chezmoi execute-template < "$BASE_CONFIG" > "$LIVE_CONFIG"
 log_ok "applied base opencode.jsonc"
+
+# Render cli.json base (user preferences, no herdr plugin entry).
+# run_after_85-herdr-plugins.sh.tmpl adds the herdr entry via integration install.
+chezmoi execute-template < "$CLI_TEMPLATE" > "$CLI_CONFIG"
+log_ok "applied base cli.json"
 
 # Generate model specs via corti CLI.
 # Skipped in CI — requires interactive auth (CORTI_CLIENT_ID + CORTI_BEARER).

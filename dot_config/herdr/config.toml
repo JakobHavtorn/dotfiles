@@ -59,3 +59,16 @@ key = "prefix+ctrl+o"
 type = "plugin_action"
 command = "annotate.last-newest"
 description = "review the agent's newest reply"
+
+[theme]
+name = "gruvbox"
+auto_switch = false
+
+[ui.sound]
+enabled = false
+
+[ui.toast]
+delivery = "herdr"
+
+[ui]
+status_indicators = "dots"
