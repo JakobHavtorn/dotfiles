@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# run_after_85-herdr-plugins.sh.tmpl
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# Install the herdr-annotate plugin (Full variant) and opencode integration into Herdr.
+# Herdr itself is installed via brew (darwin) or remote-tools.txt (remote linux).
+# Runs after every chezmoi apply. run_after_20 renders the base cli.json (without
+# the herdr plugin entry); this script re-adds it via `herdr integration install opencode`.
+# Idempotent — re-running overwrites herdr's own files and re-registers the plugin.
+
+if is_ci; then
+    log_skip "herdr plugins (CI environment)"
+    exit 0
+fi
+
+if ! command -v herdr >/dev/null 2>&1; then
+    log_skip "herdr plugins (herdr not installed)"
+    exit 0
+fi
+
+log_section "herdr plugins"
+
+# --yes: auto-confirm the install prompt (it hangs chezmoi apply otherwise);
+# </dev/null: turn any future interactive prompt into a fail-fast.
+log_run --non-fatal "herdr plugin install herdr-annotate" \
+    herdr plugin install --yes plannotator/herdr-annotate </dev/null || true
+
+# Agent integrations — idempotent, re-running overwrites herdr's own files.
+# opencode also registers the TUI plugin in cli.json; run_after_20 renders the
+# base cli.json without that entry, this script re-adds it every apply.
+for agent in opencode omp claude codex; do
+    log_run --non-fatal "herdr integration install $agent" \
+        herdr integration install "$agent" </dev/null || true
+done
+
+log_ok "herdr plugins done"
