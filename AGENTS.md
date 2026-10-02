@@ -28,9 +28,8 @@ manifests/Brewfile                     # homebrew bundle (darwin); regenerated b
 manifests/remote-tools.txt             # pinned release URLs for rootless install (remote/linux)
 manifests/omf.txt                      # OMF packages/themes — dumped from 'omf list' (consumed by run_onchange_after_60-omf.sh)
 manifests/pipx.txt                      # pipx install declaration — dumped from the venvs' pipx metadata (package_or_url: git URLs, extras)
-manifests/go-tools.txt                 # go tools, package@version — dumped from binaries' own build metadata
-manifests/npm-globals.txt              # npm global packages, name@version — dumped from npm ls --json
-manifests/macos-defaults.txt           # observed values for keys declared in run_once_after_90-macos-defaults.sh.tmpl
+manifests/macos-defaults-keys.txt       # shared (domain|key|value) list — read by dump.sh (observes) and run_once_after_90-macos-defaults.sh.tmpl (writes)
+manifests/macos-defaults.txt           # observed values for keys in manifests/macos-defaults-keys.txt (dumped by dump.sh)
 run_once_after_05-ssh-config.sh.tmpl           # ensures Include config.d/* in ~/.ssh/config (prepends if missing, never rewrites existing content)
 run_onchange_after_10-git-config.sh.tmpl        # sets git keys via `git config --global` (insteadOf skipped in CI)
 run_once_before_10-install-homebrew.sh.tmpl   # darwin only
@@ -43,7 +42,8 @@ run_onchange_after_80-launchd-load.sh.tmpl      # darwin only — loads dump.sh 
 run_once_after_90-macos-defaults.sh.tmpl       # darwin only — sets Finder/Dock defaults
 Library/LaunchAgents/                   # launchd plist for weekly dump.sh (no dot_ prefix — Library is not hidden)
 dot_config/k9s/config.yaml             # minimal k9s config
-scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd): brew, omf, go tools, npm globals, macOS defaults. PATH-hardened for launchd (which ships /usr/bin:/bin only)
+scripts/check-bootstrap.sh             # platform-agnostic interrupted-apply detector; called from dump.sh and CI
+scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults. PATH-hardened for launchd (which ships /usr/bin:/bin only)
 .github/workflows/                     # CI
 ```
 

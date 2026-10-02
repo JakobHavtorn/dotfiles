@@ -43,3 +43,6 @@ jobs:
             test -x "$HOME/.local/bin/$bin" || { echo "MISSING after re-run: $bin"; exit 1; }
             echo "  $bin: OK after re-run"
           done
+
+      - name: Bootstrap completeness check
+        run: bash scripts/check-bootstrap.sh || true
