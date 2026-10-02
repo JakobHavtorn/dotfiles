@@ -5,6 +5,7 @@ tap "anomalyco/tap"
 tap "azure/kubelogin", "https://github.com/Azure/homebrew-kubelogin", trusted: true
 tap "derailed/k9s"
 tap "nklmilojevic/sofka"
+tap "plannotator/tap", trusted: true
 
 # Shells & terminal
 brew "fish"
@@ -38,6 +39,8 @@ brew "pandoc"
 brew "parallel"
 brew "magic-wormhole"
 brew "claude-squad"
+brew "herdr"
+brew "plannotator/tap/plannotator-tui"
 
 # Python tooling
 brew "pipx"

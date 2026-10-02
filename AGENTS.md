@@ -43,9 +43,12 @@ run_onchange_after_20-opencode-config.sh.tmpl  # renders opencode.jsonc.tmpl + c
 run_onchange_after_60-omf.sh.tmpl              # installs OMF packages from manifest
 run_onchange_after_70-pipx.sh.tmpl              # installs pipx packages from manifest
 run_onchange_after_80-launchd-load.sh.tmpl      # darwin only — loads dump.sh launchd job
+run_onchange_after_80-taxhelper.sh.tmpl          # installs taxhelper agent skills for opencode
+run_onchange_after_85-herdr-plugins.sh.tmpl      # installs herdr-annotate plugin (Full variant)
 run_once_after_90-macos-defaults.sh.tmpl       # darwin only — sets Finder/Dock defaults
 Library/LaunchAgents/                   # launchd plist for weekly dump.sh (no dot_ prefix — Library is not hidden)
 dot_config/k9s/config.yaml             # minimal k9s config
+dot_config/herdr/config.toml           # herdr keybindings for herdr-annotate (Full install)
 scripts/check-bootstrap.sh             # platform-agnostic interrupted-apply detector; called from dump.sh and CI
 scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults. PATH-hardened for launchd (which ships /usr/bin:/bin only)
 .github/workflows/                     # CI
