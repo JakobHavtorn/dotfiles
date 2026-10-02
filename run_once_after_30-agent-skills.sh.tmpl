@@ -32,10 +32,10 @@ export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
 
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     log_info "updating $AGENT_SKILLS_DIR..."
-    log_run --non-fatal "agent-skills update" git -C "$AGENT_SKILLS_DIR" pull --ff-only || true
+    log_run --non-fatal "agent-skills update" git -C "$AGENT_SKILLS_DIR" pull --ff-only
 else
     log_info "cloning to $AGENT_SKILLS_DIR..."
-    if ! log_run --non-fatal "agent-skills clone" git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"; then
+    if ! log_run "agent-skills clone" git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"; then
         log_info "bootstrap continues without agent-skills"
         exit 0
     fi
@@ -44,7 +44,7 @@ fi
 # Link skills (config linking is handled by chezmoi/dotfiles)
 if command -v python3 >/dev/null 2>&1; then
     for agent in opencode omp claude codex; do
-        log_run --non-fatal "linked skills into $agent" python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force || true
+        log_run --non-fatal "linked skills into $agent" python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force
     done
 else
     log_warn "python3 not found — skipping skill linking"

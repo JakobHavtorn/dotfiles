@@ -70,9 +70,10 @@ coding_agents:
   # Corti model list — matches models.yml provider.corti.models[].id
   # and the onchange script's --model flag.
   corti:
-    default_model: "corti-s1-beta"
+    default_model: "corti-s1"
     models:
       - corti-s1
+      - corti-s1-beta
       - corti-s1-instant
       - corti-s1-mini
       - corti-s1-mini-beta

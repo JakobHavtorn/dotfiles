@@ -35,8 +35,7 @@ elif command -v npx &>/dev/null; then
     log_info "running corti models init..."
     log_run --non-fatal "corti models initialized" npx --yes @corti/cli@latest models init \
         --tools opencode --scope global --yes --no-shell-rc \
-        --model {{ .coding_agents.corti.models | join "," }} \
-        </dev/null || true
+        --model {{ .coding_agents.corti.models | join "," }} </dev/null
 else
     log_warn "npx not found — skipping model init. Models will be bare stubs."
 fi
