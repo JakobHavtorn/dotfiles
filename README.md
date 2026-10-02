@@ -26,8 +26,10 @@ chezmoi update   # git pull + apply
 file 40 of 60 leaves the first 39 written. The diff is the safety net.
 
 ```fish
-abbr -a cza 'chezmoi diff; and read -P "apply? " -n1 c; and test "$c" = y; and chezmoi apply'
+abbr -a cza 'chezmoi diff; and read -P "apply? " -n1 c; and test "$c" = y; and chezmoi apply --no-pager'
 ```
+
+`--no-pager` avoids a [known deadlock](https://github.com/twpayne/chezmoi/issues/4874) where the diff pager and the overwrite prompt both grab the TTY. Without it, the prompt vanishes on first keystroke and chezmoi hangs.
 
 **Edited a `run_once` script that already ran?** It will not re-run — chezmoi tracks
 execution in a local state DB. The escape hatch:
