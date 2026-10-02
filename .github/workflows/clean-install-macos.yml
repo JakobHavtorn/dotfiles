@@ -2,6 +2,8 @@
 name: clean-install-macos
 on:
   pull_request:
+  schedule:
+    - cron: '0 10 * * 0'  # Sundays 10:00 UTC
 
 jobs:
   clean-install:
@@ -53,3 +55,47 @@ jobs:
 
       - name: Bootstrap completeness check
         run: bash scripts/check-bootstrap.sh || true
+
+  clean-install-scheduled:
+    runs-on: macos-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        run: |
+          curl -fsLS get.chezmoi.io | sh
+          install -m 755 bin/chezmoi /usr/local/bin/chezmoi
+
+      - name: chezmoi apply (role=work)
+        run: |
+          mkdir -p "$HOME/.config/chezmoi"
+          printf 'sourceDir = "%s"\n[data]\nrole = "work"\n' "$GITHUB_WORKSPACE" > "$HOME/.config/chezmoi/chezmoi.toml"
+          chezmoi apply
+
+      - name: Verify fish
+        run: fish -c 'echo ok'
+
+      - name: Verify expected tools
+        run: |
+          for bin in fish go node tmux shellcheck shfmt yq tree wget pandoc parallel uv poetry htop rg jq gh ffmpeg sox argocd helm kubectx kubelogin; do
+            command -v "$bin" || { echo "MISSING: $bin"; exit 1; }
+            echo "  $bin: OK"
+          done
+          fish -c 'type -q omf' || { echo "MISSING: omf"; exit 1; }
+          echo "  omf: OK"
+
+      - name: chezmoi apply (idempotency check)
+        run: |
+          chezmoi state delete-bucket --bucket=scriptState
+          chezmoi apply
+
+      - name: Dump round-trip (idempotency, hard-fatal)
+        run: |
+          # Scheduled run: dump drift is a hard failure — silently rotting
+          # manifests mean the dump/install cycle is broken.
+          bash scripts/dump.sh || { echo "dump.sh failed"; exit 1; }
+          git diff --exit-code manifests/
+
+      - name: Bootstrap completeness check (hard-fatal)
+        run: bash scripts/check-bootstrap.sh

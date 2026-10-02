@@ -138,27 +138,13 @@ dump_macos_defaults() {
 }
 
 # ---------------------------------------------------------------------------
-# Bootstrap completeness — extracted to scripts/check-bootstrap.sh so it runs
-# on any platform, not just macOS. Non-fatal here (dump is a weekly report);
-# CI calls it as a post-apply assertion.
-# ---------------------------------------------------------------------------
-check_bootstrap_completeness() {
-    if [ ! -x scripts/check-bootstrap.sh ]; then
-        echo "  check-bootstrap.sh not found or not executable, skipping"
-        return 0
-    fi
-
-    ./scripts/check-bootstrap.sh || echo "  (non-fatal: incomplete bootstrap reported above)"
-}
-
-# ---------------------------------------------------------------------------
 # Run all sections in sequence.
 # ---------------------------------------------------------------------------
 dump_brew
 dump_pipx
 dump_omf
 dump_macos_defaults
-check_bootstrap_completeness
+./scripts/check-bootstrap.sh || echo "  (non-fatal: incomplete bootstrap reported above)"
 
 echo ""
 git diff --stat

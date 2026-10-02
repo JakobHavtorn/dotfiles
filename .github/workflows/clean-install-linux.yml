@@ -4,6 +4,8 @@ on:
   push:
     branches: [main, "*"]
   pull_request:
+  schedule:
+    - cron: '0 10 * * 0'  # Sundays 10:00 UTC
 
 jobs:
   clean-install:
@@ -45,4 +47,9 @@ jobs:
           done
 
       - name: Bootstrap completeness check
+        if: github.event_name != 'schedule'
         run: bash scripts/check-bootstrap.sh || true
+
+      - name: Bootstrap completeness check (hard-fatal)
+        if: github.event_name == 'schedule'
+        run: bash scripts/check-bootstrap.sh
