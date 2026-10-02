@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# run_onchange_after_80-taxhelper.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # Install taxhelper agent skills for opencode.
 # Taxhelper itself is installed via pipx (see manifests/pipx.txt).
 # Re-runs when this script changes.
 
-if [[ -n "${CI:-}" ]]; then
+if is_ci; then
     log_skip "taxhelper skills (CI environment)"
     exit 0
 fi

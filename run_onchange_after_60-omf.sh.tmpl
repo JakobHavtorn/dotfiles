@@ -2,6 +2,7 @@
 # run_onchange_after_60-omf.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 
 # Install OMF packages and themes from manifest.
 # Re-runs when this script or the manifest changes.
@@ -26,18 +27,22 @@ if ! fish -c 'type -q omf' 2>/dev/null; then
     rm -f /tmp/omf-install.fish
 fi
 
-MANIFEST="{{ .chezmoi.sourceDir }}/manifests/omf.txt"
+MANIFEST="${MANIFEST:-"{{ .chezmoi.sourceDir }}/manifests/omf.txt"}"
 
 log_section "OMF packages"
-while IFS='|' read -r type name; do
-    # skip comments and empty lines
-    [[ "$type" =~ ^# ]] && continue
-    [[ -z "$type" ]] && continue
+
+# Install a single OMF package/theme. Called by manifest_each with the
+# pipe-delimited fields: type, name.
+install_omf_package() {
+    local type="$1" name="$2"
     log_info "$type: $name"
     if fish -c "omf install $name" >/dev/null 2>&1; then
         log_ok "$name"
     else
         log_warn "$name install failed"
     fi
-done < "$MANIFEST"
+}
+
+manifest_each "$MANIFEST" "|" install_omf_package
+
 log_ok "OMF done"

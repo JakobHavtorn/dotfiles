@@ -2,6 +2,7 @@
 # run_onchange_before_15-remote-tools.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 
 {{ if and (eq .role "remote") (eq .chezmoi.os "linux") -}}
 
@@ -11,9 +12,9 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # remote-tools.txt hash: {{ include "manifests/remote-tools.txt" | sha256sum }}
 
-LOCAL_BIN="$HOME/.local/bin"
-VERSION_DIR="$HOME/.local/share/remote-tools-versions"
-MANIFEST="{{ .chezmoi.sourceDir }}/manifests/remote-tools.txt"
+LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
+VERSION_DIR="${VERSION_DIR:-$HOME/.local/share/remote-tools-versions}"
+MANIFEST="${MANIFEST:-"{{ .chezmoi.sourceDir }}/manifests/remote-tools.txt"}"
 ARCH="$(uname -m)"
 
 if [[ "$ARCH" != "x86_64" ]]; then
@@ -27,22 +28,24 @@ mkdir -p "$LOCAL_BIN" "$VERSION_DIR"
 CACHE_DIR="$(mktemp -d)"
 trap 'rm -rf "$CACHE_DIR"' EXIT
 
-while IFS='|' read -r name url path_in_archive; do
-    # Skip comments and empty lines
-    [[ "$name" =~ ^[[:space:]]*# || -z "$name" ]] && continue
+# Install a single tool from the manifest. Called by manifest_each with
+# the pipe-delimited fields: name, url, path_in_archive.
+install_remote_tool() {
+    local name="$1" url="$2" path_in_archive="$3"
 
     # Idempotent: skip if the pinned version is already installed
-    installed_url=""
+    local installed_url=""
     [[ -f "$VERSION_DIR/$name" ]] && installed_url="$(cat "$VERSION_DIR/$name")"
     if [[ "$installed_url" == "$url" ]]; then
         log_ok "$name: up to date"
-        continue
+        return 0
     fi
 
     log_info "installing $name..."
 
+    local cache_key
     cache_key="$(printf '%s' "$url" | sha256sum | cut -d' ' -f1)"
-    cached="$CACHE_DIR/$cache_key"
+    local cached="$CACHE_DIR/$cache_key"
 
     if [[ ! -d "$cached" ]]; then
         mkdir -p "$cached"
@@ -64,7 +67,7 @@ while IFS='|' read -r name url path_in_archive; do
         chmod +x "$cached/$name"
         mv "$cached/$name" "$LOCAL_BIN/$name"
     else
-        src="$cached/$path_in_archive"
+        local src="$cached/$path_in_archive"
         if [[ ! -f "$src" ]]; then
             log_err "$name not found at $path_in_archive in archive"
             exit 1
@@ -75,7 +78,9 @@ while IFS='|' read -r name url path_in_archive; do
 
     log_ok "$name installed"
     echo "$url" > "$VERSION_DIR/$name"
-done < "$MANIFEST"
+}
+
+manifest_each "$MANIFEST" "|" install_remote_tool
 
 # Install a Python interpreter via uv
 if [[ -x "$LOCAL_BIN/uv" ]]; then
