@@ -2,6 +2,7 @@
 # run_once_after_30-agent-skills.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # Clone agent-skills and link skills into opencode, omp, claude, and codex.
 # Config linking is handled by dotfiles/chezmoi, not agent-skills.
@@ -19,7 +20,7 @@ fi
 # Private repo — skip in CI (no auth available). On real machines a
 # clone/update failure (missing GitHub auth) is logged and never stops
 # the bootstrap.
-if [[ -n "${CI:-}" ]]; then
+if is_ci; then
     log_skip "agent-skills (CI environment)"
     exit 0
 fi
@@ -31,29 +32,19 @@ export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
 
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     log_info "updating $AGENT_SKILLS_DIR..."
-    if ! output="$(git -C "$AGENT_SKILLS_DIR" pull --ff-only 2>&1)"; then
-        log_err "agent-skills update failed (non-fatal):"
-        printf '%s\n' "$output" >&2
-    fi
+    log_run --non-fatal "agent-skills update" git -C "$AGENT_SKILLS_DIR" pull --ff-only || true
 else
     log_info "cloning to $AGENT_SKILLS_DIR..."
-    if ! output="$(git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR" 2>&1)"; then
-        log_err "agent-skills clone failed (non-fatal) — bootstrap continues:"
-        printf '%s\n' "$output" >&2
+    if ! log_run --non-fatal "agent-skills clone" git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"; then
+        log_info "bootstrap continues without agent-skills"
         exit 0
     fi
-    log_ok "cloned agent-skills"
 fi
 
 # Link skills (config linking is handled by chezmoi/dotfiles)
 if command -v python3 >/dev/null 2>&1; then
     for agent in opencode omp claude codex; do
-        if ! output="$(python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force 2>&1)"; then
-            log_err "skill linking failed for $agent (non-fatal):"
-            printf '%s\n' "$output" >&2
-        else
-            log_ok "linked skills into $agent"
-        fi
+        log_run --non-fatal "linked skills into $agent" python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force || true
     done
 else
     log_warn "python3 not found — skipping skill linking"

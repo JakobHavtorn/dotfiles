@@ -27,7 +27,7 @@ jobs:
         run: |
           for f in run_once_* run_onchange_* scripts/*.sh shared/*.sh; do
             [[ -f "$f" ]] || continue
-            [[ "$f" == "shared/log.sh" ]] && continue  # sourced, not executed
+            [[ "$f" == "shared/log.sh" || "$f" == "shared/env.sh" || "$f" == "shared/manifest.sh" ]] && continue  # sourced, not executed
             grep -q 'set -euo pipefail' "$f" || {
               echo "MISSING 'set -euo pipefail': $f"
               exit 1

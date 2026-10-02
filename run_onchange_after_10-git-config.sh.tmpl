@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# run_onchange_after_10-git-config.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 log_section "git config"
 
@@ -20,7 +20,7 @@ git config --global init.defaultBranch main
 
 # insteadOf rewrites https -> ssh for github.com. Skipped in CI: keyless
 # runners would fail every HTTPS clone (brew clones taps over git).
-if [[ -z "${CI:-}" ]]; then
+if ! is_ci; then
     git config --global url."git@github.com:".insteadOf "https://github.com/"
 fi
 

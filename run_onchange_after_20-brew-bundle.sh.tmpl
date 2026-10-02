@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# run_onchange_after_20-brew-bundle.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 {{ if eq .chezmoi.os "darwin" -}}
 
@@ -10,7 +10,7 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}
 
-BREWFILE="{{ .chezmoi.sourceDir }}/manifests/Brewfile"
+BREWFILE="${BREWFILE:-"{{ .chezmoi.sourceDir }}/manifests/Brewfile"}"
 
 if ! command -v brew >/dev/null 2>&1; then
     log_skip "brew bundle (homebrew not installed)"
@@ -21,8 +21,7 @@ log_section "brew bundle install"
 
 # In CI, skip VS Code extensions — marketplace 503s are transient and
 # extensions aren't part of the system bootstrap we're testing.
-if [[ -n "${CI:-}" ]]; then
-    log_skip "VS Code extensions (CI environment)"
+if is_ci; then
     BREWFILE_FILTERED="$(mktemp)"
     grep -v '^vscode ' "$BREWFILE" > "$BREWFILE_FILTERED"
     brew bundle install --file "$BREWFILE_FILTERED"
