@@ -1,0 +1,71 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "providers": {
+    "corti": {
+      "package": "aisdk:@ai-sdk/openai-compatible",
+      "name": "Corti",
+      "settings": {
+        "baseURL": "https://ai.eu.corti.app/v1",
+        "apiKey": "{env:CORTI_BEARER}"
+      }
+    }
+  },
+  "model": "corti/{{ .coding_agents.corti.default_model }}",
+  "permissions": [
+{{- range $i, $action := .coding_agents.notion.deny_wildcards }}
+    { "action": "notion_notion-{{ $action }}", "resource": "*", "effect": "deny" },
+{{- end }}
+{{- range $i, $action := .coding_agents.notion.deny_actions }}
+    { "action": "notion_notion-{{ $action }}", "resource": "*", "effect": "deny" }{{ if lt $i (sub (len $.coding_agents.notion.deny_actions) 1) }},{{ end }}
+{{- end }}
+  ],
+  "mcp": {
+    "servers": {
+      "linear": {
+        "type": "remote",
+        "url": "{{ .coding_agents.mcp.servers.linear.url }}",
+        "oauth": {},
+        "disabled": false,
+        "timeout": { "catalog": 30000, "execution": 30000 }
+      },
+      "slack": {
+        "type": "remote",
+        "url": "{{ .coding_agents.mcp.servers.slack.url }}",
+        "oauth": {
+          "client_id": "{env:SLACK_CLIENT_ID}",
+          "client_secret": "{env:SLACK_CLIENT_SECRET}",
+          "scope": "{{ .coding_agents.mcp.servers.slack.scope }}",
+          "callback_port": {{ .coding_agents.mcp.servers.slack.callback_port }},
+          "redirect_uri": "{{ .coding_agents.mcp.servers.slack.redirect_uri }}"
+        },
+        "disabled": false,
+        "timeout": { "catalog": 30000, "execution": 30000 }
+      },
+      "synapse": {
+        "type": "remote",
+        "url": "{{ .coding_agents.mcp.servers.synapse.url }}",
+        "oauth": {
+          "client_id": "{{ .coding_agents.mcp.servers.synapse.oauth_client_id }}",
+          "scope": "{{ .coding_agents.mcp.servers.synapse.oauth_scope }}"
+        },
+        "disabled": false,
+        "timeout": { "catalog": 30000, "execution": 30000 }
+      },
+      "notion": {
+        "type": "remote",
+        "url": "{{ .coding_agents.mcp.servers.notion.url }}",
+        "oauth": {},
+        "disabled": false,
+        "timeout": { "catalog": 30000, "execution": 30000 }
+      }
+    }
+  },
+  "plugins": [
+    "@plannotator/opencode@latest",
+    "@cortexkit/opencode-magic-context@latest",
+    "@cortexkit/aft-opencode@latest"
+  ],
+  "compaction": {
+    "auto": false
+  }
+}

@@ -17,39 +17,10 @@ tools:
   approvalMode: yolo
   approval:
     bash: allow
-    # Notion — deny write/session tools, mirror opencode permissions
-    mcp__notion_create_attachment: deny
-    mcp__notion_create_comment: deny
-    mcp__notion_create_database: deny
-    mcp__notion_create_file_upload: deny
-    mcp__notion_create_folder: deny
-    mcp__notion_create_pages: deny
-    mcp__notion_create_view: deny
-    mcp__notion_download_attachment: deny
-    mcp__notion_duplicate_page: deny
-    mcp__notion_move_pages: deny
-    mcp__notion_update_data_source: deny
-    mcp__notion_update_folder: deny
-    mcp__notion_update_view: deny
-    mcp__notion_get_comments: deny
-    mcp__notion_get_users: deny
-    mcp__notion_get_teams: deny
-    mcp__notion_get_session_status: deny
-    mcp__notion_list_favorite_pages: deny
-    mcp__notion_list_private_pages: deny
-    mcp__notion_list_recent_pages: deny
-    mcp__notion_list_shared_pages: deny
-    mcp__notion_list_session_events: deny
-    mcp__notion_query_meeting_notes: deny
-    mcp__notion_query_sessions: deny
-    mcp__notion_search_sessions: deny
-    mcp__notion_search_agents: deny
-    mcp__notion_spawn_session: deny
-    mcp__notion_stop_session: deny
-    mcp__notion_send_message_to_session: deny
-    mcp__notion_wait_session: deny
-    mcp__notion_read_session_event: deny
-    mcp__notion_convert_page_to_skill: deny
+    # Notion — deny write/session tools, rendered from .chezmoidata notion.deny_actions
+{{- range $action := .coding_agents.notion.deny_actions }}
+    mcp__notion_{{ $action | replace "notion-" "" | replace "-" "_" }}: deny
+{{- end }}
 lsp:
   enabled: true
   lazy: true
