@@ -17,28 +17,61 @@ cd "$(chezmoi source-path)"
 
 echo "=== dumping machine state ==="
 
-# Homebrew
-if command -v brew >/dev/null 2>&1; then
+# ---------------------------------------------------------------------------
+# Homebrew — brew bundle dump (regenerate Brewfile), then drift + cleanup checks.
+# ---------------------------------------------------------------------------
+dump_brew() {
+    if ! command -v brew >/dev/null 2>&1; then
+        echo "  brew not found, skipping"
+        return 0
+    fi
+
     echo "  brew bundle dump..."
     brew bundle dump --force --file manifests/Brewfile
+
     # Drift report — does the machine still satisfy the Brewfile? (report-only)
     # Outdated/missing formulas or corrupt keg-tab dependency data surface here.
     # Repair steps: README, section "Brew repair".
     echo "  brew bundle check..."
+    local check_out
     if check_out="$(brew bundle check --file manifests/Brewfile 2>&1)"; then
         echo "  brew dependencies satisfied"
     else
         echo "  brew bundle check FAILED (repair: README, 'Brew repair')"
         printf '%s\n' "$check_out" | sed 's/^/    /' | tail -n 6
     fi
-else
-    echo "  brew not found, skipping"
-fi
 
+    # Convergence report — what would `brew bundle cleanup` REMOVE?
+    # The pipeline is additive-only: deleting a Brewfile line never uninstalls.
+    # This dry-run gives weekly visibility into the drift, so a stale entry is
+    # noticed and removed by hand (brew bundle cleanup is destructive — never
+    # run it without review). Report-only, non-fatal.
+    echo "  brew bundle cleanup --dry-run (report-only)..."
+    local cleanup_out
+    if cleanup_out="$(brew bundle cleanup --dry-run --file manifests/Brewfile 2>&1)"; then
+        # brew bundle cleanup --dry-run returns 0 even when it lists removals.
+        if [ -n "$cleanup_out" ]; then
+            printf '%s\n' "$cleanup_out" | sed 's/^/    /'
+        else
+            echo "    (nothing to remove)"
+        fi
+    else
+        echo "    cleanup dry-run could not complete"
+        printf '%s\n' "$cleanup_out" | sed 's/^/    /' | tail -n 6
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # pipx — install declaration ('name' or 'name|source'), consumed by
 # run_onchange_after_70-pipx.sh. Sources come from each venv's pipx metadata
 # ('package_or_url' — git URLs, extras); 'pipx list' does not expose them.
-if [ -d "$HOME/.local/pipx/venvs" ]; then
+# ---------------------------------------------------------------------------
+dump_pipx() {
+    if [ ! -d "$HOME/.local/pipx/venvs" ]; then
+        echo "  pipx not found, skipping"
+        return 0
+    fi
+
     echo "  pipx packages..."
     python3 - > manifests/pipx.txt <<'PY'
 import glob, json, os
@@ -52,13 +85,18 @@ for meta_path in sorted(glob.glob(os.path.expanduser("~/.local/pipx/venvs/*/pipx
     source = main.get("package_or_url")
     print(f"{name}|{source}" if source and source != name else name)
 PY
-else
-    echo "  pipx not found, skipping"
-fi
+}
 
+# ---------------------------------------------------------------------------
 # OMF packages and themes — lines: 'plugin|name' / 'theme|name' (consumed by run_onchange_after_60-omf.sh)
 # omf list output is sectioned + tab-separated: parse despite what the old hand-curated comment claimed
-if command -v fish >/dev/null 2>&1 && fish -c 'type -q omf' >/dev/null 2>&1; then
+# ---------------------------------------------------------------------------
+dump_omf() {
+    if ! command -v fish >/dev/null 2>&1 || ! fish -c 'type -q omf' >/dev/null 2>&1; then
+        echo "  omf not found, skipping"
+        return 0
+    fi
+
     echo "  OMF packages..."
     {
         echo "# omf packages and themes — lines: 'plugin|name' / 'theme|name' (dumped by scripts/dump.sh)"
@@ -70,92 +108,57 @@ if command -v fish >/dev/null 2>&1 && fish -c 'type -q omf' >/dev/null 2>&1; the
             { print mode "|" $1 }
         ' | sort
     } > manifests/omf.txt
-else
-    echo "  omf not found, skipping"
-fi
+}
 
-# Go tools — lines: 'package@version' (binary's own build metadata via 'go version -m')
-if command -v go >/dev/null 2>&1; then
-    echo "  go tools..."
-    gobin="$(go env GOBIN 2>/dev/null || true)"
-    [ -n "$gobin" ] || gobin="$(go env GOPATH)/bin"
-    {
-        echo "# go tools in $gobin — reinstall via 'go install <line>@<version>' (dumped by scripts/dump.sh)"
-        for binfile in "$gobin"/*; do
-            [ -f "$binfile" ] || continue
-            go version -m "$binfile" 2>/dev/null | awk -F'\t' '
-                $2=="path" { p=$3; next }
-                $2=="mod" && ($3==p || index(p, $3)==1) { print p "@" $4; exit }
-            '
-        done | sort -u
-    } > manifests/go-tools.txt
-else
-    echo "  go not found, skipping"
-fi
+# ---------------------------------------------------------------------------
+# macOS defaults — observed values for exactly the keys in
+# manifests/macos-defaults-keys.txt (the shared artifact). dump.sh reads the
+# (domain, key) pairs and calls `defaults read`; the install script reads the
+# same file and writes them. No awk-parsing of the install script — the keys
+# file is the single source of truth.
+# ---------------------------------------------------------------------------
+dump_macos_defaults() {
+    local keys_file="manifests/macos-defaults-keys.txt"
 
-# npm globals — lines: 'name@version'
-if command -v npm >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-    echo "  npm globals..."
-    {
-        echo "# npm global packages — lines: 'name@version', reinstall via 'npm install -g <name>@<version>' (dumped by scripts/dump.sh)"
-        npm ls -g --depth=0 --json | jq -r '
-            (.dependencies // {}) | to_entries[]
-            | "\(.key)@\(.value.version // "unknown")"
-        ' | sort -u
-    } > manifests/npm-globals.txt
-else
-    echo "  npm or jq not found, skipping"
-fi
+    if [ ! -f "$keys_file" ] || ! command -v defaults >/dev/null 2>&1; then
+        echo "  macOS defaults keys file or defaults not found, skipping"
+        return 0
+    fi
 
-# macOS defaults — observed values for exactly the keys run_once_after_90-macos-defaults.sh.tmpl declares
-# Single source of truth: the (domain, key) pairs are parsed from that script, never duplicated here.
-# Manual System Settings edits outside these keys are not captured — extend the declared script instead.
-if [ -f run_once_after_90-macos-defaults.sh.tmpl ] && command -v defaults >/dev/null 2>&1; then
     echo "  macOS defaults..."
     {
-        echo "# macOS defaults — observed values for the keys run_once_after_90-macos-defaults.sh.tmpl declares (dumped by scripts/dump.sh)"
-        awk '/^defaults write /{print $3 "|" $4}' run_once_after_90-macos-defaults.sh.tmpl | sort -u | while IFS='|' read -r domain key; do
+        echo "# macOS defaults — observed values for keys in manifests/macos-defaults-keys.txt (dumped by scripts/dump.sh)"
+        # Lines: domain|key|value — read domain+key, ignore value (dump observes live state).
+        awk -F'|' '/^[^#]/{print $1 "|" $2}' "$keys_file" | sort -u | while IFS='|' read -r domain key; do
+            [ -n "$domain" ] && [ -n "$key" ] || continue
             value="$(defaults read "$domain" "$key" 2>/dev/null || echo "(absent)")"
             printf '%s %s = %s\n' "$domain" "$key" "$value"
         done
     } > manifests/macos-defaults.txt
-else
-    echo "  defaults not found, skipping"
-fi
+}
 
-# Bootstrap completeness — an interrupted `chezmoi apply` stages run_* scripts
-# in entryState, but records scriptState[runAt] only once they actually ran.
-# A later unchanged-render apply then SKIPS those scripts silently, leaving the
-# bootstrap incomplete. Report any script staged-but-never-run (non-fatal).
-if command -v chezmoi >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
-    echo "  run-script completeness..."
-    python3 - <<'PY' || echo "  completeness ERROR: 'chezmoi state dump' could not be parsed"
-import json, subprocess, sys
+# ---------------------------------------------------------------------------
+# Bootstrap completeness — extracted to scripts/check-bootstrap.sh so it runs
+# on any platform, not just macOS. Non-fatal here (dump is a weekly report);
+# CI calls it as a post-apply assertion.
+# ---------------------------------------------------------------------------
+check_bootstrap_completeness() {
+    if [ ! -x scripts/check-bootstrap.sh ]; then
+        echo "  check-bootstrap.sh not found or not executable, skipping"
+        return 0
+    fi
 
-state = json.loads(subprocess.run(
-    ["chezmoi", "state", "dump", "--format=json"],
-    capture_output=True, text=True, check=True,
-).stdout)
-staged, ran = {}, {v.get("name", "") for v in state.get("scriptState", {}).values()}
-for key in state.get("entryState", {}):
-    base = key.rsplit("/", 1)[-1]
-    # run_* sources stage under their plain name, always number-prefixed
-    # (e.g. 'run_onchange_before_15-...' -> '15-...sh'); sourced helpers like
-    # shared/log.sh also stage as *.sh but carry no number prefix.
-    if base.endswith(".sh") and base[:1].isdigit():
-        staged[base] = key
-unrun = [b for b in sorted(staged) if b not in ran]
-if unrun:
-    print("  INCOMPLETE — staged but never run (later applies skip them silently):", file=sys.stderr)
-    for b in unrun:
-        print(f"    {b}   (state key: {staged[b]})", file=sys.stderr)
-    print("    repair: chezmoi state delete --bucket=entryState --key=<state key>; chezmoi diff && chezmoi apply", file=sys.stderr)
-else:
-    print("  ok — every staged run_ script has a runAt record")
-PY
-else
-    echo "  chezmoi or python3 not found, skipping"
-fi
+    ./scripts/check-bootstrap.sh || echo "  (non-fatal: incomplete bootstrap reported above)"
+}
+
+# ---------------------------------------------------------------------------
+# Run all sections in sequence.
+# ---------------------------------------------------------------------------
+dump_brew
+dump_pipx
+dump_omf
+dump_macos_defaults
+check_bootstrap_completeness
 
 echo ""
 git diff --stat

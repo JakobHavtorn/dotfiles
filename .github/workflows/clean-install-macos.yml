@@ -36,3 +36,20 @@ jobs:
         run: |
           chezmoi state delete-bucket --bucket=scriptState
           chezmoi apply
+
+      - name: Dump round-trip (idempotency)
+        run: |
+          # After apply, run dump.sh to regenerate manifests from observed state,
+          # then check git diff is empty (dump is idempotent). brew bundle dump
+          # may reorder lines or pick up CI-only packages — this is best-effort:
+          # a non-empty diff is reported as a warning, not a hard failure.
+          bash scripts/dump.sh || { echo "dump.sh failed"; exit 1; }
+          if git diff --quiet manifests/; then
+            echo "dump round-trip: manifests unchanged (idempotent)"
+          else
+            echo "::warning::dump.sh produced manifest drift — review the diff below"
+            git diff manifests/
+          fi
+
+      - name: Bootstrap completeness check
+        run: bash scripts/check-bootstrap.sh

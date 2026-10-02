@@ -3,18 +3,29 @@
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
+# macOS defaults keys shared artifact — the (domain, key, value) triples.
+# Re-run when this script or the keys file changes.
+# macos-defaults-keys hash: {{ include "manifests/macos-defaults-keys.txt" | sha256sum }}
+
 {{ if eq .chezmoi.os "darwin" -}}
 
 log_section "setting macOS defaults"
 
-# Finder
-defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-defaults write com.apple.finder ShowPathbar -bool true
-defaults write com.apple.finder ShowStatusBar -bool true
+KEYS_FILE="{{ .chezmoi.sourceDir }}/manifests/macos-defaults-keys.txt"
 
-# Dock
-defaults write com.apple.dock autohide -bool true
-defaults write com.apple.dock show-recents -bool false
+if [[ ! -f "$KEYS_FILE" ]]; then
+    log_err "macOS defaults keys file not found: $KEYS_FILE"
+    exit 1
+fi
+
+# Lines: domain|key|value — value is the raw args to 'defaults write'.
+while IFS='|' read -r domain key value; do
+    # skip comments and blank lines
+    [[ "$domain" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "$domain" ]] && continue
+    log_info "defaults write $domain $key $value"
+    defaults write "$domain" "$key" $value
+done < "$KEYS_FILE"
 
 # Apply changes
 killall Dock 2>/dev/null || true

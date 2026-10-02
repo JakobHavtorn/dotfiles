@@ -1,6 +1,0 @@
-# npm global packages — lines: 'name@version', reinstall via 'npm install -g <name>@<version>' (dumped by scripts/dump.sh)
-@openai/codex@0.87.0
-@openchamber/web@2.0.0
-corepack@0.36.0
-npm@11.19.1
-skills-ref@0.1.5
