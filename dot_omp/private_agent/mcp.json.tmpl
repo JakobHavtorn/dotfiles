@@ -3,37 +3,37 @@
   "mcpServers": {
     "linear": {
       "type": "http",
-      "url": "{{ .mcp.servers.linear.url }}",
+      "url": "{{ .coding_agents.mcp.servers.linear.url }}",
       "oauth": {}
     },
     "slack": {
       "type": "http",
-      "url": "{{ .mcp.servers.slack.url }}",
+      "url": "{{ .coding_agents.mcp.servers.slack.url }}",
       "oauth": {
         "clientId": "${SLACK_CLIENT_ID}",
         "clientSecret": "${SLACK_CLIENT_SECRET}",
-        "scope": "{{ .mcp.servers.slack.scope }}",
-        "redirectUri": "{{ .mcp.servers.slack.redirect_uri }}",
-        "callbackPort": {{ .mcp.servers.slack.callback_port }}
+        "scope": "{{ .coding_agents.mcp.servers.slack.scope }}",
+        "redirectUri": "{{ .coding_agents.mcp.servers.slack.redirect_uri }}",
+        "callbackPort": {{ .coding_agents.mcp.servers.slack.callback_port }}
       },
       "auth": {
         "type": "oauth",
-        "tokenUrl": "{{ .mcp.servers.slack.auth_token_url }}",
+        "tokenUrl": "{{ .coding_agents.mcp.servers.slack.auth_token_url }}",
         "clientId": "${SLACK_CLIENT_ID}",
         "clientSecret": "${SLACK_CLIENT_SECRET}"
       }
     },
     "synapse": {
       "type": "http",
-      "url": "{{ .mcp.servers.synapse.url }}",
+      "url": "{{ .coding_agents.mcp.servers.synapse.url }}",
       "oauth": {
-        "clientId": "{{ .mcp.servers.synapse.oauth_client_id }}",
-        "scope": "{{ .mcp.servers.synapse.oauth_scope }}"
+        "clientId": "{{ .coding_agents.mcp.servers.synapse.oauth_client_id }}",
+        "scope": "{{ .coding_agents.mcp.servers.synapse.oauth_scope }}"
       }
     },
     "notion": {
       "type": "http",
-      "url": "{{ .mcp.servers.notion.url }}",
+      "url": "{{ .coding_agents.mcp.servers.notion.url }}",
       "oauth": {}
     }
   }

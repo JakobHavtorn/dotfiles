@@ -18,7 +18,7 @@ tools:
   approval:
     bash: allow
     # Notion — deny write/session tools, rendered from .chezmoidata notion.deny_actions
-{{- range $action := .notion.deny_actions }}
+{{- range $action := .coding_agents.notion.deny_actions }}
     mcp__notion_{{ $action | replace "notion-" "" | replace "-" "_" }}: deny
 {{- end }}
 lsp:

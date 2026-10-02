@@ -34,7 +34,7 @@ elif command -v npx &>/dev/null; then
     log_info "running corti models init..."
     if ! output="$(npx --yes @corti/cli@latest models init \
         --tools opencode --scope global --yes --no-shell-rc \
-        --model {{ .corti.models | join "," }} \
+        --model {{ .coding_agents.corti.models | join "," }} \
         2>&1 </dev/null)"; then
         log_err "corti models init failed (non-fatal) — bootstrap continues:"
         printf '%s\n' "$output" >&2
