@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# run_once_after_30-agent-skills.sh.tmpl
+# run_after_30-agent-skills.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # Clone agent-skills and link skills into opencode, omp, claude, and codex.
+# Runs on every chezmoi apply — idempotent: git pull --ff-only is a no-op
+# when current, skillctl link --force overwrites symlinks. This ensures
+# upstream agent-skills changes (renames, new skills) propagate without
+# needing to clear chezmoi's scriptState.
 # Config linking is handled by dotfiles/chezmoi, not agent-skills.
 
 AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/.agent-skills}"

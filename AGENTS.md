@@ -40,6 +40,7 @@ run_once_before_10-install-homebrew.sh.tmpl   # darwin only
 run_onchange_before_15-remote-tools.sh.tmpl   # remote/linux only — installs to ~/.local/bin
 run_onchange_after_20-brew-bundle.sh.tmpl      # darwin only
 run_onchange_after_20-opencode-config.sh.tmpl  # renders opencode.jsonc.tmpl + corti models init (model list from .chezmoidata)
+run_after_30-agent-skills.sh.tmpl            # clones/updates agent-skills, runs skillctl link (every apply — idempotent)
 run_onchange_after_60-omf.sh.tmpl              # installs OMF packages from manifest
 run_onchange_after_70-pipx.sh.tmpl              # installs pipx packages from manifest
 run_onchange_after_80-launchd-load.sh.tmpl      # darwin only — loads dump.sh launchd job
@@ -57,6 +58,7 @@ scripts/dump.sh                        # weekly dump to manifests/ (macOS, launc
 ## Conventions
 
 - `run_once_*` — executes exactly once per machine. Guard with `command -v` checks; the prefix is a guard, not idempotency.
+- `run_after_*` / `run_before_*` (no `once`/`onchange`) — executes on every `chezmoi apply`. Use for idempotent operations that must track upstream changes (e.g. agent-skills: `git pull` + `skillctl link`). The script itself must be safe to re-run.
 - `run_onchange_*` — re-executes when the script's own content changes. Embed manifest hashes as comments to trigger on manifest edits: `# Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}`
 - `before_` / `after_` — relative to file application. The number controls ordering within a phase.
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.
