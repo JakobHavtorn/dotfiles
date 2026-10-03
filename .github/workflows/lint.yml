@@ -13,7 +13,7 @@ jobs:
 
       - name: Validate JSON files
         run: |
-          for f in dot_config/opencode/cli.json.tmpl; do
+          for f in chezmoi/dot_config/opencode/cli.json.tmpl; do
             python3 -c "import json; json.load(open('$f'))" && echo "  $f: valid"
           done
 
@@ -25,9 +25,9 @@ jobs:
 
       - name: Verify set -euo pipefail in all scripts
         run: |
-          for f in run_once_* run_onchange_* run_after_* scripts/*.sh shared/*.sh; do
+          for f in chezmoi/run_once_* chezmoi/run_onchange_* chezmoi/run_after_* scripts/*.sh chezmoi/shared/*.sh; do
             [[ -f "$f" ]] || continue
-            [[ "$f" == "shared/log.sh" || "$f" == "shared/env.sh" || "$f" == "shared/manifest.sh" ]] && continue  # sourced, not executed
+            [[ "$f" == "chezmoi/shared/log.sh" || "$f" == "chezmoi/shared/env.sh" || "$f" == "chezmoi/shared/manifest.sh" ]] && continue  # sourced, not executed
             grep -q 'set -euo pipefail' "$f" || {
               echo "MISSING 'set -euo pipefail': $f"
               exit 1

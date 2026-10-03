@@ -3,16 +3,12 @@
 Library/
 {{ end }}
 
-# Non-chezmoi files — repo metadata, not home directory targets
-README.md
-AGENTS.md
+# Files inside the chezmoi root that aren't home targets
 .chezmoi.toml.tmpl
 .chezmoidata.yaml
 .chezmoiignore.tmpl
-.gitignore
-.github
+shared
 manifests
-scripts
 
 # opencode.jsonc is managed by run_onchange_after_20-opencode-config.sh.tmpl
 # (template render + corti models init), not by chezmoi's file mechanism
