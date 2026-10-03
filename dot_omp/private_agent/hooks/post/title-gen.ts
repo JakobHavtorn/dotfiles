@@ -3,9 +3,9 @@
 // Reuses the cross-harness title agent spec from agent-skills/agents/title.md
 // so opencode and omp share one title-generation prompt.  Reads the spec at
 // runtime, strips YAML frontmatter, and uses the body as the system prompt for
-// a one-shot model call via `omp -p`.  The resulting title is injected via
-// /rename, which sets source:"user" so omp's built-in auto-title never
-// overwrites it.
+// a one-shot model call via `omp -p`.  The resulting title is set via
+// pi.setSessionName(title, "user"), which sets source:"user" so omp's built-in
+// auto-title never overwrites it.
 //
 // Install path (chezmoi-managed):
 //   dot_omp/private_agent/hooks/post/title-gen.ts
@@ -100,7 +100,7 @@ export default function titleGenHook(pi: ExtensionAPI) {
       try {
         const title = (await new Response(proc.stdout).text()).trim();
         if (title && title.length > 0 && title.length <= 80) {
-          pi.sendMessage(`/rename ${title}`);
+          await pi.setSessionName(title, "user");
           renamed = true;
         }
       } finally {
