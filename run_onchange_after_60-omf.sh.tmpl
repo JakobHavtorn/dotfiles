@@ -2,6 +2,7 @@
 # run_onchange_after_60-omf.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 
 # Install OMF packages and themes from manifest.

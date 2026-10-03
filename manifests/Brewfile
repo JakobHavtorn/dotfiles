@@ -6,6 +6,7 @@ tap "azure/kubelogin", "https://github.com/Azure/homebrew-kubelogin", trusted: t
 tap "derailed/k9s"
 tap "nklmilojevic/sofka"
 tap "plannotator/tap", trusted: true
+tap "can1357/tap", trusted: true
 
 # Shells & terminal
 brew "fish"
@@ -64,6 +65,7 @@ brew "glances"
 
 # OpenCode
 brew "anomalyco/tap/opencode-v2", trusted: true
+brew "can1357/tap/omp"
 
 # SOFKA (k9s alternative)
 brew "nklmilojevic/sofka/sofka", trusted: true
