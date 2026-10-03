@@ -59,7 +59,6 @@ power:
   sleepPrevention: idle
 github:
   enabled: true
-{{- /* providers: tinyModel/memoryModel removed — unrecognized by omp 18.4.8, caused config churn on rewrite */}}
 disabledProviders:
   - github
 hideThinkingBlock: true
@@ -67,7 +66,6 @@ advisor:
   enabled: true
 python:
   kernelMode: session
-{{- /* inspect_image: mode auto removed — unrecognized by omp 18.4.8, caused config churn on rewrite */}}
 task:
   eager: preferred
   enableEffort: true
@@ -84,6 +82,5 @@ todo:
   enabled: true
 web_search:
   enabled: true
-{{- /* title-gen hook sets source:"user"; disable built-in auto-refresh on replan */}}
 title:
   refreshOnReplan: false
