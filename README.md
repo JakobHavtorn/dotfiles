@@ -8,7 +8,15 @@ chezmoi-based dotfiles. Private repo.
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --ssh jakobhavtorn/dotfiles
 ```
 
-The repo is private: the machine needs SSH auth against GitHub. Either give the box its own key, or bootstrap through one agent-forwarded session (`ssh -A <host>` first). You'll be prompted for a machine role (`work` / `personal` / `remote`).
+**Prerequisites:**
+
+- **Linux only** — a minimal container or fresh box may lack these:
+  ```sh
+  apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils
+  ```
+  `curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish archive (`.tar.xz`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
+- **SSH auth** — the repo is private. Either give the box its own key, or bootstrap through one agent-forwarded session (`ssh -A <host>` first).
+- **Role prompt** — you'll be prompted for a machine role (`work` / `personal` / `remote`).
 
 Optional personal-layer steps (`corti models init`, agent-skills clone) are non-fatal: without their credentials they log an error and the bootstrap continues. Re-run them manually once credentials are in place, or `chezmoi update`.
 
