@@ -17,7 +17,7 @@ tools:
   approvalMode: yolo
   approval:
     bash: allow
-    # Notion — deny write/session tools, rendered from .chezmoidata notion.deny_actions
+{{- /* Notion — deny write/session tools, rendered from .chezmoidata notion.deny_actions */}}
 {{- range $action := .coding_agents.notion.deny_actions }}
     mcp__notion_{{ $action | replace "notion-" "" | replace "-" "_" }}: deny
 {{- end }}
@@ -59,9 +59,7 @@ power:
   sleepPrevention: idle
 github:
   enabled: true
-providers:
-  tinyModel: online
-  memoryModel: online
+{{- /* providers: tinyModel/memoryModel removed — unrecognized by omp 18.4.8, caused config churn on rewrite */}}
 disabledProviders:
   - github
 hideThinkingBlock: true
@@ -69,8 +67,7 @@ advisor:
   enabled: true
 python:
   kernelMode: session
-inspect_image:
-  mode: auto
+{{- /* inspect_image: mode auto removed — unrecognized by omp 18.4.8, caused config churn on rewrite */}}
 task:
   eager: preferred
   enableEffort: true
@@ -86,6 +83,7 @@ composer:
 todo:
   enabled: true
 web_search:
-  enabled: true 
+  enabled: true
+{{- /* title-gen hook sets source:"user"; disable built-in auto-refresh on replan */}}
 title:
-  refreshOnReplan: false  # title-gen hook sets source:"user"; disable built-in auto-refresh on replan
+  refreshOnReplan: false
