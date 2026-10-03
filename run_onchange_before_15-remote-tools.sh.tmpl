@@ -53,9 +53,11 @@ install_remote_tool() {
             # Direct binary download
             curl -fsSL "$url" -o "$cached/$name"
         else
-            # Archive download + extract
+            # Archive download + extract. tar xf auto-detects compression
+            # (gzip, xz, bzip2) from file magic — but needs the matching
+            # decompressor binary installed (gzip, xz, bzip2 respectively).
             curl -fsSL "$url" -o "$cached/archive"
-            tar xzf "$cached/archive" -C "$cached" 2>/dev/null || tar xf "$cached/archive" -C "$cached"
+            tar xf "$cached/archive" -C "$cached"
         fi
     fi
 

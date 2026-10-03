@@ -48,7 +48,7 @@ run_onchange_after_85-herdr-plugins.sh.tmpl      # installs herdr-annotate plugi
 run_once_after_90-macos-defaults.sh.tmpl       # darwin only — sets Finder/Dock defaults
 Library/LaunchAgents/                   # launchd plist for weekly dump.sh (no dot_ prefix — Library is not hidden)
 dot_config/k9s/config.yaml             # minimal k9s config
-dot_config/herdr/config.toml           # herdr keybindings for herdr-annotate (Full install)
+dot_config/herdr/config.toml.tmpl     # herdr keybindings + remote-only [terminal] default_shell (fish via remote-tools.txt)
 scripts/check-bootstrap.sh             # platform-agnostic interrupted-apply detector; called from dump.sh and CI
 scripts/dump.sh                        # weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults. PATH-hardened for launchd (which ships /usr/bin:/bin only)
 .github/workflows/                     # CI
@@ -65,7 +65,7 @@ scripts/dump.sh                        # weekly dump to manifests/ (macOS, launc
 - `uv` owns Python interpreters. Do not `brew install python`.
 - The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate. Same gate applies to all dump-generated manifests; pipx.txt is dumped from the venvs' pipx metadata (`package_or_url`) so install sources survive regeneration.
 - `remote-tools.txt` is a pipe-delimited manifest: `name|url|path_in_archive`. `path_in_archive` is the relative path to the binary inside the archive, or `-` for direct binary download. Architecture is x86_64; add aarch64 entries when needed.
-- Remote role is subtractive: gets fish config, git config, opencode, omp config, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s.
+- Remote role is subtractive: gets fish (via remote-tools.txt) + fish config, git config, opencode, omp config, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s. Herdr's `default_shell` is set to the rootless fish binary since `chsh` is unavailable.
 
 ## Editing run_once scripts
 

@@ -10,3 +10,5 @@ jq|https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-linux-amd64|-
 herdr|https://github.com/herdrdev/herdr/releases/download/v0.9.3/herdr-linux-x86_64|-
 plannotator-tui|https://github.com/plannotator/plannotator-tui/releases/download/v0.9.4/plannotator-tui-x86_64-unknown-linux-gnu|-
 gh|https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_amd64.tar.gz|gh_2.101.0_linux_amd64/bin/gh
+fish|https://github.com/fish-shell/fish-shell/releases/download/4.9.3/fish-4.9.3-linux-x86_64.tar.xz|fish
+omp|https://github.com/can1357/oh-my-pi/releases/download/v18.5.1/omp-linux-x64|-

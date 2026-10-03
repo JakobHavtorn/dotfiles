@@ -72,3 +72,10 @@ delivery = "herdr"
 
 [ui]
 status_indicators = "dots"
+
+{{ if eq .role "remote" }}
+[terminal]
+# Rootless fish from remote-tools.txt — can't chsh on this box, so tell
+# herdr explicitly instead of relying on $SHELL (which is bash/sh here).
+default_shell = "{{ .chezmoi.homeDir }}/.local/bin/fish"
+{{ end }}

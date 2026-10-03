@@ -27,7 +27,7 @@ jobs:
 
       - name: Verify expected tools
         run: |
-          for bin in fish go node tmux shellcheck shfmt yq tree wget pandoc parallel uv poetry htop rg jq gh ffmpeg sox argocd helm kubectx kubelogin; do
+          for bin in fish go node tmux shellcheck shfmt yq tree wget pandoc parallel uv poetry htop rg jq gh ffmpeg sox argocd helm kubectx kubelogin omp; do
             command -v "$bin" || { echo "MISSING: $bin"; exit 1; }
             echo "  $bin: OK"
           done
@@ -78,7 +78,7 @@ jobs:
 
       - name: Verify expected tools
         run: |
-          for bin in fish go node tmux shellcheck shfmt yq tree wget pandoc parallel uv poetry htop rg jq gh ffmpeg sox argocd helm kubectx kubelogin; do
+          for bin in fish go node tmux shellcheck shfmt yq tree wget pandoc parallel uv poetry htop rg jq gh ffmpeg sox argocd helm kubectx kubelogin omp; do
             command -v "$bin" || { echo "MISSING: $bin"; exit 1; }
             echo "  $bin: OK"
           done

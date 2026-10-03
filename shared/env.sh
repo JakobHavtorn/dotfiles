@@ -18,3 +18,13 @@ is_darwin() {
 is_linux() {
     [[ "$(uname)" == "Linux" ]]
 }
+
+# Ensure ~/.local/bin is in PATH for chezmoi run scripts. On remote Linux,
+# tools (fish, herdr, gh, etc.) are installed rootless to ~/.local/bin by
+# run_onchange_before_15-remote-tools.sh.tmpl. Downstream scripts (OMF,
+# herdr plugins) find them via `command -v` — without this, they'd need
+# ~/.local/bin already in the inherited login shell PATH.
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) [[ -d "$HOME/.local/bin" ]] && PATH="$HOME/.local/bin:$PATH" ;;
+esac

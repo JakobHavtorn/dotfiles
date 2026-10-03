@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install prerequisites
-        run: apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git
+        run: apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils
 
       - name: Install chezmoi
         run: |
@@ -31,7 +31,7 @@ jobs:
 
       - name: Verify expected binaries
         run: |
-          for bin in uv rg jq gh; do
+          for bin in uv rg jq gh fish omp; do
             test -x "$HOME/.local/bin/$bin" || { echo "MISSING: $bin"; exit 1; }
             echo "  $bin: OK"
           done
@@ -41,7 +41,7 @@ jobs:
           # Force scripts to re-run, then verify they're safe against installed state
           chezmoi state delete-bucket --bucket=scriptState
           chezmoi apply
-          for bin in uv rg jq gh; do
+          for bin in uv rg jq gh fish omp; do
             test -x "$HOME/.local/bin/$bin" || { echo "MISSING after re-run: $bin"; exit 1; }
             echo "  $bin: OK after re-run"
           done
