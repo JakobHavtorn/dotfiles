@@ -67,7 +67,7 @@ it. The two failure classes previously seen:
 Then re-run and expect a quiet check before applying:
 
 ```sh
-brew bundle install --file manifests/Brewfile
+brew bundle install --file chezmoi/manifests/Brewfile
 brew bundle check
 chezmoi diff && chezmoi apply
 ```
