@@ -144,7 +144,7 @@ dump_brew
 dump_pipx
 dump_omf
 dump_macos_defaults
-./scripts/check-bootstrap.sh || echo "  (non-fatal: incomplete bootstrap reported above)"
+../scripts/check-bootstrap.sh || echo "  (non-fatal: incomplete bootstrap reported above)"
 
 echo ""
 git diff --stat
