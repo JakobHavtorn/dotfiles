@@ -5,7 +5,7 @@ chezmoi-based dotfiles. Private repo.
 ## Bootstrap
 
 ```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply --ssh jakobhavtorn/dotfiles
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply --ssh jakobhavtorn/dotfiles
 ```
 
 **Prerequisites:**
