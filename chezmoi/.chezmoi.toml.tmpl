@@ -1,8 +1,4 @@
 {{- /*
-  Machine identity: "work" or "personal". Determines git author via
-  .identities[.identity] (see .chezmoidata.yaml). Platform facts (darwin/linux)
-  are detected separately — this datum is identity only, not platform.
-
   Promptless bootstrap: set IDENTITY=work (or personal) in the env to skip
   the prompt entirely. Without it, chezmoi prompts once and caches the answer
   in its state DB; subsequent applies reuse the cached value.
