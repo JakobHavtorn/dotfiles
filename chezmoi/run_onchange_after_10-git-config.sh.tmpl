@@ -14,8 +14,8 @@ fi
 # whole config file. Existing credentials, hosts, aliases, and [url]
 # sections on the machine are preserved.
 
-git config --global user.name "Jakob Havtorn"
-git config --global user.email "jdh@corti.ai"
+git config --global user.name "{{ (index .identities .identity).name }}"
+git config --global user.email "{{ (index .identities .identity).email }}"
 git config --global init.defaultBranch main
 
 # insteadOf rewrites https -> ssh for github.com. Skipped in CI: keyless

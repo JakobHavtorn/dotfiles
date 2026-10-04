@@ -19,6 +19,12 @@ is_linux() {
     [[ "$(uname)" == "Linux" ]]
 }
 
+# Machine architecture (uname -m). Used by remote-tools to warn when
+# the manifest arch doesn't match the running arch.
+arch() {
+    uname -m
+}
+
 # Ensure ~/.local/bin is in PATH for chezmoi run scripts. On remote Linux,
 # tools (fish, herdr, gh, etc.) are installed rootless to ~/.local/bin by
 # run_onchange_before_15-remote-tools.sh.tmpl. Downstream scripts (OMF,

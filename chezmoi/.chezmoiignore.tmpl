@@ -1,5 +1,7 @@
-{{ if eq .role "remote" }}
+{{ if eq .chezmoi.os "linux" }}
+# k9s is installed via Homebrew (darwin only); config is noise on Linux
 .config/k9s
+# Library/LaunchAgents is macOS-only
 Library/
 {{ end }}
 

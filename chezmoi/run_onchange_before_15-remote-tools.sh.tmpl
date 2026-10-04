@@ -2,9 +2,10 @@
 # run_onchange_before_15-remote-tools.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 
-{{ if and (eq .role "remote") (eq .chezmoi.os "linux") -}}
+{{ if eq .chezmoi.os "linux" -}}
 
 # Install CLI tools rootless to ~/.local/bin from pinned release URLs.
 # Runs before file application so tools are available for after_ scripts.
@@ -15,7 +16,7 @@ source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
 VERSION_DIR="${VERSION_DIR:-$HOME/.local/share/remote-tools-versions}"
 MANIFEST="${MANIFEST:-"{{ .chezmoi.sourceDir }}/manifests/remote-tools.txt"}"
-ARCH="$(uname -m)"
+ARCH="$(arch)"
 
 if [[ "$ARCH" != "x86_64" ]]; then
     log_warn "remote-tools.txt has x86_64 URLs, but arch is $ARCH"
@@ -94,6 +95,6 @@ log_ok "remote tools done"
 
 {{ else -}}
 
-log_skip "remote tools (not remote/linux)"
+log_skip "remote tools (not linux)"
 
 {{ end -}}

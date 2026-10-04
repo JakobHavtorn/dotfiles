@@ -4,9 +4,13 @@ chezmoi-based dotfiles. Private repo.
 
 ## Bootstrap
 
+Promptless (recommended):
+
 ```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply --ssh jakobhavtorn/dotfiles
+IDENTITY=work sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply --ssh jakobhavtorn/dotfiles
 ```
+
+Without `IDENTITY`, you'll be prompted for a machine identity (`work` / `personal`).
 
 **Prerequisites:**
 
@@ -16,7 +20,6 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply --ssh
   ```
   `curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish archive (`.tar.xz`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
 - **SSH auth** — the repo is private. Either give the box its own key, or bootstrap through one agent-forwarded session (`ssh -A <host>` first).
-- **Role prompt** — you'll be prompted for a machine role (`work` / `personal` / `remote`).
 
 Optional personal-layer steps (`corti models init`, agent-skills clone) are non-fatal: without their credentials they log an error and the bootstrap continues. Re-run them manually once credentials are in place, or `chezmoi update`.
 
@@ -72,13 +75,14 @@ brew bundle check
 chezmoi diff && chezmoi apply
 ```
 
-## Roles
+## Identity
 
-| Role | Gets |
+| Identity | Git author |
 |---|---|
-| `work` | Full setup: fish, git, opencode, homebrew, k9s, macOS defaults |
-| `personal` | Same as work (identity differs via templates) |
-| `remote` | Reduced: fish config, git, opencode, rootless CLI tools. No homebrew, no casks, no macOS defaults. |
+| `work` | Jakob Havtorn <jdh@corti.ai> |
+| `personal` | Jakob Havtorn <havtorn93@gmail.com> |
+
+Platform differences (Homebrew, macOS defaults, rootless tools, k9s) are detected automatically from the OS — no manual role selection needed.
 
 ## Layout
 
