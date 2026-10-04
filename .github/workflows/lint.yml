@@ -40,18 +40,18 @@ jobs:
           curl -fsLS get.chezmoi.io | sh
           install -m 755 bin/chezmoi /usr/local/bin/chezmoi
 
-      - name: Render templates for all roles
+      - name: Render templates for all identities
         run: |
-          for role in work personal remote; do
-            echo "=== role=$role ==="
+          for identity in work personal; do
+            echo "=== identity=$identity ==="
             mkdir -p "$HOME/.config/chezmoi"
-            printf 'sourceDir = "%s"\n[data]\nrole = "%s"\n' "$GITHUB_WORKSPACE" "$role" > "$HOME/.config/chezmoi/chezmoi.toml"
+            printf 'sourceDir = "%s"\n[data]\nidentity = "%s"\n' "$GITHUB_WORKSPACE" "$identity" > "$HOME/.config/chezmoi/chezmoi.toml"
             for f in $(find . -name '*.tmpl' -not -path './.git/*' -not -name '.chezmoi.toml.tmpl'); do
               chezmoi execute-template < "$f" > /dev/null 2>&1 || {
-                echo "FAILED: $f (role=$role)"
+                echo "FAILED: $f (identity=$identity)"
                 chezmoi execute-template < "$f"
                 exit 1
               }
             done
           done
-          echo "All templates rendered successfully for all roles"
+          echo "All templates rendered successfully for all identities"

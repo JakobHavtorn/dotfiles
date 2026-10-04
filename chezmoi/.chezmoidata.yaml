@@ -1,3 +1,14 @@
+# Machine identity — determines git author. The .chezmoi.toml.tmpl prompt
+# sets .identity to "work" or "personal"; run_onchange_after_10-git-config
+# reads .chezmoidata.identities[.identity] for name + email.
+identities:
+  work:
+    name: "Jakob Havtorn"
+    email: "jdh@corti.ai"
+  personal:
+    name: "Jakob Havtorn"
+    email: "havtorn93@gmail.com"
+
 # Non-secret shared facts. Available in templates as .chezmoidata.*
 
 # Coding agent config — shared across opencode + omp. Single source of truth

@@ -1,3 +1,18 @@
-{{- $role := promptStringOnce . "role" "Machine role (work/personal/remote)" -}}
+{{- /*
+  Machine identity: "work" or "personal". Determines git author via
+  .identities[.identity] (see .chezmoidata.yaml). Platform facts (darwin/linux)
+  are detected separately — this datum is identity only, not platform.
+
+  Promptless bootstrap: set IDENTITY=work (or personal) in the env to skip
+  the prompt entirely. Without it, chezmoi prompts once and caches the answer
+  in its state DB; subsequent applies reuse the cached value.
+*/ -}}
+{{- $identity := env "IDENTITY" -}}
+{{- if not $identity -}}
+{{- $identity = promptStringOnce . "identity" "Machine identity (work/personal)" "work" -}}
+{{- end -}}
+{{- if not (or (eq $identity "work") (eq $identity "personal")) -}}
+{{- fail (printf "unknown identity %q (expected work or personal)" $identity) -}}
+{{- end -}}
 [data]
-    role = {{ $role | quote }}
+    identity = {{ $identity | quote }}

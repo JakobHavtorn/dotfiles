@@ -29,16 +29,16 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 
 | Path | Description |
 |---|---|
-| `chezmoi/.chezmoi.toml.tmpl` | Prompts on init (role: work/personal/remote) |
-| `chezmoi/.chezmoiignore.tmpl` | Excludes non-home-target files + role-specific paths |
-| `chezmoi/.chezmoidata.yaml` | Non-secret shared facts (notion deny-list, MCP servers, corti models) — single source of truth for templates |
+| `chezmoi/.chezmoi.toml.tmpl` | Prompts on init (identity: work/personal); `IDENTITY` env var skips the prompt |
+| `chezmoi/.chezmoiignore.tmpl` | Excludes non-home-target files + platform-specific paths (k9s, Library on linux) |
+| `chezmoi/.chezmoidata.yaml` | Non-secret shared facts (identities, notion deny-list, MCP servers, corti models) — single source of truth for templates |
 | `chezmoi/dot_config/` | Maps to `~/.config/` |
 | `chezmoi/dot_config/fish/config.fish` | PATH setup, corti-cli env, gpu/oc abbreviations (interactive only) |
 | `chezmoi/dot_config/opencode/cli.json` | opencode TUI settings (symlinked) |
 | `chezmoi/dot_config/opencode/opencode.jsonc.tmpl` | opencode base config (templated from .chezmoidata; managed by run_onchange script) |
-| `chezmoi/dot_config/herdr/config.toml.tmpl` | herdr keybindings + remote-only `[terminal] default_shell` (fish via remote-tools.txt) |
+| `chezmoi/dot_config/herdr/config.toml.tmpl` | herdr keybindings + linux-only `[terminal] default_shell` (rootless fish via remote-tools.txt) |
 | `chezmoi/dot_config/k9s/config.yaml` | Minimal k9s config |
-| `chezmoi/private_dot_ssh/config.d/github.tmpl` | github.com SSH host block (UseKeychain excluded on remote) |
+| `chezmoi/private_dot_ssh/config.d/github.tmpl` | github.com SSH host block (UseKeychain only on darwin) |
 | `chezmoi/dot_omp/private_agent/private_config.yml.tmpl` | omp settings (templated notion deny-list; `~/.omp/agent/config.yml`, 0600) |
 | `chezmoi/dot_omp/private_agent/models.yml` | omp custom providers: corti (key via CORTI_BEARER env) |
 | `chezmoi/dot_omp/private_agent/mcp.json.tmpl` | omp MCP servers (templated from .chezmoidata) |
@@ -54,9 +54,9 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/macos-defaults-keys.txt` | Shared (domain\|key\|value) list — read by dump.sh (observes) and run_once_after_90-macos-defaults.sh.tmpl (writes) |
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
-| `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git keys via `git config --global` (insteadOf skipped in CI) |
+| `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
 | `chezmoi/run_once_before_10-install-homebrew.sh.tmpl` | Darwin only |
-| `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Remote/linux only — installs to `~/.local/bin` |
+| `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` |
 | `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only |
 | `chezmoi/run_onchange_after_20-opencode-config.sh.tmpl` | Renders opencode.jsonc.tmpl + corti models init (model list from .chezmoidata) |
 | `chezmoi/run_after_30-agent-skills.sh.tmpl` | Clones/updates agent-skills, runs skillctl link (every apply — idempotent) |
@@ -80,7 +80,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 - `uv` owns Python interpreters. Do not `brew install python`.
 - The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate. Same gate applies to all dump-generated manifests; pipx.txt is dumped from the venvs' pipx metadata (`package_or_url`) so install sources survive regeneration.
 - `remote-tools.txt` is a pipe-delimited manifest: `name|url|path_in_archive`. `path_in_archive` is the relative path to the binary inside the archive, or `-` for direct binary download. Architecture is x86_64; add aarch64 entries when needed.
-- Remote role is subtractive: gets fish (via remote-tools.txt) + fish config, git config, opencode, omp config, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s. Herdr's `default_shell` is set to the rootless fish binary since `chsh` is unavailable.
+- Linux is subtractive: gets fish (via remote-tools.txt) + fish config, git config, opencode, omp config, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s. Herdr's `default_shell` is set to the rootless fish binary since `chsh` is unavailable. Platform is detected from `.chezmoi.os`, not from a role datum.
 
 ## Editing run_once scripts
 

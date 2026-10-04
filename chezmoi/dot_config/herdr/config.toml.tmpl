@@ -73,7 +73,7 @@ delivery = "herdr"
 [ui]
 status_indicators = "dots"
 
-{{ if eq .role "remote" }}
+{{ if eq .chezmoi.os "linux" }}
 [terminal]
 # Rootless fish from remote-tools.txt — can't chsh on this box, so tell
 # herdr explicitly instead of relying on $SHELL (which is bash/sh here).

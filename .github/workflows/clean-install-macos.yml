@@ -16,10 +16,10 @@ jobs:
           curl -fsLS get.chezmoi.io | sh
           install -m 755 bin/chezmoi /usr/local/bin/chezmoi
 
-      - name: chezmoi apply (role=work)
+      - name: chezmoi apply (identity=work)
         run: |
           mkdir -p "$HOME/.config/chezmoi"
-          printf 'sourceDir = "%s"\n[data]\nrole = "work"\n' "$GITHUB_WORKSPACE" > "$HOME/.config/chezmoi/chezmoi.toml"
+          printf 'sourceDir = "%s"\n[data]\nidentity = "work"\n' "$GITHUB_WORKSPACE" > "$HOME/.config/chezmoi/chezmoi.toml"
           chezmoi apply
 
       - name: Verify fish
@@ -67,10 +67,10 @@ jobs:
           curl -fsLS get.chezmoi.io | sh
           install -m 755 bin/chezmoi /usr/local/bin/chezmoi
 
-      - name: chezmoi apply (role=work)
+      - name: chezmoi apply (identity=work)
         run: |
           mkdir -p "$HOME/.config/chezmoi"
-          printf 'sourceDir = "%s"\n[data]\nrole = "work"\n' "$GITHUB_WORKSPACE" > "$HOME/.config/chezmoi/chezmoi.toml"
+          printf 'sourceDir = "%s"\n[data]\nidentity = "work"\n' "$GITHUB_WORKSPACE" > "$HOME/.config/chezmoi/chezmoi.toml"
           chezmoi apply
 
       - name: Verify fish
