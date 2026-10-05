@@ -1,74 +1,100 @@
 // Session title generation extension for omp.
 //
-// Reuses the cross-harness title agent spec from agent-skills/agents/title.md
-// so opencode and omp share one title-generation prompt.  Reads the spec at
-// runtime, strips YAML frontmatter, and pipes the body + user message as stdin
-// to `omp -p --no-extensions`.  The resulting title is set via
+// Shares the title agent spec from agent-skills/agents/title.md with opencode.
+// Reads the spec at runtime, strips YAML frontmatter, and sends the body as
+// the system prompt to a direct API call.  The resulting title is set via
 // pi.setSessionName(title, "user") from the `input` event, which fires before
-// omp's built-in auto-title check and prevents it from running (per
-// extensions.md: "Extensions that call await pi.setSessionName(...) from input
-// can set the persisted session name and prevent the default auto-generated
-// title from running for that session").
+// omp's built-in auto-title check.
 //
-// The title instructions are piped via stdin (not --system-prompt, which omp
-// ignores, and not as a CLI argument, which fails for long prompts).
-// --no-extensions prevents the subprocess from re-loading this hook.
-// The subprocess is fired without awaiting so it doesn't block the turn;
-// setSessionName(title, "user") overrides any auto title already set.
+// A direct API call returns in ~1s.  An `omp -p` subprocess loads the full
+// coding agent context and takes 10-45s, racing the hook budget.
+//
+// API endpoint, auth, and model come from omp's models.yml at runtime.
+// The hook selects the first non-reasoning model from the first provider,
+// falling back to corti-s1-instant.
 //
 // Install path (chezmoi-managed):
 //   dot_omp/private_agent/hooks/post/title-gen.ts
 //     → ~/.omp/agent/hooks/post/title-gen.ts   (user scope, all projects)
-//
-// The title.md spec lives in a separate repo and is NOT copied here.
 
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 
-// Candidate paths for the title agent spec, checked in order.
 const TITLE_SPEC_PATHS = [
-  // standard install.sh location
   `${process.env.HOME}/.agent-skills/agents/title.md`,
-  // env override
   ...(process.env.AGENT_SKILLS_DIR
     ? [`${process.env.AGENT_SKILLS_DIR}/agents/title.md`]
     : []),
 ];
 
-// Subprocess timeout — keep margin under the hook event budget.
-const MODEL_TIMEOUT_MS = 20_000;
+const MODELS_YML_PATHS = [
+  `${process.env.HOME}/.omp/agent/models.yml`,
+  ...(process.env.OMP_MODELS_YML ? [process.env.OMP_MODELS_YML] : []),
+];
 
-// ─── frontmatter helpers ─────────────────────────────────────────────
+const API_TIMEOUT_MS = 15_000;
+
+// Non-reasoning model: returns clean content within the token budget.
+const FALLBACK_MODEL = "corti-s1-instant";
 
 function extractBody(md: string): string {
   const m = md.match(/^---\n[\s\S]*?\n---\n(.*)$/);
   return m ? m[1].trim() : md.trim();
 }
 
-function extractModel(md: string): string | undefined {
-  const m = md.match(/^model:\s*(.+)$/m);
-  return m?.[1]?.trim();
+interface ProviderConfig {
+  baseUrl: string;
+  apiKeyEnv: string;
+  modelId: string;
 }
 
-// ─── extension ───────────────────────────────────────────────────────
+// Parse the first provider from models.yml.  Simple regex on a known
+// hand-maintained format.
+async function readProviderConfig(): Promise<ProviderConfig | null> {
+  let yml: string | null = null;
+  for (const p of MODELS_YML_PATHS) {
+    try {
+      const file = Bun.file(p);
+      if (await file.exists()) {
+        yml = await file.text();
+        break;
+      }
+    } catch {}
+  }
+  if (!yml) return null;
+
+  const baseUrlMatch = yml.match(/baseUrl:\s*(\S+)/);
+  const apiKeyMatch = yml.match(/apiKey:\s*(\S+)/);
+  if (!baseUrlMatch || !apiKeyMatch) return null;
+
+  const baseUrl = baseUrlMatch[1].replace(/\/+$/, "");
+  const apiKeyEnv = apiKeyMatch[1];
+
+  // First non-reasoning model — reasoning models spend the token budget on
+  // chain-of-thought, leaving none for the title.
+  const modelBlocks = yml.split(/^\s*-\s*id:/m);
+  for (const block of modelBlocks.slice(1)) {
+    const idMatch = block.match(/^\s*["']([^"'\n]+)["']/);
+    const reasoningMatch = block.match(/reasoning:\s*(\w+)/);
+    if (idMatch && reasoningMatch?.[1] === "false") {
+      return { baseUrl, apiKeyEnv, modelId: idMatch[1].trim() };
+    }
+  }
+
+  const firstId = yml.match(/id:\s*["']([^"']+)["']/);
+  return firstId ? { baseUrl, apiKeyEnv, modelId: firstId[1] } : null;
+}
 
 export default function titleGenHook(pi: ExtensionAPI) {
   let titled = false;
 
   pi.on("input", (event, ctx) => {
-    if (titled) return;
-    if (!event.text) return;
-
-    // Skip slash commands — they're not conversational messages worth titling.
-    if (event.text.startsWith("/")) return;
-
+    if (titled || !event.text || event.text.startsWith("/")) return;
     titled = true;
 
-    // Fire title generation in the background — don't block the turn.
-    // The built-in auto-title may set an "auto" title immediately; our
-    // setSessionName(title, "user") will override it when the subprocess
-    // completes (user-source overrides auto-source).
+    // Fire-and-forget: setSessionName("user") overrides the auto title when
+    // the API call completes.
     generateTitle(pi, event.text, ctx.cwd).catch((e) => {
-      pi.logger?.debug?.(`title-gen: model call failed: ${e}`);
+      pi.logger?.debug?.(`title-gen: API call failed: ${e}`);
     });
   });
 }
@@ -78,7 +104,6 @@ async function generateTitle(
   userMessage: string,
   cwd: string,
 ): Promise<void> {
-  // Locate the title agent spec.
   let spec: string | null = null;
   for (const p of TITLE_SPEC_PATHS) {
     try {
@@ -90,42 +115,59 @@ async function generateTitle(
     } catch {}
   }
   if (!spec) {
-    pi.logger?.debug?.("title-gen: title.md not found in any candidate path");
+    pi.logger?.debug?.("title-gen: title.md not found");
     return;
   }
 
-  const instructions = extractBody(spec);
-  const model = extractModel(spec) ?? "corti/corti-s1-mini";
+  const systemPrompt = extractBody(spec);
+  const config = await readProviderConfig();
+  const baseUrl = config?.baseUrl ?? "https://ai.eu.corti.app/v1";
+  const apiKeyEnv = config?.apiKeyEnv ?? "CORTI_BEARER";
+  const model = config?.modelId ?? FALLBACK_MODEL;
 
-  // Embed title instructions in the user message since omp -p's
-  // --system-prompt does not replace the built-in coding assistant prompt.
-  // Pipe via stdin to avoid shell argument length limits.
-  const prompt = `${instructions}\n\n---\n\nGenerate a title for this user message:\n\n${userMessage}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
-  const proc = Bun.spawn(
-    [
-      "omp", "-p",
-      "--no-extensions",
-      "--no-session",
-      "--no-tools",
-      "--model", model,
-    ],
-    {
-      cwd,
-      stdout: "pipe",
-      stderr: "pipe",
-      stdin: "pipe",
-    },
-  );
-
-  const timer = setTimeout(() => proc.kill(), MODEL_TIMEOUT_MS);
   try {
-    // Write prompt to stdin then close it.
-    proc.stdin.write(prompt);
-    proc.stdin.end();
-    const title = (await new Response(proc.stdout).text()).trim();
-    // Take only the first line — the model may add explanatory text after.
-    const firstLine = title.split("\n")[0].trim();
+    const apiKey = process.env[apiKeyEnv];
+    if (!apiKey) {
+      pi.logger?.debug?.(`title-gen: ${apiKeyEnv} not set`);
+      return;
+    }
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        temperature: 0.3,
+        max_tokens: 100,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      pi.logger?.debug?.(
+        `title-gen: API ${response.status}: ${await response.text()}`,
+      );
+      return;
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (typeof content !== "string") {
+      pi.logger?.debug?.("title-gen: no content in response");
+      return;
+    }
+
+    const firstLine = content.trim().split("\n")[0].trim();
     if (firstLine && firstLine.length > 0 && firstLine.length <= 80) {
       await pi.setSessionName(firstLine, "user");
     }
