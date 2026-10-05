@@ -35,6 +35,40 @@
       "type": "http",
       "url": "{{ .coding_agents.mcp.servers.notion.url }}",
       "oauth": {}
+    },
+    "google_calendar": {
+      "type": "http",
+      "url": "{{ .coding_agents.mcp.servers.google_calendar.url }}",
+      "oauth": {
+        "clientId": "${GOOGLE_CLIENT_ID}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}",
+        "scope": "{{ .coding_agents.mcp.servers.google_calendar.scope }}",
+        "redirectUri": "{{ .coding_agents.mcp.servers.google_calendar.redirect_uri }}",
+        "callbackPort": {{ .coding_agents.mcp.servers.google_calendar.callback_port }}
+      },
+      "auth": {
+        "type": "oauth",
+        "tokenUrl": "{{ .coding_agents.mcp.servers.google_calendar.auth_token_url }}",
+        "clientId": "${GOOGLE_CLIENT_ID}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}"
+      }
+    },
+    "google_drive": {
+      "type": "http",
+      "url": "{{ .coding_agents.mcp.servers.google_drive.url }}",
+      "oauth": {
+        "clientId": "${GOOGLE_CLIENT_ID}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}",
+        "scope": "{{ .coding_agents.mcp.servers.google_drive.scope }}",
+        "redirectUri": "{{ .coding_agents.mcp.servers.google_drive.redirect_uri }}",
+        "callbackPort": {{ .coding_agents.mcp.servers.google_drive.callback_port }}
+      },
+      "auth": {
+        "type": "oauth",
+        "tokenUrl": "{{ .coding_agents.mcp.servers.google_drive.auth_token_url }}",
+        "clientId": "${GOOGLE_CLIENT_ID}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}"
+      }
     }
   }
 }

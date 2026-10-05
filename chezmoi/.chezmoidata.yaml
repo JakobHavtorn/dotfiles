@@ -77,6 +77,20 @@ coding_agents:
         oauth_scope: "openid email profile offline_access"
       notion:
         url: "https://mcp.notion.com/mcp"
+      google_calendar:
+        url: "https://calendarmcp.googleapis.com/mcp/v1"
+        # Google Workspace MCP servers (Developer Preview) share one OAuth client;
+        # set GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET in the environment.
+        scope: "https://www.googleapis.com/auth/calendar.calendarlist.readonly https://www.googleapis.com/auth/calendar.events.freebusy https://www.googleapis.com/auth/calendar.events.readonly"
+        callback_port: 19877
+        redirect_uri: "http://127.0.0.1:19877/mcp/oauth/callback"
+        auth_token_url: "https://oauth2.googleapis.com/token"
+      google_drive:
+        url: "https://drivemcp.googleapis.com/mcp/v1"
+        scope: "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file"
+        callback_port: 19877
+        redirect_uri: "http://127.0.0.1:19877/mcp/oauth/callback"
+        auth_token_url: "https://oauth2.googleapis.com/token"
 
   # Corti model list — matches models.yml provider.corti.models[].id
   # and the onchange script's --model flag.

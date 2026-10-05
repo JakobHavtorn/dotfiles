@@ -57,6 +57,32 @@
         "oauth": {},
         "disabled": false,
         "timeout": { "catalog": 30000, "execution": 30000 }
+      },
+      "google_calendar": {
+        "type": "remote",
+        "url": "{{ .coding_agents.mcp.servers.google_calendar.url }}",
+        "oauth": {
+          "client_id": "{env:GOOGLE_CLIENT_ID}",
+          "client_secret": "{env:GOOGLE_CLIENT_SECRET}",
+          "scope": "{{ .coding_agents.mcp.servers.google_calendar.scope }}",
+          "callback_port": {{ .coding_agents.mcp.servers.google_calendar.callback_port }},
+          "redirect_uri": "{{ .coding_agents.mcp.servers.google_calendar.redirect_uri }}"
+        },
+        "disabled": false,
+        "timeout": { "catalog": 30000, "execution": 30000 }
+      },
+      "google_drive": {
+        "type": "remote",
+        "url": "{{ .coding_agents.mcp.servers.google_drive.url }}",
+        "oauth": {
+          "client_id": "{env:GOOGLE_CLIENT_ID}",
+          "client_secret": "{env:GOOGLE_CLIENT_SECRET}",
+          "scope": "{{ .coding_agents.mcp.servers.google_drive.scope }}",
+          "callback_port": {{ .coding_agents.mcp.servers.google_drive.callback_port }},
+          "redirect_uri": "{{ .coding_agents.mcp.servers.google_drive.redirect_uri }}"
+        },
+        "disabled": false,
+        "timeout": { "catalog": 30000, "execution": 30000 }
       }
     }
   },
