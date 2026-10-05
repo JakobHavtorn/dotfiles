@@ -8,6 +8,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 - Commit titles follow [Conventional Commits](https://www.conventionalcommits.org/).
 - Always `chezmoi diff` before `chezmoi apply`. There is no rollback.
 - Secrets are never committed. `fish_variables`, `~/.env`, and any file containing tokens/API keys are excluded.
+- Prefer [Mermaid](https://mermaid.js/) for diagrams and flowcharts in docs and PR descriptions where a visual structure genuinely aids understanding; skip it for trivial or purely linear content.
 
 ## Layout
 
