@@ -9,10 +9,10 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 # when current, skillctl link --force overwrites symlinks. This ensures
 # upstream agent-skills changes (renames, new skills) propagate without
 # needing to clear chezmoi's scriptState.
-# Config linking is handled by dotfiles/chezmoi, not agent-skills.
+# skillctl link now handles skills, context file (AGENTS.md), and agents/*
+# specs — all via a single mechanism.
 
 AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-$HOME/.agent-skills}"
-OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 
 log_section "agent-skills bootstrap"
 
@@ -45,23 +45,13 @@ else
     fi
 fi
 
-# Link skills (config linking is handled by chezmoi/dotfiles)
+# Link skills, context file, and agents/*.md specs into each harness.
 if command -v python3 >/dev/null 2>&1; then
     for agent in opencode omp claude codex; do
         log_run --non-fatal "linked skills into $agent" python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force
     done
 else
     log_warn "python3 not found — skipping skill linking"
-fi
-
-# Link agents directory
-if [[ -d "$AGENT_SKILLS_DIR/agents" ]]; then
-    mkdir -p "$OPENCODE_CONFIG_DIR"
-    ln -sfh "$AGENT_SKILLS_DIR/agents" "$OPENCODE_CONFIG_DIR/agents" 2>/dev/null || {
-        [[ -e "$OPENCODE_CONFIG_DIR/agents" && ! -L "$OPENCODE_CONFIG_DIR/agents" ]] && mv "$OPENCODE_CONFIG_DIR/agents" "$OPENCODE_CONFIG_DIR/agents.bak"
-        ln -sf "$AGENT_SKILLS_DIR/agents" "$OPENCODE_CONFIG_DIR/agents"
-    }
-    log_ok "linked agents/"
 fi
 
 log_ok "agent-skills done"

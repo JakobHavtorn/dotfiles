@@ -1,10 +1,10 @@
 // Session title generation extension for omp.
 //
-// Shares the title agent spec from agent-skills/agents/title.md with opencode.
-// Reads the spec at runtime, strips YAML frontmatter, and sends the body as
-// the system prompt to a direct API call.  The resulting title is set via
-// pi.setSessionName(title, "user") from the `input` event, which fires before
-// omp's built-in auto-title check.
+// Reads the title agent spec from OMP's config tree
+// (~/.omp/agent/agents/title.md, symlinked by skillctl).  Strips YAML
+// frontmatter and sends the body as the system prompt to a direct API
+// call.  The resulting title is set via pi.setSessionName(title, "user")
+// from the `input` event, which fires before omp's built-in auto-title.
 //
 // A direct API call returns in ~1s.  An `omp -p` subprocess loads the full
 // coding agent context and takes 10-45s, racing the hook budget.
@@ -20,10 +20,8 @@
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 
 const TITLE_SPEC_PATHS = [
-  `${process.env.HOME}/.agent-skills/agents/title.md`,
-  ...(process.env.AGENT_SKILLS_DIR
-    ? [`${process.env.AGENT_SKILLS_DIR}/agents/title.md`]
-    : []),
+  // skillctl-symlinked spec in OMP's config tree.
+  `${process.env.HOME}/.omp/agent/agents/title.md`,
 ];
 
 const MODELS_YML_PATHS = [
