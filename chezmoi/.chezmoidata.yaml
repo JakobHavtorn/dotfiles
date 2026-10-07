@@ -78,18 +78,28 @@ coding_agents:
       notion:
         url: "https://mcp.notion.com/mcp"
 
-  # Corti model list — matches models.yml provider.corti.models[].id
-  # and the onchange script's --model flag.
+  # Corti model list — single source of truth for models.yml,
+  # opencode.jsonc, and the Hermes config run script.
   corti:
     default_model: "corti-s1"
     models:
-      - corti-s1
-      - corti-s1-beta
-      - corti-s1-instant
-      - corti-s1-mini
-      - corti-s1-mini-beta
-      - corti-s1-mini-instant
-      - corti-s1-mini-instant-beta
-      - corti-s1-tiny
-      - corti-s1-tiny-instant
-      - corti-s1-embedding
+      - id: corti-s1
+        context_length: 264000
+      - id: corti-s1-beta
+        context_length: 264000
+      - id: corti-s1-instant
+        context_length: 264000
+      - id: corti-s1-mini
+        context_length: 262144
+      - id: corti-s1-mini-beta
+        context_length: 262144
+      - id: corti-s1-mini-instant
+        context_length: 262144
+      - id: corti-s1-mini-instant-beta
+        context_length: 262144
+      - id: corti-s1-tiny
+        context_length: 32768
+      - id: corti-s1-tiny-instant
+        context_length: 32768
+      - id: corti-s1-embedding
+        context_length: 8192
