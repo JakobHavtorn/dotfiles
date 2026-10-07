@@ -11,6 +11,12 @@ providers:
         input: [text]
         contextWindow: 264000
         cost: { input: 2, output: 8, cacheRead: 0.200000, cacheWrite: 0 }
+      - id: "corti-s1-beta"
+        name: "Corti S1 Beta"
+        reasoning: true
+        input: [text]
+        contextWindow: 264000
+        cost: { input: 2, output: 8, cacheRead: 0.200000, cacheWrite: 0 }
       - id: "corti-s1-instant"
         name: "Corti S1 Instant"
         reasoning: false
