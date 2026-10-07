@@ -3,9 +3,6 @@
 // supported settings. This file is safe to hand-edit; plugins update individual
 // keys and preserve the rest (values and comments).
 {
-  "magic-context": {
-    "collapsed": false
-  },
   "aft": {
     "collapsed": false
   }
