@@ -18,7 +18,7 @@ brew "go"
 brew "node"
 brew "uv"               # Python package/project manager; uv owns interpreter versions
 brew "poetry"            # Python dependency management
-
+brew "bun"             # JS runtime; required for omp plugin install (AFT, future Pi plugins)
 # Build tools
 brew "cmake"
 brew "make"

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cortexkit/aft/main/assets/aft.schema.json",
+  // Semantic search backend — Corti embedding API via CORTI_BEARER.
+  // Switching backend/model/base_url triggers a full index rebuild.
+  "semantic": {
+    "backend": "openai_compatible",
+    "base_url": "https://ai.eu.corti.app/v1",
+    "model": "corti-s1-embedding",
+    "api_key_env": "CORTI_BEARER"
+  }
+}

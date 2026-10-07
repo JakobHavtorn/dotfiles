@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# run_onchange_after_88-aft-plugin.sh.tmpl
+#
+# Dependency hashes — re-run when the CortexKit configs or this script change:
+# aft.jsonc hash: {{ include "dot_config/cortexkit/aft.jsonc" | sha256sum }}
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# Install the AFT plugin (@cortexkit/aft-pi) into OMP and the AFT binary.
+# The CortexKit config file (aft.jsonc) is applied by chezmoi's file mechanism;
+# this script only handles the plugin registration,
+# which OMP stores in ~/.omp/plugins/ (bun-managed node_modules + lockfile).
+# Idempotent — omp plugin install is a no-op when the plugin is already present.
+
+if is_ci; then
+    log_skip "aft plugin (CI environment)"
+    exit 0
+fi
+
+if ! command -v omp >/dev/null 2>&1; then
+    log_skip "aft plugin (omp not installed)"
+    exit 0
+fi
+
+log_section "aft plugin"
+
+# bun is required by omp plugin install (it drives the node_modules install).
+if ! command -v bun >/dev/null 2>&1; then
+    log_warn "bun not found — skipping AFT plugin install. Install with: brew install bun"
+    exit 0
+fi
+
+# --force: idempotent install; skips prompts and reinstalls if already present.
+# </dev/null: fail-fast on interactive prompts instead of hanging chezmoi apply.
+log_run --non-fatal "aft plugin install @cortexkit/aft-pi" \
+    omp plugin install --force @cortexkit/aft-pi </dev/null || true
+
+# Download the AFT binary if missing (matches the plugin version). The binary
+# is normally lazy-installed on first session start; this pre-warms the cache
+# so the first session doesn't pay the download cost. Requires npx.
+if command -v npx >/dev/null 2>&1; then
+    log_info "pre-warming aft binary..."
+    log_run --non-fatal "aft binary pre-warm" \
+        npx --yes @cortexkit/aft@latest doctor --fix --harness omp </dev/null || true
+else
+    log_warn "npx not found — skipping aft binary pre-warm"
+fi
+
+log_ok "aft plugin done"
