@@ -1,0 +1,15 @@
+providers:
+  corti:
+    baseUrl: https://ai.eu.corti.app/v1
+    apiKey: CORTI_BEARER
+    api: openai-completions
+    auth: apiKey
+    models:
+{{- range .coding_agents.corti.models }}
+      - id: "{{ .id }}"
+        name: "{{ .name }}"
+        reasoning: {{ .reasoning }}
+        input: [{{ range $i, $m := .input }}{{ if $i }}, {{ end }}{{ $m }}{{ end }}]
+        contextWindow: {{ .context_length }}
+        cost: { input: {{ .cost.input }}, output: {{ .cost.output }}, cacheRead: {{ .cost.cacheRead }}, cacheWrite: {{ .cost.cacheWrite }} }
+{{- end }}

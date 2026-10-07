@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# run_onchange_after_25-corti-models.sh.tmpl
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# Wire Corti models into all supported coding agent harnesses via the
+# corti CLI. Centralized here so all harnesses stay in sync from a
+# single invocation. The model list + default come from .chezmoidata.yaml.
+#
+# OMP/Pi models.yml.tmpl is still rendered separately by chezmoi (it may
+# contain non-Corti models or manual overrides). The CLI handles opencode,
+# and any other --tools passed below.
+#
+# Re-runs when this script or .chezmoidata.yaml changes.
+# chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+
+if is_ci; then
+    log_skip "corti models init (CI environment)"
+    exit 0
+fi
+
+if ! command -v npx >/dev/null 2>&1; then
+    log_warn "npx not found — skipping corti models init"
+    exit 0
+fi
+
+log_section "corti models init"
+
+# --yes: auto-confirm npx's package-install prompt (it hangs otherwise
+# on boxes with a cold npm cache and no interactive answer); stdin
+# from /dev/null turns any future interactive prompt into a fail-fast.
+# --non-fatal: a missing/failed auth must never stop the bootstrap —
+# log the tool's own error and continue.
+log_run --non-fatal "corti models initialized" npx --yes @corti/cli@latest models init \
+    --tools opencode,pi --scope global --yes --no-shell-rc \
+    --model {{ range $i, $m := .coding_agents.corti.models }}{{ if $i }},{{ end }}{{ .id }}{{ end }} </dev/null
+
+log_ok "corti models done"

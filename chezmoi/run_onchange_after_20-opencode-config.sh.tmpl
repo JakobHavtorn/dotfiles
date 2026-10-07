@@ -5,10 +5,12 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # opencode.jsonc.tmpl hash: {{ include "dot_config/opencode/opencode.jsonc.tmpl" | sha256sum }}
 # cli.json.tmpl hash: {{ include "dot_config/opencode/cli.json.tmpl" | sha256sum }}
+# chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
 
 # Renders both opencode.jsonc and cli.json from templates.
 # cli.json base has user preferences but NOT the herdr plugin entry —
 # run_onchange_after_85-herdr-plugins.sh.tmpl adds that via `herdr integration install opencode`.
+# Corti model wiring is handled centrally by run_onchange_after_25-corti-models.sh.tmpl.
 # Re-runs when this script or either config template changes.
 
 CHEZMOI="{{ .chezmoi.executable }}"
@@ -19,11 +21,11 @@ LIVE_CONFIG="$OPENCODE_CONFIG_DIR/opencode.jsonc"
 CLI_TEMPLATE="$SOURCE_DIR/dot_config/opencode/cli.json.tmpl"
 CLI_CONFIG="$OPENCODE_CONFIG_DIR/cli.json"
 
-log_section "opencode config + corti models"
+log_section "opencode config"
 
 mkdir -p "$OPENCODE_CONFIG_DIR"
 
-# Render base config from template (without generated model specs)
+# Render base config from template.
 "$CHEZMOI" execute-template < "$BASE_CONFIG" > "$LIVE_CONFIG"
 log_ok "applied base opencode.jsonc"
 
@@ -31,23 +33,5 @@ log_ok "applied base opencode.jsonc"
 # run_onchange_after_85-herdr-plugins.sh.tmpl adds the herdr entry via integration install.
 "$CHEZMOI" execute-template < "$CLI_TEMPLATE" > "$CLI_CONFIG"
 log_ok "applied base cli.json"
-
-# Generate model specs via corti CLI.
-# Skipped in CI — requires interactive auth (CORTI_CLIENT_ID + CORTI_BEARER).
-# On real machines a missing/failed auth must never stop the bootstrap:
-# log the tool's own error and continue with the base config in place.
-if is_ci; then
-    log_skip "corti models init (CI environment)"
-elif command -v npx &>/dev/null; then
-    # --yes: auto-confirm npx's package-install prompt (it hangs otherwise
-    # on boxes with a cold npm cache and no interactive answer); stdin
-    # from /dev/null turns any future interactive prompt into a fail-fast.
-    log_info "running corti models init..."
-    log_run --non-fatal "corti models initialized" npx --yes @corti/cli@latest models init \
-        --tools opencode --scope global --yes --no-shell-rc \
-        --model {{ range $i, $m := .coding_agents.corti.models }}{{ if $i }},{{ end }}{{ .id }}{{ end }} </dev/null
-else
-    log_warn "npx not found — skipping model init. Models will be bare stubs."
-fi
 
 log_ok "opencode config done"
