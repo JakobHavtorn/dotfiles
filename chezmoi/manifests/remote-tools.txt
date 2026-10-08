@@ -12,3 +12,4 @@ plannotator-tui|https://github.com/plannotator/plannotator-tui/releases/download
 gh|https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_amd64.tar.gz|gh_2.101.0_linux_amd64/bin/gh
 fish|https://github.com/fish-shell/fish-shell/releases/download/4.9.3/fish-4.9.3-linux-x86_64.tar.xz|fish
 omp|https://github.com/can1357/oh-my-pi/releases/download/v18.5.1/omp-linux-x64|-
+tuicr|https://github.com/agavra/tuicr/releases/download/v0.27.0/tuicr-0.27.0-x86_64-unknown-linux-gnu.tar.gz|tuicr

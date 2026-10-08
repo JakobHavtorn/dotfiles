@@ -41,6 +41,7 @@ brew "parallel"
 brew "magic-wormhole"
 brew "claude-squad"
 brew "herdr"
+brew "tuicr"             # code review TUI with vim keybindings
 brew "plannotator/tap/plannotator-tui"
 
 # Python tooling
