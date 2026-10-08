@@ -16,7 +16,7 @@
 # - CORTI_BEARER must be set in the shell env or ~/.hermes/.env
 #
 # Hashes that trigger re-run when model definitions change:
-# chebmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+# chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
@@ -65,8 +65,12 @@ fi
 # config; if hermes update changes them, this script re-applies on next apply.
 # All edits are idempotent — if already patched, sed is a no-op.
 
-# model.default: "anthropic/claude-opus-4.6" → "corti-s1"
-sed -i '' 's/^  default: "anthropic\/claude-opus-4.6"/  default: "corti-s1"/' "$HERMES_CONFIG"
+# model.default: "anthropic/claude-opus-4.6" → Corti default model
+# First sed handles unpatched configs (anthropic default); second sed
+# handles already-patched configs (any corti-* model) so default_model
+# changes propagate without a full hermes reset.
+sed -i '' 's/^  default: "anthropic\/claude-opus-4.6"/  default: "{{ .coding_agents.corti.default_model }}"/' "$HERMES_CONFIG"
+sed -i '' 's/^  default: "corti-[^"]*"/  default: "{{ .coding_agents.corti.default_model }}"/' "$HERMES_CONFIG"
 
 # model.provider: "auto" (first occurrence only — line 108 area)
 # BSD sed doesn't support 0,/pattern/ address ranges — use awk instead.
@@ -90,7 +94,7 @@ if grep -q '^  base_url: "https://ai.eu.corti.app/v1"$' "$HERMES_CONFIG" && ! gr
     mv "$TMP" "$HERMES_CONFIG"
 fi
 
-log_ok "model: corti-s1 via custom provider"
+log_ok "model: {{ .coding_agents.corti.default_model }} via custom provider"
 
 # ── config.yaml: named Corti provider ────────────────────────────────────────
 
