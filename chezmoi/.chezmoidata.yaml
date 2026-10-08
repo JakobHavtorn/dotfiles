@@ -85,7 +85,7 @@ coding_agents:
   # Corti model list — single source of truth for models.yml.tmpl,
   # opencode.jsonc, and the Hermes config run script.
   corti:
-    default_model: "corti-s1-beta"
+    default_model: "corti-s1"
     models:
       - id: corti-s1
         name: "Corti S1"
