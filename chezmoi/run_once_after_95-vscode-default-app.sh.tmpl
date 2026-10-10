@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# run_once_after_95-vscode-default-app.sh.tmpl
+# Sets VS Code as the default app for common dev file types via duti.
+# Uses extension-based binding (."ext") — the UTI form is unreliable for
+# many languages (fabricated UTIs silently fail).
+# duti is installed by the Brewfile (dev tools section).
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+
+{{ if eq .chezmoi.os "darwin" -}}
+
+log_section "setting VS Code as default app for dev file types"
+
+if ! command -v duti >/dev/null 2>&1; then
+    log_err "duti not found — run 'brew install duti' first"
+    exit 1
+fi
+
+APP="com.microsoft.VSCode"
+
+# Extensions to bind to VS Code. Using the ."ext" form exclusively —
+# extension-based binding works regardless of whether a real UTI exists.
+EXTENSIONS=(
+    # Languages
+    js ts jsx tsx
+    json jsonc
+    py rb go rs c h cpp hpp java kt swift
+    sh fish zsh bash
+    yml yaml toml xml
+    sql
+    # Markup / data
+    md markdown
+    html htm css scss sass less
+    # Config / text
+    txt log env conf ini cfg properties
+    diff patch
+    lock
+    # Frameworks / ecosystems
+    vue svelte graphql gql prisma proto
+    dockerfile
+    makefile
+    cmake
+)
+
+for ext in "${EXTENSIONS[@]}"; do
+    if duti -s "$APP" ".$ext" all 2>/dev/null; then
+        log_info ".$ext"
+    else
+        log_warn ".$ext (duti failed — skipping)"
+    fi
+done
+
+log_ok "VS Code set as default for ${#EXTENSIONS[@]} file types"
+
+{{ else -}}
+
+log_skip "VS Code default app bindings (not darwin)"
+
+{{ end -}}
