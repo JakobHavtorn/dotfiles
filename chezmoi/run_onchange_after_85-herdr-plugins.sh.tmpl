@@ -36,7 +36,7 @@ log_run --non-fatal "herdr plugin install herdr-annotate" \
 # Agent integrations — idempotent, re-running overwrites herdr's own files.
 # opencode also registers the TUI plugin in cli.json; run_onchange_after_20
 # renders the base cli.json without that entry, this script re-adds it.
-for agent in opencode omp claude codex; do
+for agent in opencode omp claude codex hermes; do
     log_run --non-fatal "herdr integration install $agent" \
         herdr integration install "$agent" </dev/null || true
 done
