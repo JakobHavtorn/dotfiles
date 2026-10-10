@@ -33,6 +33,7 @@ brew "gh"
 brew "chezmoi"
 brew "shellcheck"
 brew "shfmt"
+brew "duti"             # set default apps for file types (VS Code bindings)
 brew "tree"
 brew "wget"
 brew "yq"
