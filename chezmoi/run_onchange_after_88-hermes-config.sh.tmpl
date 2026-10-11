@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # run_onchange_after_88-hermes-config.sh.tmpl
 #
-# Patches ~/.hermes/config.yaml to use Corti as the LLM provider and links
-# agent-skills as external skill directories. Hermes is an Electron GUI app
-# not installed via chezmoi; its config.yaml is seeded by `hermes init` and
-# may be overwritten by `hermes update`. This script re-applies our patches
-# idempotently on every chezmoi apply.
+# Installs or updates the Corti Hermes profile distribution from
+# github.com/JakobHavtorn/hermes-profile. The distribution owns config.yaml,
+# SOUL.md, and skill wiring. We inject CORTI_BEARER into the profile's .env
+# and make it the sticky default profile.
 #
-# Uses sed for surgical line edits — preserves the 2300-line file's comments
-# and formatting. yq -i rewrites the whole document and strips comments,
-# which is unacceptable for this file.
+# Replaces the previous sed-patch approach (88-hermes-config v1), which
+# surgically edited Hermes's default config.yaml. The distribution approach
+# is native Hermes tooling — versioned, clean install, and survives
+# `hermes update` without pattern-matching fragility.
 #
 # Dependencies:
-# - ~/.hermes/config.yaml must exist (Hermes installed)
-# - CORTI_BEARER must be set in the shell env or ~/.hermes/.env
+# - hermes CLI in PATH (installed by user, not chezmoi)
+# - CORTI_BEARER in shell env or ~/.hermes/.env
 #
 # Hashes that trigger re-run when model definitions change:
 # chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
@@ -28,23 +28,51 @@ if is_ci; then
     exit 0
 fi
 
-HERMES_DIR="$HOME/.hermes"
-HERMES_CONFIG="$HERMES_DIR/config.yaml"
-HERMES_ENV="$HERMES_DIR/.env"
-
-if [[ ! -f "$HERMES_CONFIG" ]]; then
-    log_skip "hermes config (Hermes not installed)"
+if ! command -v hermes >/dev/null 2>&1; then
+    log_skip "hermes config (hermes CLI not installed)"
     exit 0
 fi
 
-log_section "hermes config (Corti provider + agent-skills)"
+HERMES_DIR="$HOME/.hermes"
+HERMES_ENV="$HERMES_DIR/.env"
+PROFILE_NAME="corti"
+PROFILE_DIR="$HERMES_DIR/profiles/$PROFILE_NAME"
+PROFILE_ENV="$PROFILE_DIR/.env"
+
+log_section "hermes config (Corti profile distribution)"
+
+# ── Install or update the distribution ──────────────────────────────────────
+
+if [[ ! -f "$PROFILE_DIR/distribution.yaml" ]]; then
+    log_info "installing corti profile distribution..."
+    if ! hermes profile install github.com/JakobHavtorn/hermes-profile \
+         --name "$PROFILE_NAME" --alias -y </dev/null; then
+        log_warn "profile install failed — Hermes may not be fully set up yet"
+        exit 0
+    fi
+    log_ok "installed corti profile distribution"
+else
+    log_info "updating corti profile distribution..."
+    # --force-config replaces config.yaml with the repo version.
+    # Omit --force-config to preserve local config tweaks.
+    if ! hermes profile update "$PROFILE_NAME" --force-config -y </dev/null; then
+        log_warn "profile update failed — continuing with existing config"
+    else
+        log_ok "updated corti profile distribution"
+    fi
+fi
 
 # ── .env: ensure CORTI_BEARER ────────────────────────────────────────────────
 
-# Hermes is a GUI app — it reads ~/.hermes/.env, not shell env vars.
-# If CORTI_BEARER is in the shell env but not in .env, append it.
-if [[ -n "${CORTI_BEARER:-}" ]] && ! grep -q '^CORTI_BEARER=' "$HERMES_ENV" 2>/dev/null; then
-    cat >> "$HERMES_ENV" <<EOF
+# Hermes is a GUI app — it reads .env files, not shell env vars.
+# Prefer the profile-specific .env; fall back to the default profile .env.
+ENV_TARGET="$PROFILE_ENV"
+if [[ ! -f "$ENV_TARGET" ]]; then
+    ENV_TARGET="$HERMES_ENV"
+fi
+
+if [[ -n "${CORTI_BEARER:-}" ]] && ! grep -q '^CORTI_BEARER=' "$ENV_TARGET" 2>/dev/null; then
+    cat >> "$ENV_TARGET" <<EOF
 
 # =============================================================================
 # LLM PROVIDER (Corti)
@@ -52,175 +80,34 @@ if [[ -n "${CORTI_BEARER:-}" ]] && ! grep -q '^CORTI_BEARER=' "$HERMES_ENV" 2>/d
 # OpenAI-compatible endpoint at https://ai.eu.corti.app/v1
 CORTI_BEARER="$CORTI_BEARER"
 EOF
-    log_ok "added CORTI_BEARER to ~/.hermes/.env"
+    log_ok "added CORTI_BEARER to $ENV_TARGET"
+elif grep -q '^CORTI_BEARER=' "$ENV_TARGET" 2>/dev/null; then
+    log_skip "CORTI_BEARER already in $ENV_TARGET"
 elif grep -q '^CORTI_BEARER=' "$HERMES_ENV" 2>/dev/null; then
-    log_skip "CORTI_BEARER already in ~/.hermes/.env"
+    log_skip "CORTI_BEARER in default .env"
 else
-    log_warn "CORTI_BEARER not in shell env or ~/.hermes/.env — Hermes won't authenticate"
+    log_warn "CORTI_BEARER not in shell env or any .env — Hermes won't authenticate"
 fi
 
-# ── config.yaml: main model section ──────────────────────────────────────────
+# ── Make corti the sticky default profile ────────────────────────────────────
 
-# Replace specific lines in-place. These patterns match the Hermes default
-# config; if hermes update changes them, this script re-applies on next apply.
-# All edits are idempotent — if already patched, sed is a no-op.
-
-# model.default: "anthropic/claude-opus-4.6" → Corti default model
-# First sed handles unpatched configs (anthropic default); second sed
-# handles already-patched configs (any corti-* model) so default_model
-# changes propagate without a full hermes reset.
-sed -i '' 's/^  default: "anthropic\/claude-opus-4.6"/  default: "{{ .coding_agents.corti.default_model }}"/' "$HERMES_CONFIG"
-sed -i '' 's/^  default: "corti-[^"]*"/  default: "{{ .coding_agents.corti.default_model }}"/' "$HERMES_CONFIG"
-
-# model.provider: "auto" (first occurrence only — line 108 area)
-# BSD sed doesn't support 0,/pattern/ address ranges — use awk instead.
-if grep -q '^  provider: "auto"$' "$HERMES_CONFIG"; then
-    TMP=$(mktemp)
-    awk '!done && /^  provider: "auto"$/ {$0="  provider: \"custom\""; done=1} {print}' "$HERMES_CONFIG" > "$TMP"
-    mv "$TMP" "$HERMES_CONFIG"
-fi
-
-# model.base_url: replace openrouter with corti, add key_env after it.
-# Use awk — BSD sed doesn't expand \n in replacement strings.
-if grep -q '^  base_url: "https://openrouter.ai/api/v1"$' "$HERMES_CONFIG"; then
-    TMP=$(mktemp)
-    awk '/^  base_url: "https:\/\/openrouter.ai\/api\/v1"$/ {sub(/openrouter.ai\/api\/v1/, "ai.eu.corti.app/v1"); print; print "  key_env: \"CORTI_BEARER\""; next} {print}' "$HERMES_CONFIG" > "$TMP"
-    mv "$TMP" "$HERMES_CONFIG"
-fi
-# If base_url is already corti but key_env is missing, insert key_env after it.
-if grep -q '^  base_url: "https://ai.eu.corti.app/v1"$' "$HERMES_CONFIG" && ! grep -q '^  key_env: "CORTI_BEARER"$' "$HERMES_CONFIG"; then
-    TMP=$(mktemp)
-    awk '/^  base_url: "https:\/\/ai.eu.corti.app\/v1"$/ {print; print "  key_env: \"CORTI_BEARER\""; next} {print}' "$HERMES_CONFIG" > "$TMP"
-    mv "$TMP" "$HERMES_CONFIG"
-fi
-
-log_ok "model: {{ .coding_agents.corti.default_model }} via custom provider"
-
-# ── config.yaml: named Corti provider ────────────────────────────────────────
-
-# Insert after the last commented providers example. We use a marker:
-# the line `#     key_cmd: "databricks auth token -p MY-PROFILE"` that ends
-# the commented dbx-claude example. If our block already exists (marker:
-# "# Corti provider"), skip insertion.
-if grep -q '^# Corti provider —' "$HERMES_CONFIG"; then
-    log_skip "providers.corti already present"
+if ! hermes profile show "$PROFILE_NAME" >/dev/null 2>&1; then
+    log_warn "profile '$PROFILE_NAME' not found — skipping 'profile use'"
+elif hermes profile list 2>/dev/null | grep -q '◆corti'; then
+    log_skip "corti is already the active profile"
 else
-    # Find the line number of the last databricks key_cmd comment and insert after it
-    ANCHOR='#     key_cmd: "databricks auth token -p MY-PROFILE"'
-    LINE_NUM=$(grep -n "$ANCHOR" "$HERMES_CONFIG" | tail -1 | cut -d: -f1)
-    if [[ -z "$LINE_NUM" ]]; then
-        log_warn "could not find providers anchor — skipping named provider"
+    if hermes profile use "$PROFILE_NAME" </dev/null 2>/dev/null; then
+        log_ok "corti set as sticky default profile"
     else
-        # Insert the Corti provider block after the anchor line + blank line
-        # Use a temp file to insert multiple lines
-        TMP=$(mktemp)
-        HEAD=$((LINE_NUM + 1))
-        {
-            sed -n "1,${LINE_NUM}p" "$HERMES_CONFIG"
-            echo ""
-            echo "# Corti provider — OpenAI-compatible endpoint. Same base URL + key as model:"
-            echo "# above, but as a named provider so you can switch with"
-            echo "# /model custom:corti:corti-s1-mini mid-session."
-            echo "providers:"
-            echo "  corti:"
-            echo "    base_url: \"https://ai.eu.corti.app/v1\""
-            echo "    api_key: \${CORTI_BEARER}"
-            echo "    api_mode: chat_completions"
-            echo "    default_model: {{ .coding_agents.corti.default_model }}"
-            echo "    models:"
-{{ range .coding_agents.corti.models }}{{ if not (eq .id "corti-s1-embedding") }}            echo "      {{ .id }}:"
-            echo "        context_length: {{ .context_length }}"
-{{ end }}{{ end }}
-            sed -n "${HEAD},\$p" "$HERMES_CONFIG"
-        } > "$TMP"
-        mv "$TMP" "$HERMES_CONFIG"
-        log_ok "providers.corti configured"
+        log_warn "could not set corti as default — run 'hermes profile use corti' manually"
     fi
 fi
 
-# ── config.yaml: auxiliary models ────────────────────────────────────────────
-
-# Insert before the `agent:` section (which follows skills/auxiliary in the
-# default config). If already present (marker: "^auxiliary:"), skip.
-if grep -q '^auxiliary:' "$HERMES_CONFIG"; then
-    log_skip "auxiliary models already present"
-else
-    # Find the `agent:` section to insert before it
-    LINE_NUM=$(grep -n '^agent:' "$HERMES_CONFIG" | head -1 | cut -d: -f1)
-    if [[ -z "$LINE_NUM" ]]; then
-        log_warn "could not find agent: section — skipping auxiliary"
-    else
-        TMP=$(mktemp)
-        {
-            sed -n "1,$((LINE_NUM - 1))p" "$HERMES_CONFIG"
-            echo "# ============================================================================="
-            echo "# Auxiliary Models"
-            echo "# ============================================================================="
-            echo "# Side-task model routing — matches OMP modelRoles from private_config.yml."
-            echo "# provider: \"main\" reuses the Corti endpoint + key from the model: section above."
-            echo "auxiliary:"
-            echo "  vision:"
-            echo "    provider: \"main\""
-            echo "    model: \"corti-s1-mini\""
-            echo "    reasoning_effort: \"none\""
-            echo "    timeout: 120"
-            echo "  title_generation:"
-            echo "    provider: \"main\""
-            echo "    model: \"corti-s1-tiny-instant\""
-            echo "    timeout: 30"
-            echo "  compression:"
-            echo "    provider: \"main\""
-            echo "    model: \"corti-s1-mini\""
-            echo "    reasoning_effort: \"low\""
-            echo "    timeout: 120"
-            echo "  approval:"
-            echo "    provider: \"main\""
-            echo "    model: \"corti-s1-tiny-instant\""
-            echo "    timeout: 30"
-            echo ""
-            sed -n "${LINE_NUM},\$p" "$HERMES_CONFIG"
-        } > "$TMP"
-        mv "$TMP" "$HERMES_CONFIG"
-        log_ok "auxiliary: vision, title, compression, approval → Corti"
-    fi
-fi
-
-# ── config.yaml: skills external_dirs ────────────────────────────────────────
+# ── Verify external_dirs resolve ─────────────────────────────────────────────
 
 AGENT_SKILLS_DIR="$HOME/.agent-skills"
 if [[ ! -d "$AGENT_SKILLS_DIR/plugins/coding/skills" ]]; then
-    log_warn "agent-skills repo not found at $AGENT_SKILLS_DIR — skipping external_dirs"
+    log_warn "agent-skills repo not found at $AGENT_SKILLS_DIR — external_dirs won't resolve"
 else
-    if grep -q '^  external_dirs:' "$HERMES_CONFIG"; then
-        log_skip "skills.external_dirs already present"
-    else
-        # Replace the commented external_dirs example with active config.
-        # The default config has a commented block:
-        #   # external_dirs:
-        #     - ~/.agents/skills
-        #     - /home/shared/team-skills
-        # We uncomment and replace with our paths.
-        # Find the `# external_dirs:` comment line under skills:
-        LINE_NUM=$(grep -n '^\s*# external_dirs:' "$HERMES_CONFIG" | head -1 | cut -d: -f1)
-        if [[ -z "$LINE_NUM" ]]; then
-            log_warn "could not find external_dirs comment — skipping"
-        else
-            # Replace the commented block (3 lines: comment + 2 paths) with active config
-            # Use sed for the replacement
-            TMP=$(mktemp)
-            {
-                sed -n "1,$((LINE_NUM - 1))p" "$HERMES_CONFIG"
-                echo "  # External skill directories — agent-skills repo, linked via skillctl."
-                echo "  # coding skills: code-review, tdd, mermaid, skill-creator, etc."
-                echo "  # pm skills: standup-summary, prioritize-tasks, etc."
-                echo "  external_dirs:"
-                echo "    - $AGENT_SKILLS_DIR/plugins/coding/skills"
-                echo "    - $AGENT_SKILLS_DIR/plugins/pm/skills"
-                # Skip the 3 commented lines we replaced
-                sed -n "$((LINE_NUM + 3)),\$p" "$HERMES_CONFIG"
-            } > "$TMP"
-            mv "$TMP" "$HERMES_CONFIG"
-            log_ok "skills.external_dirs: agent-skills coding + pm"
-        fi
-    fi
+    log_ok "agent-skills present — external_dirs will resolve"
 fi
