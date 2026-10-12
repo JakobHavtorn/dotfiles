@@ -4,8 +4,7 @@
 # Installs or updates the Corti Hermes profile distribution from
 # github.com/JakobHavtorn/hermes-profile. The distribution owns config.yaml,
 # SOUL.md, cron/jobs.json, and skill wiring. We inject CORTI_BEARER into the
-# profile's .env, make it the sticky default profile, and clone bot profiles
-# that the cron jobs deliver to.
+# profile's .env, and make it the sticky default profile.
 #
 # Replaces the previous sed-patch approach (88-hermes-config v1), which
 # surgically edited Hermes's default config.yaml. The distribution approach
@@ -129,21 +128,3 @@ if [[ ! -d "$AGENT_SKILLS_DIR/plugins/coding/skills" ]]; then
 else
     log_ok "agent-skills present — external_dirs will resolve"
 fi
-
-# ── Clone bot profiles that cron jobs deliver to ──────────────────────────────
-
-# The distribution ships cron jobs with deliver targets like bot-chat:quantum.
-# Those bot profiles must exist before the jobs can fire. Bots are identical
-# clones of corti — same config, SOUL, skills — created here so they resolve.
-BOT_PROFILES=(asr newsdigest onthisday quantum)
-
-for bot in "${BOT_PROFILES[@]}"; do
-    if hermes profile show "$bot" >/dev/null 2>&1; then
-        log_skip "bot profile '$bot' already exists"
-    elif hermes profile create "$bot" --clone-from "$PROFILE_NAME" --no-alias \
-             </dev/null >/dev/null 2>&1; then
-        log_ok "created bot profile '$bot' (cloned from $PROFILE_NAME)"
-    else
-        log_warn "could not create bot profile '$bot' — run 'hermes profile create $bot --clone-from $PROFILE_NAME' manually"
-    fi
-done
