@@ -90,6 +90,23 @@ else
     log_warn "CORTI_BEARER not in shell env or any .env — Hermes won't authenticate"
 fi
 
+# ── .env: ensure SLACK_CLIENT_ID / SLACK_CLIENT_SECRET ────────────────────────
+
+# Slack MCP is DCR-less — needs a pre-registered OAuth app. Credentials live
+# in fish_variables (shell env), but Hermes reads .env. Same pattern as
+# CORTI_BEARER: pull from shell, write to profile .env if missing.
+for slack_var in SLACK_CLIENT_ID SLACK_CLIENT_SECRET; do
+    env_val="${!slack_var:-}"
+    if [[ -n "$env_val" ]] && ! grep -q "^${slack_var}=" "$ENV_TARGET" 2>/dev/null; then
+        echo "${slack_var}=${env_val}" >> "$ENV_TARGET"
+        log_ok "added ${slack_var} to $ENV_TARGET"
+    elif grep -q "^${slack_var}=" "$ENV_TARGET" 2>/dev/null; then
+        log_skip "${slack_var} already in $ENV_TARGET"
+    else
+        log_warn "${slack_var} not in shell env or .env — Slack MCP won't authenticate"
+    fi
+done
+
 # ── Make corti the sticky default profile ────────────────────────────────────
 
 if ! hermes profile show "$PROFILE_NAME" >/dev/null 2>&1; then
