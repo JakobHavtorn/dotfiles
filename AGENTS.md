@@ -75,6 +75,8 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 
 ## Conventions
 
+- Two config management strategies. Authored configs — fish, herdr, k9s, SSH, git, omp, LaunchAgents plists — live as chezmoi source files in `dot_config/`, `dot_omp/`, `Library/`. You write them, chezmoi applies them. Observed state from external tools — Brewfile, pipx.txt, omf.txt, macOS defaults, Obsidian vault config — lives in `manifests/`. `dump.sh` captures it weekly, PR review is the curation gate, `run_onchange` scripts install it. The split: if you hand-write it, it is a source file; if a tool generates it, it is a manifest.
+
 - `run_once_*` — executes exactly once per machine. Guard with `command -v` checks; the prefix is a guard, not idempotency.
 - `run_after_*` / `run_before_*` (no `once`/`onchange`) — executes on every `chezmoi apply`. Use for idempotent operations that must track upstream changes (e.g. agent-skills: `git pull` + `skillctl link`). The script itself must be safe to re-run.
 - `run_onchange_*` — re-executes when the script's own content changes. Embed manifest hashes as comments to trigger on manifest edits: `# Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}`
