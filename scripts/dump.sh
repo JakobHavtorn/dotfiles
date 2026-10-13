@@ -138,12 +138,54 @@ dump_macos_defaults() {
 }
 
 # ---------------------------------------------------------------------------
+# Obsidian — snapshot vault config (.obsidian/*.json) and plugin configs
+# (plugins/*/manifest.json + data.json). Excludes workspace state and
+# binary plugin files (main.js, styles.css). Not the notes themselves.
+# ---------------------------------------------------------------------------
+dump_obsidian() {
+    local vault="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten"
+    local obs_dir="$vault/.obsidian"
+    local dest="manifests/obsidian"
+
+    if [ ! -d "$obs_dir" ]; then
+        echo "  obsidian vault not found, skipping"
+        return 0
+    fi
+
+    echo "  obsidian config..."
+
+    # Top-level config files (portable, not machine-specific)
+    local configs=(
+        app.json community-plugins.json core-plugins.json core-plugins-migration.json
+        daily-notes.json graph.json hotkeys.json templates.json types.json
+        workspaces.json zk-prefixer.json
+    )
+
+    mkdir -p "$dest"
+    for f in "${configs[@]}"; do
+        [ -f "$obs_dir/$f" ] && cp "$obs_dir/$f" "$dest/$f"
+    done
+
+    # Plugin manifests + data.json (config only; skip main.js/styles.css)
+    rm -rf "$dest/plugins"
+    mkdir -p "$dest/plugins"
+    for d in "$obs_dir/plugins/"*/; do
+        local plugin
+        plugin=$(basename "$d")
+        mkdir -p "$dest/plugins/$plugin"
+        [ -f "$d/manifest.json" ] && cp "$d/manifest.json" "$dest/plugins/$plugin/manifest.json"
+        [ -f "$d/data.json" ] && cp "$d/data.json" "$dest/plugins/$plugin/data.json"
+    done
+}
+
+# ---------------------------------------------------------------------------
 # Run all sections in sequence.
 # ---------------------------------------------------------------------------
 dump_brew
 dump_pipx
 dump_omf
 dump_macos_defaults
+dump_obsidian
 ../scripts/check-bootstrap.sh || echo "  (non-fatal: incomplete bootstrap reported above)"
 
 echo ""
