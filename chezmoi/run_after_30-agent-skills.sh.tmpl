@@ -36,7 +36,30 @@ export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
 
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     log_info "updating $AGENT_SKILLS_DIR..."
+    _pre_sha="$(git -C "$AGENT_SKILLS_DIR" rev-parse HEAD)"
     log_run --non-fatal "agent-skills update" git -C "$AGENT_SKILLS_DIR" pull --ff-only
+    _post_sha="$(git -C "$AGENT_SKILLS_DIR" rev-parse HEAD)"
+    if [[ "$_pre_sha" != "$_post_sha" ]]; then
+        # Extract skill names from changed paths under plugins/*/skills/<name>/.
+        _changed="$(git -C "$AGENT_SKILLS_DIR" diff --name-only "$_pre_sha" "$_post_sha" \
+            | sed -n 's|^plugins/[^/]*/skills/\([^/][^/]*\)/.*|\1|p' \
+            | sort -u)"
+        # Non-skill changes (skillctl, AGENTS.md, README, etc.) —
+        # anything not under plugins/*/skills/.
+        _other="$(git -C "$AGENT_SKILLS_DIR" diff --name-only "$_pre_sha" "$_post_sha" \
+            | grep -v '^plugins/[^/]*/skills/' \
+            | sort -u)"
+        if [[ -n "$_changed" ]]; then
+            while IFS= read -r _skill; do
+                log_info "  changed: $_skill"
+            done <<< "$_changed"
+        fi
+        if [[ -n "$_other" ]]; then
+            _other_csv="$(paste -sd, - <<< "$_other")"
+            log_info "  changed: $_other_csv"
+        fi
+    fi
+    unset _pre_sha _post_sha _changed _other _skill _other_csv
 else
     log_info "cloning to $AGENT_SKILLS_DIR..."
     if ! log_run "agent-skills clone" git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"; then
@@ -46,10 +69,28 @@ else
 fi
 
 # Link skills, context file, and agents/*.md specs into each harness.
+# skillctl prints LINKED/COPIED for new or redirected symlinks and EXISTS
+# for already-correct ones.  We surface only the LINKED/COPIED lines so
+# the log shows symlink changes (new skills, renames, redirected paths)
+# without noise from the common no-op case.
 if command -v python3 >/dev/null 2>&1; then
     for agent in opencode omp claude codex; do
-        log_run --non-fatal "linked skills into $agent" python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force
+        _rc=0
+        _link_out="$(python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force 2>&1)" || _rc=$?
+        if [[ "$_rc" -ne 0 ]]; then
+            log_err "linked skills into $agent"
+            printf '%s\n' "$_link_out" >&2
+        else
+            _link_changed="$(grep -E '^  (LINKED|COPIED) ' <<< "$_link_out" || true)"
+            log_ok "linked skills into $agent"
+            if [[ -n "$_link_changed" ]]; then
+                while IFS= read -r _line; do
+                    log_info "$_line"
+                done <<< "$_link_changed"
+            fi
+        fi
     done
+    unset _rc _link_out _link_changed _line
 else
     log_warn "python3 not found — skipping skill linking"
 fi
