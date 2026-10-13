@@ -1,0 +1,5 @@
+{
+  "folder": "permanent-notes",
+  "template": "templates/permanent-note",
+  "format": "YYYY-MM-DD-HH-mm"
+}

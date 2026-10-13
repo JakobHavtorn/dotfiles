@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# run_onchange_after_89-obsidian-config.sh.tmpl
+#
+# Copies Obsidian vault config from manifests/obsidian/ into the live vault's
+# .obsidian/ directory. Excludes workspace state and binary plugin files.
+# The manifest is dumped by scripts/dump.sh and curated via PR review.
+#
+# Only runs on macOS (Obsidian is not on Linux). Skips in CI.
+#
+# Manifest hash (triggers re-run when config files change):
+# app.json hash: {{ include "manifests/obsidian/app.json" | sha256sum }}
+# community-plugins.json hash: {{ include "manifests/obsidian/community-plugins.json" | sha256sum }}
+# core-plugins.json hash: {{ include "manifests/obsidian/core-plugins.json" | sha256sum }}
+# core-plugins-migration.json hash: {{ include "manifests/obsidian/core-plugins-migration.json" | sha256sum }}
+# daily-notes.json hash: {{ include "manifests/obsidian/daily-notes.json" | sha256sum }}
+# graph.json hash: {{ include "manifests/obsidian/graph.json" | sha256sum }}
+# hotkeys.json hash: {{ include "manifests/obsidian/hotkeys.json" | sha256sum }}
+# templates.json hash: {{ include "manifests/obsidian/templates.json" | sha256sum }}
+# types.json hash: {{ include "manifests/obsidian/types.json" | sha256sum }}
+# workspaces.json hash: {{ include "manifests/obsidian/workspaces.json" | sha256sum }}
+# zk-prefixer.json hash: {{ include "manifests/obsidian/zk-prefixer.json" | sha256sum }}
+# plugins/dataview/manifest.json hash: {{ include "manifests/obsidian/plugins/dataview/manifest.json" | sha256sum }}
+# plugins/number-headings-obsidian/data.json hash: {{ include "manifests/obsidian/plugins/number-headings-obsidian/data.json" | sha256sum }}
+# plugins/number-headings-obsidian/manifest.json hash: {{ include "manifests/obsidian/plugins/number-headings-obsidian/manifest.json" | sha256sum }}
+# plugins/obsidian-citation-plugin/data.json hash: {{ include "manifests/obsidian/plugins/obsidian-citation-plugin/data.json" | sha256sum }}
+# plugins/obsidian-citation-plugin/manifest.json hash: {{ include "manifests/obsidian/plugins/obsidian-citation-plugin/manifest.json" | sha256sum }}
+# plugins/obsidian-dynamic-toc/manifest.json hash: {{ include "manifests/obsidian/plugins/obsidian-dynamic-toc/manifest.json" | sha256sum }}
+# plugins/obsidian-tasks-plugin/manifest.json hash: {{ include "manifests/obsidian/plugins/obsidian-tasks-plugin/manifest.json" | sha256sum }}
+# plugins/quick-latex/data.json hash: {{ include "manifests/obsidian/plugins/quick-latex/data.json" | sha256sum }}
+# plugins/quick-latex/manifest.json hash: {{ include "manifests/obsidian/plugins/quick-latex/manifest.json" | sha256sum }}
+# plugins/table-editor-obsidian/data.json hash: {{ include "manifests/obsidian/plugins/table-editor-obsidian/data.json" | sha256sum }}
+# plugins/table-editor-obsidian/manifest.json hash: {{ include "manifests/obsidian/plugins/table-editor-obsidian/manifest.json" | sha256sum }}
+# plugins/templater-obsidian/data.json hash: {{ include "manifests/obsidian/plugins/templater-obsidian/data.json" | sha256sum }}
+# plugins/templater-obsidian/manifest.json hash: {{ include "manifests/obsidian/plugins/templater-obsidian/manifest.json" | sha256sum }}
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# ── Guards ──────────────────────────────────────────────────────────────────
+
+if is_ci; then
+    log_skip "obsidian config (CI environment)"
+    exit 0
+fi
+
+if ! is_darwin; then
+    log_skip "obsidian config (not macOS)"
+    exit 0
+fi
+
+VAULT="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten"
+OBS_DIR="$VAULT/.obsidian"
+SRC="{{ .chezmoi.sourceDir }}/manifests/obsidian"
+
+if [ ! -d "$OBS_DIR" ]; then
+    log_skip "obsidian config (vault not found)"
+    exit 0
+fi
+
+if [ ! -d "$SRC" ]; then
+    log_skip "obsidian config (no manifest found)"
+    exit 0
+fi
+
+log_section "obsidian config"
+
+# ── Copy top-level config files ──────────────────────────────────────────────
+
+configs=(
+    app.json community-plugins.json core-plugins.json core-plugins-migration.json
+    daily-notes.json graph.json hotkeys.json templates.json types.json
+    workspaces.json zk-prefixer.json
+)
+
+for f in "${configs[@]}"; do
+    if [ -f "$SRC/$f" ]; then
+        cp "$SRC/$f" "$OBS_DIR/$f"
+        log_ok "copied $f"
+    fi
+done
+
+# ── Copy plugin manifests + data.json ────────────────────────────────────────
+# Creates plugin dirs if needed. Does NOT copy main.js or styles.css —
+# those are downloaded by Obsidian when installing plugins. If a plugin
+# in the manifest isn't installed, Obsidian will show it as disabled
+# until the user installs it from the community plugin browser.
+
+for d in "$SRC/plugins/"*/; do
+    plugin=$(basename "$d")
+    mkdir -p "$OBS_DIR/plugins/$plugin"
+    for pf in manifest.json data.json; do
+        if [ -f "$d/$pf" ]; then
+            cp "$d/$pf" "$OBS_DIR/plugins/$plugin/$pf"
+            log_ok "copied plugins/$plugin/$pf"
+        fi
+    done
+done
+
+log_info "note: plugin binaries (main.js, styles.css) are not managed —"
+log_info "      install plugins via Obsidian → Settings → Community plugins"

@@ -23,7 +23,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `README.md` | User-facing docs |
 | `.github/workflows/` | CI |
 | `scripts/check-bootstrap.sh` | Platform-agnostic interrupted-apply detector; called from dump.sh and CI |
-| `scripts/dump.sh` | Weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults. PATH-hardened for launchd |
+| `scripts/dump.sh` | Weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults, obsidian config. PATH-hardened for launchd |
 
 **`chezmoi/` — chezmoi source root (via `.chezmoiroot`):**
 
@@ -54,6 +54,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/pipx.txt` | pipx install declaration — dumped from venvs' pipx metadata (package_or_url: git URLs, extras) |
 | `chezmoi/manifests/macos-defaults-keys.txt` | Shared (domain\|key\|value) list — read by dump.sh (observes) and run_once_after_90-macos-defaults.sh.tmpl (writes) |
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
+| `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — `.obsidian/*.json` + `plugins/*/manifest.json` + `data.json` (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes workspace state and plugin binaries |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
 | `chezmoi/run_once_before_10-install-homebrew.sh.tmpl` | Darwin only |
@@ -68,6 +69,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_85-herdr-plugins.sh.tmpl` | Installs herdr-annotate plugin (Full variant) across opencode, omp, claude, codex, hermes |
 | `chezmoi/run_onchange_after_88-hermes-config.sh.tmpl` | Installs/updates Corti Hermes profile distribution from hermes-profile repo; injects CORTI_BEARER, sets corti as sticky default profile |
 | `chezmoi/run_onchange_after_88-aft-plugin.sh.tmpl` | Installs @cortexkit/aft-pi into OMP via `omp plugin install --force`; pre-warms AFT binary |
+| `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |
 | `chezmoi/Library/LaunchAgents/` | launchd plist for weekly dump.sh (no `dot_` prefix — Library is not hidden) |
 
