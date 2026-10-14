@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # dump.sh — snapshot current machine state into manifests/.
-# Run weekly via launchd (macOS). No auto-commit; review and commit by hand.
+# Run daily via launchd (macOS). No auto-commit; review and commit by hand.
 #
 # Generated manifests are observed state, not declarations: git diff shows what
 # the machine consciously drifted, and PR review is the gate. pipx.txt is the
@@ -43,7 +43,7 @@ dump_brew() {
 
     # Convergence report — what would `brew bundle cleanup` REMOVE?
     # The pipeline is additive-only: deleting a Brewfile line never uninstalls.
-    # This dry-run gives weekly visibility into the drift, so a stale entry is
+    # This dry-run gives daily visibility into the drift, so a stale entry is
     # noticed and removed by hand (brew bundle cleanup is destructive — never
     # run it without review). Report-only, non-fatal.
     echo "  brew bundle cleanup --dry-run (report-only)..."
