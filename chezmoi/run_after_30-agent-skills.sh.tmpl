@@ -37,9 +37,18 @@ export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     log_info "updating $AGENT_SKILLS_DIR..."
     _pre_sha="$(git -C "$AGENT_SKILLS_DIR" rev-parse HEAD)"
-    log_run --non-fatal "agent-skills update" git -C "$AGENT_SKILLS_DIR" pull --ff-only
+    _pull_rc=0
+    _pull_out="$(git -C "$AGENT_SKILLS_DIR" pull --ff-only 2>&1)" || _pull_rc=$?
     _post_sha="$(git -C "$AGENT_SKILLS_DIR" rev-parse HEAD)"
-    if [[ "$_pre_sha" != "$_post_sha" ]]; then
+    if [[ "$_pull_rc" -ne 0 ]]; then
+        log_err "agent-skills update"
+        printf '%s\n' "$_pull_out" >&2
+    elif [[ "$_pre_sha" == "$_post_sha" ]]; then
+        log_ok "agent-skills update (no changes)"
+    else
+        log_ok "agent-skills update"
+    fi
+    if [[ "$_pull_rc" -eq 0 && "$_pre_sha" != "$_post_sha" ]]; then
         # Extract skill names from changed paths under plugins/*/skills/<name>/.
         _changed="$(git -C "$AGENT_SKILLS_DIR" diff --name-only "$_pre_sha" "$_post_sha" \
             | sed -n 's|^plugins/[^/]*/skills/\([^/][^/]*\)/.*|\1|p' \
@@ -59,7 +68,7 @@ if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
             log_info "  changed: $_other_csv"
         fi
     fi
-    unset _pre_sha _post_sha _changed _other _skill _other_csv
+    unset _pre_sha _post_sha _pull_rc _pull_out _changed _other _skill _other_csv
 else
     log_info "cloning to $AGENT_SKILLS_DIR..."
     if ! log_run "agent-skills clone" git clone https://github.com/JakobHavtorn/agent-skills.git "$AGENT_SKILLS_DIR"; then
@@ -78,15 +87,17 @@ if command -v python3 >/dev/null 2>&1; then
         _rc=0
         _link_out="$(python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force 2>&1)" || _rc=$?
         if [[ "$_rc" -ne 0 ]]; then
-            log_err "linked skills into $agent"
+            log_err "synced skills into $agent"
             printf '%s\n' "$_link_out" >&2
         else
             _link_changed="$(grep -E '^  (LINKED|COPIED) ' <<< "$_link_out" || true)"
-            log_ok "linked skills into $agent"
             if [[ -n "$_link_changed" ]]; then
+                log_ok "synced skills into $agent"
                 while IFS= read -r _line; do
                     log_info "$_line"
                 done <<< "$_link_changed"
+            else
+                log_ok "synced skills into $agent (all current)"
             fi
         fi
     done
