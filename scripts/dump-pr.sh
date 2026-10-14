@@ -11,8 +11,9 @@
 # Requires: gh CLI authenticated (gh auth status). dump.sh's PATH hardening
 # covers launchd sessions.
 #
-# Output goes to ~/Library/Logs/dotfiles-dump.log via the launchd plist
-# StandardOutPath/StandardErrorPath keys. Check there if the weekly run fails.
+# Output appends to ~/Library/Logs/dotfiles-dump.log via the launchd plist
+# ProgramArguments redirect. Each run starts with a timestamp separator.
+# Check there if the weekly run fails.
 set -euo pipefail
 
 # launchd sessions get /usr/bin:/bin only; put Homebrew first so gh resolves
