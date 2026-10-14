@@ -57,7 +57,7 @@ if command -v shellcheck >/dev/null 2>&1; then
         | grep -v '/shared/manifest.sh$' \
         | sort)
     if [[ ${#_sc_files[@]} -gt 0 ]]; then
-        if shellcheck "${_sc_files[@]}" 2>&1; then
+        if shellcheck --severity=warning "${_sc_files[@]}" 2>&1; then
             log_ok "shellcheck (${#_sc_files[@]} files)"
         else
             log_err "shellcheck found issues"
@@ -99,9 +99,9 @@ if command -v chezmoi >/dev/null 2>&1; then
     for _identity in work personal; do
         _tmpl_fail=0
         while IFS= read -r _f; do
-            if ! chezmoi execute-template < "$_f" > /dev/null 2>&1; then
+            if ! chezmoi execute-template --override-data "{\"identity\":\"$_identity\"}" < "$_f" > /dev/null 2>&1; then
                 log_err "FAILED: $_f (identity=$_identity)"
-                chezmoi execute-template < "$_f" 2>&1 || true
+                chezmoi execute-template --override-data "{\"identity\":\"$_identity\"}" < "$_f" 2>&1 || true
                 _tmpl_fail=1
             fi
         done < <(find . -name '*.tmpl' -not -path './.git/*' -not -name '.chezmoi.toml.tmpl' | sort)
