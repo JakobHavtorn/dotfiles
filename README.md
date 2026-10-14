@@ -84,17 +84,23 @@ chezmoi diff && chezmoi apply
 
 Platform differences (Homebrew, macOS defaults, rootless tools, k9s) are detected automatically from the OS — no manual role selection needed.
 
-## Local CI
+## Pre-commit hooks
 
-Run the same fast checks as the `lint` workflow before pushing:
+Install hooks after cloning:
+
+```sh
+pre-commit install
+```
+
+Runs all four `ci-local.sh` checks (JSON, shellcheck, pipefail, template rendering) on every commit. Bypass with `git commit --no-verify`.
+
+## Local CI
 
 ```sh
 scripts/ci-local.sh
 ```
 
-Checks: JSON template validation, shellcheck, `set -euo pipefail` presence, chezmoi template rendering for both identities. Requires `shellcheck`, `python3`, and `chezmoi` on PATH.
-
-The clean-install workflows (full `chezmoi apply` on a fresh OS) are not locally runnable — they need a clean machine and have side effects unsuitable for a live system.
+Same checks as pre-commit, runnable on demand. CI (`.github/workflows/lint.yml`) calls this script too — single source of truth.
 
 ## Layout
 
