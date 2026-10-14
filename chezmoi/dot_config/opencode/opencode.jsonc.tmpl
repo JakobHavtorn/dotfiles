@@ -68,6 +68,9 @@
       "obsidian": {
         "type": "remote",
         "url": "{{ .coding_agents.mcp.servers.obsidian.url }}",
+        "headers": {
+          "Authorization": "Bearer {env:OBSIDIAN_API_KEY}"
+        },
         "disabled": false,
         "timeout": { "catalog": 30000, "execution": 30000 }
       }

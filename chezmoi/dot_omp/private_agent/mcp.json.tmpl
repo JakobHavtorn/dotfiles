@@ -42,7 +42,10 @@
     },
     "obsidian": {
       "type": "http",
-      "url": "{{ .coding_agents.mcp.servers.obsidian.url }}"
+      "url": "{{ .coding_agents.mcp.servers.obsidian.url }}",
+      "headers": {
+        "Authorization": "Bearer ${OBSIDIAN_API_KEY}"
+      }
     }
   }
 }

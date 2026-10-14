@@ -22,3 +22,12 @@ if test -f ~/.env
     end
 end
 # <<< corti-cli <<<
+
+# >>> obsidian-mcp >>>
+# loads OBSIDIAN_API_KEY from ~/.env into new shells (for OMP MCP config)
+if test -f ~/.env
+    for obs_line in (string match -r '^OBSIDIAN_[A-Za-z0-9_]*=.*' < ~/.env)
+        set -gx (string split -m 1 = -- $obs_line)
+    end
+end
+# <<< obsidian-mcp <<<

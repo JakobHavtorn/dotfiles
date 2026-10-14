@@ -35,10 +35,9 @@ fi
 
 API_KEY=$(python3 -c "
 import json, sys
-with open('$PLUGIN_DATA') as f:
-    d = json.load(f)
-print(d.get('apiKey', ''))
-" 2>/dev/null)
+with open(sys.argv[1]) as f:
+    print(json.load(f).get('apiKey', ''))
+" "$PLUGIN_DATA" 2>/dev/null)
 
 if [[ -z "$API_KEY" ]]; then
     log_warn "obsidian mcp (no apiKey in plugin data.json)"
@@ -66,15 +65,23 @@ fi
 # ── Codex (~/.codex/config.toml → [mcp_servers.obsidian]) ─────────────────────
 #
 # Codex supports bearer_token_env_var, so the key lives in an env var, not
-# in the config file. We set the env var in fish_variables (user does this
-# manually) and reference it here. The config.toml entry is just the URL
-# and the env var name.
+# in the config file. We write the key to ~/.env (loaded by config.fish for
+# new shells) and reference it via OBSIDIAN_API_KEY in config.toml.
 #
 # Codex's config.toml has hand-managed sections (personality, project trust,
 # features). We append the [mcp_servers.obsidian] block idempotently rather
 # than templating the whole file.
 
 CODEX_CONFIG="$HOME/.codex/config.toml"
+
+# Ensure OBSIDIAN_API_KEY is in ~/.env (same pattern as CORTI_BEARER)
+ENV_FILE="$HOME/.env"
+if ! grep -q '^OBSIDIAN_API_KEY=' "$ENV_FILE" 2>/dev/null; then
+    echo "OBSIDIAN_API_KEY=$API_KEY" >> "$ENV_FILE"
+    log_ok "added OBSIDIAN_API_KEY to ~/.env"
+else
+    log_skip "OBSIDIAN_API_KEY already in ~/.env"
+fi
 
 if [[ ! -d "$HOME/.codex" ]]; then
     log_skip "codex (~/.codex not found)"
@@ -89,7 +96,6 @@ url = "$OBSIDIAN_URL"
 bearer_token_env_var = "OBSIDIAN_API_KEY"
 EOF
         log_ok "codex: obsidian mcp added to config.toml"
-        log_warn "codex: set OBSIDIAN_API_KEY env var to the plugin's API key"
     fi
 fi
 
