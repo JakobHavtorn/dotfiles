@@ -191,4 +191,4 @@ dump_obsidian
 echo ""
 git diff --stat
 echo ""
-echo "review, curate, commit by hand."
+echo "dump complete. dump-pr.sh will open a PR if there are changes."

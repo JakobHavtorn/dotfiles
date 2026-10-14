@@ -24,6 +24,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `.github/workflows/` | CI |
 | `scripts/check-bootstrap.sh` | Platform-agnostic interrupted-apply detector; called from dump.sh and CI |
 | `scripts/dump.sh` | Weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults, obsidian config. PATH-hardened for launchd |
+| `scripts/dump-pr.sh` | Opens a PR for dump.sh manifest changes (macOS, launchd). Closes stale dump PRs first. Called after dump.sh |
 
 **`chezmoi/` — chezmoi source root (via `.chezmoiroot`):**
 
@@ -71,7 +72,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_88-aft-plugin.sh.tmpl` | Installs @cortexkit/aft-pi into OMP via `omp plugin install --force`; pre-warms AFT binary |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |
-| `chezmoi/Library/LaunchAgents/` | launchd plist for weekly dump.sh (no `dot_` prefix — Library is not hidden) |
+| `chezmoi/Library/LaunchAgents/` | launchd plist for weekly dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
 
 ## Conventions
 
