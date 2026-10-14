@@ -81,6 +81,8 @@ coding_agents:
       # query_docs_filesystem_corti_api_documentation. No auth.
       corti_docs:
         url: "https://docs.corti.ai/mcp"
+      obsidian:
+        url: "http://127.0.0.1:27123/mcp"
 
   # Corti model list — single source of truth for models.yml.tmpl,
   # opencode.jsonc, and the Hermes config run script.

@@ -64,6 +64,15 @@
         "oauth": {},
         "disabled": false,
         "timeout": { "catalog": 30000, "execution": 30000 }
+      },
+      "obsidian": {
+        "type": "remote",
+        "url": "{{ .coding_agents.mcp.servers.obsidian.url }}",
+        "headers": {
+          "Authorization": "Bearer {env:OBSIDIAN_LOCAL_REST_MCP_TOKEN}"
+        },
+        "disabled": false,
+        "timeout": { "catalog": 30000, "execution": 30000 }
       }
     }
   },
