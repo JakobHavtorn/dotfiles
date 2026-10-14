@@ -25,7 +25,7 @@ launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 
 log_ok "loaded: $PLIST"
-log_info "schedule: Sundays 10:00 (catch-up if missed)"
+log_info "schedule: daily at 10:00 (catch-up if missed)"
 
 {{ else -}}
 
