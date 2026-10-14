@@ -8,7 +8,8 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>echo "--- dump $(date -Iseconds) ---" &gt;&gt; {{ .chezmoi.homeDir }}/Library/Logs/dotfiles-dump.log 2&gt;&amp;1 &amp;&amp; {{ .chezmoi.sourceDir }}/../scripts/dump.sh &gt;&gt; {{ .chezmoi.homeDir }}/Library/Logs/dotfiles-dump.log 2&gt;&amp;1 &amp;&amp; {{ .chezmoi.sourceDir }}/../scripts/dump-pr.sh &gt;&gt; {{ .chezmoi.homeDir }}/Library/Logs/dotfiles-dump.log 2&gt;&amp;1</string>
+        <string>exec &gt;&gt; "$0" 2&gt;&amp;1; echo "--- dump $(date -Iseconds) ---"; {{ .chezmoi.sourceDir }}/../scripts/dump.sh &amp;&amp; {{ .chezmoi.sourceDir }}/../scripts/dump-pr.sh</string>
+        <string>{{ .chezmoi.homeDir }}/Library/Logs/dotfiles-dump.log</string>
     </array>
     <key>StartCalendarInterval</key>
     <dict>
