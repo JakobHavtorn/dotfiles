@@ -11,7 +11,7 @@ modelRoles:
   task: corti/corti-s1:max
   commit: corti/corti-s1-tiny-instant
   tiny: corti/corti-s1-tiny-instant
-  advisor: corti/corti-s1:max
+  advisor: corti/corti-s1-mini-beta:xhigh
   vision: corti/corti-s1-mini
 tools:
   approvalMode: yolo
@@ -64,6 +64,8 @@ disabledProviders:
 hideThinkingBlock: true
 advisor:
   enabled: true
+  immuneTurns: 0
+  syncBacklog: 3
 python:
   kernelMode: session
 task:
