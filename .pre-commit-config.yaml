@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^chezmoi/manifests/obsidian/
+      - id: end-of-file-fixer
+        exclude: ^chezmoi/manifests/obsidian/
+      - id: check-merge-conflict
+  - repo: local
+    hooks:
+      - id: ci-local
+        name: lint checks (ci-local.sh)
+        entry: scripts/ci-local.sh
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -23,7 +23,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `README.md` | User-facing docs |
 | `.github/workflows/` | CI |
 | `scripts/check-bootstrap.sh` | Platform-agnostic interrupted-apply detector; called from dump.sh and CI |
-| `scripts/ci-local.sh` | Local runner for the fast checks from `lint.yml`: JSON validation, shellcheck, `set -euo pipefail` check, template rendering for both identities |
+| `scripts/ci-local.sh` | Local runner for all lint checks: JSON validation, shellcheck, `set -euo pipefail` check, template rendering for both identities. Called by `.pre-commit-config.yaml` and `.github/workflows/lint.yml` — single source of truth |
 | `scripts/dump.sh` | Weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults, obsidian config. PATH-hardened for launchd |
 | `scripts/dump-pr.sh` | Opens a PR for dump.sh manifest changes (macOS, launchd). Closes stale dump PRs first. Called after dump.sh |
 
