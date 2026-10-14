@@ -74,13 +74,13 @@ fi
 
 CODEX_CONFIG="$HOME/.codex/config.toml"
 
-# Ensure OBSIDIAN_API_KEY is in ~/.env (same pattern as CORTI_BEARER)
+# Ensure OBSIDIAN_LOCAL_REST_MCP_TOKEN is in ~/.env (same pattern as CORTI_BEARER)
 ENV_FILE="$HOME/.env"
-if ! grep -q '^OBSIDIAN_API_KEY=' "$ENV_FILE" 2>/dev/null; then
-    echo "OBSIDIAN_API_KEY=$API_KEY" >> "$ENV_FILE"
-    log_ok "added OBSIDIAN_API_KEY to ~/.env"
+if ! grep -q '^OBSIDIAN_LOCAL_REST_MCP_TOKEN=' "$ENV_FILE" 2>/dev/null; then
+    echo "OBSIDIAN_LOCAL_REST_MCP_TOKEN=$API_KEY" >> "$ENV_FILE"
+    log_ok "added OBSIDIAN_LOCAL_REST_MCP_TOKEN to ~/.env"
 else
-    log_skip "OBSIDIAN_API_KEY already in ~/.env"
+    log_skip "OBSIDIAN_LOCAL_REST_MCP_TOKEN already in ~/.env"
 fi
 
 if [[ ! -d "$HOME/.codex" ]]; then
@@ -93,7 +93,7 @@ else
 
 [mcp_servers.obsidian]
 url = "$OBSIDIAN_URL"
-bearer_token_env_var = "OBSIDIAN_API_KEY"
+bearer_token_env_var = "OBSIDIAN_LOCAL_REST_MCP_TOKEN"
 EOF
         log_ok "codex: obsidian mcp added to config.toml"
     fi
