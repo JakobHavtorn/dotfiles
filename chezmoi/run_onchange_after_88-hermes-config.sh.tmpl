@@ -106,6 +106,26 @@ for slack_var in SLACK_CLIENT_ID SLACK_CLIENT_SECRET; do
     fi
 done
 
+# ── .env: ensure OBSIDIAN_LOCAL_REST_MCP_TOKEN ────────────────────────────────
+
+# Obsidian Local REST API MCP needs a bearer token. It's written to ~/.env by
+# run_onchange_after_86-obsidian-mcp.sh.tmpl. Hermes reads profile .env, not
+# shell env — same injection pattern as CORTI_BEARER and Slack vars.
+obs_var="OBSIDIAN_LOCAL_REST_MCP_TOKEN"
+# Try shell env first, then ~/.env (where the 86 script writes it)
+env_val="${!obs_var:-}"
+if [[ -z "$env_val" ]] && [[ -f "$HOME/.env" ]]; then
+    env_val=$(grep "^${obs_var}=" "$HOME/.env" 2>/dev/null | head -1 | cut -d= -f2-)
+fi
+if [[ -n "$env_val" ]] && ! grep -q "^${obs_var}=" "$ENV_TARGET" 2>/dev/null; then
+    echo "${obs_var}=${env_val}" >> "$ENV_TARGET"
+    log_ok "added ${obs_var} to $ENV_TARGET"
+elif grep -q "^${obs_var}=" "$ENV_TARGET" 2>/dev/null; then
+    log_skip "${obs_var} already in $ENV_TARGET"
+else
+    log_warn "${obs_var} not in shell env or ~/.env — Obsidian MCP won't authenticate"
+fi
+
 # ── Make corti the sticky default profile ────────────────────────────────────
 
 if ! hermes profile show "$PROFILE_NAME" >/dev/null 2>&1; then
