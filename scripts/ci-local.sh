@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# ci-local.sh — run the same fast checks as .github/workflows/lint.yml locally.
+# ci-local.sh — lint checks for the dotfiles repo.
+#
+# Single source of truth for both local and CI runs.
+# Called from .github/workflows/lint.yml and runnable as scripts/ci-local.sh.
 #
 # Usage: scripts/ci-local.sh
 #
 # Checks:
-#   1. JSON template files render to valid JSON
-#   2. Shellcheck on all shell scripts
+#   1. JSON template files parse as valid JSON
+#   2. Shellcheck on all .sh files (severity: warning, matching CI)
 #   3. set -euo pipefail present in all executable scripts
 #   4. Chezmoi templates render for both identities (work, personal)
 #
@@ -16,38 +19,37 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-# Source shared logging for consistent output style.
 # shellcheck disable=SC1091
 source "$REPO_ROOT/chezmoi/shared/log.sh"
 
 _fail=0
 
-log_section "ci-local (lint checks)"
+log_section "lint checks"
 
 # ---------------------------------------------------------------------------
 # 1. Validate JSON template files
 # ---------------------------------------------------------------------------
 log_info "validating JSON templates..."
-    # Intentionally a list — adding more JSON templates later is trivial.
-    # shellcheck disable=SC2043
-    for f in chezmoi/dot_config/opencode/cli.json.tmpl; do
-    [[ -f "$f" ]] || continue
-    if python3 -c "import json; json.load(open('$f'))" 2>/dev/null; then
-        log_ok "$f: valid JSON"
+# Intentionally a list — adding more JSON templates later is trivial.
+# shellcheck disable=SC2043
+for _f in chezmoi/dot_config/opencode/cli.json.tmpl; do
+    [[ -f "$_f" ]] || continue
+    if python3 -c "import json; json.load(open('$_f'))" 2>/dev/null; then
+        log_ok "$_f: valid JSON"
     else
-        log_err "$f: invalid JSON"
+        log_err "$_f: invalid JSON"
         _fail=1
     fi
 done
+unset _f
 
 # ---------------------------------------------------------------------------
-# 2. Shellcheck
+# 2. Shellcheck (severity: warning — same as CI)
 # ---------------------------------------------------------------------------
 if command -v shellcheck >/dev/null 2>&1; then
     log_info "running shellcheck..."
-    # Shellcheck only .sh files — .sh.tmpl files contain Go template
-    # syntax ({{ }}) that shellcheck can't parse.  CI's action has the
-    # same behavior: it detects shell scripts by extension.
+    # Only .sh files; .sh.tmpl contains Go template syntax ({{ }}) that
+    # is not valid bash. CI's action has the same behavior.
     _sc_files=()
     while IFS= read -r _f; do
         _sc_files+=("$_f")
@@ -96,12 +98,19 @@ unset _f _missing
 # ---------------------------------------------------------------------------
 if command -v chezmoi >/dev/null 2>&1; then
     log_info "rendering templates for both identities..."
+    _chezmoi_config="$(mktemp)"
+    _chezmoi_cleanup() { rm -f "$_chezmoi_config"; }
+    trap '_chezmoi_cleanup' EXIT
     for _identity in work personal; do
+        # Write a temporary chezmoi config with the identity, matching CI's
+        # approach. .chezmoidata.yaml (identities map) is always loaded from
+        # the source dir, so only .identity needs to be set here.
+        printf 'sourceDir = "%s"\n[data]\nidentity = "%s"\n' "$REPO_ROOT" "$_identity" > "$_chezmoi_config"
         _tmpl_fail=0
         while IFS= read -r _f; do
-            if ! chezmoi execute-template --override-data "{\"identity\":\"$_identity\"}" < "$_f" > /dev/null 2>&1; then
+            if ! chezmoi execute-template --config "$_chezmoi_config" --config-format toml < "$_f" > /dev/null 2>&1; then
                 log_err "FAILED: $_f (identity=$_identity)"
-                chezmoi execute-template --override-data "{\"identity\":\"$_identity\"}" < "$_f" 2>&1 || true
+                chezmoi execute-template --config "$_chezmoi_config" --config-format toml < "$_f" 2>&1 || true
                 _tmpl_fail=1
             fi
         done < <(find . -name '*.tmpl' -not -path './.git/*' -not -name '.chezmoi.toml.tmpl' | sort)
@@ -112,6 +121,9 @@ if command -v chezmoi >/dev/null 2>&1; then
         fi
     done
     unset _identity _tmpl_fail _f
+    _chezmoi_cleanup
+    trap - EXIT
+    unset _chezmoi_config _chezmoi_cleanup
 else
     log_warn "chezmoi not found — skipping template rendering"
 fi
@@ -120,9 +132,9 @@ fi
 # Summary
 # ---------------------------------------------------------------------------
 if [[ $_fail -eq 0 ]]; then
-    log_ok "ci-local: all checks passed"
+    log_ok "all checks passed"
     exit 0
 else
-    log_err "ci-local: some checks failed"
+    log_err "some checks failed"
     exit 1
 fi

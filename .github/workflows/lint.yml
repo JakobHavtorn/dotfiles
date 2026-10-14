@@ -11,47 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate JSON files
+      - name: Install shellcheck
         run: |
-          for f in chezmoi/dot_config/opencode/cli.json.tmpl; do
-            python3 -c "import json; json.load(open('$f'))" && echo "  $f: valid"
-          done
-
-      - name: Shellcheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          severity: warning
-          ignore_paths: .git
-
-      - name: Verify set -euo pipefail in all scripts
-        run: |
-          for f in chezmoi/run_once_* chezmoi/run_onchange_* chezmoi/run_after_* scripts/*.sh chezmoi/shared/*.sh; do
-            [[ -f "$f" ]] || continue
-            [[ "$f" == "chezmoi/shared/log.sh" || "$f" == "chezmoi/shared/env.sh" || "$f" == "chezmoi/shared/manifest.sh" ]] && continue  # sourced, not executed
-            grep -q 'set -euo pipefail' "$f" || {
-              echo "MISSING 'set -euo pipefail': $f"
-              exit 1
-            }
-          done
-          echo "All scripts have 'set -euo pipefail'"
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends shellcheck
 
       - name: Install chezmoi
         run: |
           curl -fsLS get.chezmoi.io | sh
           install -m 755 bin/chezmoi /usr/local/bin/chezmoi
 
-      - name: Render templates for all identities
-        run: |
-          for identity in work personal; do
-            echo "=== identity=$identity ==="
-            mkdir -p "$HOME/.config/chezmoi"
-            printf 'sourceDir = "%s"\n[data]\nidentity = "%s"\n' "$GITHUB_WORKSPACE" "$identity" > "$HOME/.config/chezmoi/chezmoi.toml"
-            for f in $(find . -name '*.tmpl' -not -path './.git/*' -not -name '.chezmoi.toml.tmpl'); do
-              chezmoi execute-template < "$f" > /dev/null 2>&1 || {
-                echo "FAILED: $f (identity=$identity)"
-                chezmoi execute-template < "$f"
-                exit 1
-              }
-            done
-          done
-          echo "All templates rendered successfully for all identities"
+      - name: Run lint checks
+        run: bash scripts/ci-local.sh
