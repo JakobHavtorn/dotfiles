@@ -19,11 +19,12 @@ fi
 
 log_section "brew bundle install"
 
-# In CI, skip VS Code extensions — marketplace 503s are transient and
-# extensions aren't part of the system bootstrap we're testing.
+# In CI, skip VS Code extensions and GUI app casks — marketplace 503s are
+# transient, and casks need /Applications access (sudo) that headless runners
+# can't provide. Neither is part of the system bootstrap we're testing.
 if is_ci; then
     BREWFILE_FILTERED="$(mktemp)"
-    grep -v '^vscode ' "$BREWFILE" > "$BREWFILE_FILTERED"
+    grep -v -E '^vscode |^cask ' "$BREWFILE" > "$BREWFILE_FILTERED"
     brew bundle install --file "$BREWFILE_FILTERED"
     rm -f "$BREWFILE_FILTERED"
 else
