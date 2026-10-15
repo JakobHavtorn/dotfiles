@@ -79,6 +79,17 @@ brew "rtk"
 # Fonts
 cask "font-fira-code-nerd-font"
 
+# GUI applications
+cask "google-chrome"
+cask "iterm2"
+cask "visual-studio-code"
+cask "slack"
+cask "obsidian"
+cask "linear"
+cask "notion"
+cask "zotero"
+cask "hermes-desktop"
+
 # VS Code extensions
 vscode "anseki.vscode-color"
 vscode "azemoh.one-monokai"
