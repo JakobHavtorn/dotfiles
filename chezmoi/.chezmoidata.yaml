@@ -95,6 +95,12 @@ coding_agents:
         input: [text]
         context_length: 264000
         cost: { input: 2, output: 8, cacheRead: 0.200000, cacheWrite: 0 }
+      - id: corti-s1-alpha
+        name: "Corti S1 Alpha"
+        reasoning: true
+        input: [text]
+        context_length: 528000
+        cost: { input: 2, output: 8, cacheRead: 0.200000, cacheWrite: 0 }
       - id: corti-s1-beta
         name: "Corti S1 Beta"
         reasoning: true
