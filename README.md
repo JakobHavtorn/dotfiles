@@ -16,9 +16,9 @@ Without `IDENTITY`, you'll be prompted for a machine identity (`work` / `persona
 
 - **Linux only** — a minimal container or fresh box may lack these:
   ```sh
-  apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils
+  apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils unzip
   ```
-  `curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish archive (`.tar.xz`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
+  `curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish and node archives (`.tar.xz`), `unzip` extracts the bun archive (`.zip`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
 - **SSH auth** — the repo is private. Either give the box its own key, or bootstrap through one agent-forwarded session (`ssh -A <host>` first).
 
 Optional personal-layer steps (`corti models init`, agent-skills clone) are non-fatal: without their credentials they log an error and the bootstrap continues. Re-run them manually once credentials are in place, or `chezmoi update`.
