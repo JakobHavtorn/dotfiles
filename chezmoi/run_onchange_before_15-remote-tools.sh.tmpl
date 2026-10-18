@@ -85,11 +85,100 @@ install_remote_tool() {
 
 manifest_each "$MANIFEST" "|" install_remote_tool
 
-# Install a Python interpreter via uv
+# Install a Python interpreter via uv and symlink python3 into LOCAL_BIN.
+# uv python install puts the interpreter under
+# ~/.local/share/uv/python/cpython-3.12-<platform>/bin/ but does not
+# expose python3 on PATH. The symlink lets downstream scripts
+# (agent-skills skillctl, etc.) find it.
 if [[ -x "$LOCAL_BIN/uv" ]]; then
     log_info "installing Python 3.12 via uv..."
     "$LOCAL_BIN/uv" python install 3.12 || log_warn "uv python install failed"
+
+    _py_bin_dir=""
+    _py_bin_dir="$(dirname "$("$LOCAL_BIN/uv" python find 3.12 2>/dev/null)" 2>/dev/null)" || true
+    if [[ -n "$_py_bin_dir" && -x "$_py_bin_dir/python3" ]]; then
+        ln -sf "$_py_bin_dir/python3" "$LOCAL_BIN/python3"
+        ln -sf "$_py_bin_dir/python3" "$LOCAL_BIN/python"
+        log_ok "python3 linked to $LOCAL_BIN"
+    else
+        log_warn "python3 symlink failed (uv python find returned no path)"
+    fi
+    unset _py_bin_dir
 fi
+
+# Install pipx via uv tool. uv is already in LOCAL_BIN and uv tool
+# installs executables to ~/.local/bin by default — same as LOCAL_BIN.
+# This lets run_onchange_after_70-pipx.sh.tmpl install pipx packages.
+if [[ -x "$LOCAL_BIN/uv" ]]; then
+    if [[ -x "$LOCAL_BIN/pipx" ]]; then
+        log_ok "pipx: up to date"
+    else
+        log_info "installing pipx via uv tool..."
+        "$LOCAL_BIN/uv" tool install pipx || log_warn "uv tool install pipx failed"
+    fi
+fi
+
+# Install bun (single binary, distributed as a zip).
+# Requires unzip on the system — add to apt-get prerequisites.
+_install_bun() {
+    local bun_version="bun-v1.4.3"
+    local bun_url="https://github.com/oven-sh/bun/releases/download/${bun_version}/bun-linux-x64.zip"
+    local installed_url=""
+    [[ -f "$VERSION_DIR/bun" ]] && installed_url="$(cat "$VERSION_DIR/bun")"
+    if [[ "$installed_url" == "$bun_url" && -x "$LOCAL_BIN/bun" ]]; then
+        log_ok "bun: up to date"
+        return 0
+    fi
+    if ! command -v unzip >/dev/null 2>&1; then
+        log_warn "unzip not found — skipping bun install. Install with: apt-get install unzip"
+        return 0
+    fi
+    log_info "installing bun..."
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+    if curl -fsSL "$bun_url" -o "$tmp_dir/bun.zip" && unzip -q "$tmp_dir/bun.zip" -d "$tmp_dir"; then
+        chmod +x "$tmp_dir/bun-linux-x64/bun"
+        mv "$tmp_dir/bun-linux-x64/bun" "$LOCAL_BIN/bun"
+        echo "$bun_url" > "$VERSION_DIR/bun"
+        log_ok "bun installed"
+    else
+        log_warn "bun download/extract failed"
+    fi
+    rm -rf "$tmp_dir"
+}
+_install_bun
+
+# Install Node.js LTS (multi-file tarball: bin/ + lib/).
+# Extract to ~/.local/share/node-<version>/ and symlink node, npm,
+# npx into LOCAL_BIN. The internal symlinks (npm → ../lib/...) resolve
+# relative to the extracted tree, so they work through the symlinks.
+_install_node() {
+    local node_version="v24.22.0"
+    local node_url="https://nodejs.org/dist/${node_version}/node-${node_version}-linux-x64.tar.xz"
+    local installed_url=""
+    [[ -f "$VERSION_DIR/node" ]] && installed_url="$(cat "$VERSION_DIR/node")"
+    if [[ "$installed_url" == "$node_url" && -x "$LOCAL_BIN/node" ]]; then
+        log_ok "node: up to date"
+        return 0
+    fi
+    log_info "installing Node.js ${node_version}..."
+    local node_dest="$HOME/.local/share/node-${node_version}"
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+    if curl -fsSL "$node_url" -o "$tmp_dir/node.tar.xz" && tar xf "$tmp_dir/node.tar.xz" -C "$tmp_dir"; then
+        rm -rf "$node_dest"
+        mv "$tmp_dir/node-${node_version}-linux-x64" "$node_dest"
+        ln -sf "$node_dest/bin/node" "$LOCAL_BIN/node"
+        ln -sf "$node_dest/bin/npm" "$LOCAL_BIN/npm"
+        ln -sf "$node_dest/bin/npx" "$LOCAL_BIN/npx"
+        echo "$node_url" > "$VERSION_DIR/node"
+        log_ok "node installed"
+    else
+        log_warn "node download/extract failed"
+    fi
+    rm -rf "$tmp_dir"
+}
+_install_node
 
 log_ok "remote tools done"
 
