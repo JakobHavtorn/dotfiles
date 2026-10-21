@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# run_onchange_after_81-archify.sh.tmpl
+#
+# Install the archify skill (tt-a1i/archify) via the `skills` CLI.
+# Archify creates validated architecture, workflow, sequence, and other
+# diagrams as standalone HTML with themes and export.
+# https://github.com/tt-a1i/archify
+#
+# Uses `npx skills add -g` which installs to ~/.agents/skills/archify —
+# the universal store that opencode, omp, claude, and codex all read from.
+# Idempotent: re-running overwrites the skill with the latest version.
+# Re-runs when this script changes.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "archify skill (CI environment)"
+    exit 0
+fi
+
+if ! command -v npx >/dev/null 2>&1; then
+    log_skip "archify skill (npx not installed)"
+    exit 0
+fi
+
+log_section "archify skill"
+
+# npx --yes: auto-confirm installing the skills package on first run.
+# skills -y: skip the skills CLI confirmation prompt.
+# </dev/null: fail-fast on any unexpected interactive prompt.
+log_run --non-fatal "install archify skill" \
+    npx --yes skills@latest add tt-a1i/archify -g -y </dev/null
+
+log_ok "archify skill done"

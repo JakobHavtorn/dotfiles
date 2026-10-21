@@ -68,6 +68,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_70-pipx.sh.tmpl` | Installs pipx packages from manifest |
 | `chezmoi/run_onchange_after_80-launchd-load.sh.tmpl` | Darwin only — loads dump.sh launchd job |
 | `chezmoi/run_onchange_after_80-taxhelper.sh.tmpl` | Installs taxhelper agent skills for opencode |
+| `chezmoi/run_onchange_after_81-archify.sh.tmpl` | Installs archify skill (diagrams as HTML) via `npx skills` CLI into ~/.agents/skills |
 | `chezmoi/run_onchange_after_85-herdr-plugins.sh.tmpl` | Installs herdr-annotate plugin (Full variant) across opencode, omp, claude, codex, hermes |
 | `chezmoi/run_onchange_after_88-hermes-config.sh.tmpl` | Installs/updates Corti Hermes profile distribution from hermes-profile repo; injects CORTI_BEARER, sets corti as sticky default profile |
 | `chezmoi/run_onchange_after_88-aft-plugin.sh.tmpl` | Installs @cortexkit/aft-pi into OMP via `omp plugin install --force`; pre-warms AFT binary |
