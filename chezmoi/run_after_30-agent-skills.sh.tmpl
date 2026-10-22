@@ -5,10 +5,12 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # Clone agent-skills and link skills into opencode, omp, claude, and codex.
-# Runs on every chezmoi apply — idempotent: git pull --ff-only is a no-op
-# when current, skillctl link --force overwrites symlinks. This ensures
-# upstream agent-skills changes (renames, new skills) propagate without
-# needing to clear chezmoi's scriptState.
+# Runs on every chezmoi apply — idempotent: the update syncs the clone to
+# origin/main unconditionally (no-op when current), and skillctl link --force
+# overwrites symlinks. This ensures upstream agent-skills changes (renames,
+# new skills) propagate without needing to clear chezmoi's scriptState.
+# Local edits (e.g. a skill edited through its harness symlink) are discarded
+# so the clone always converges on upstream main.
 # skillctl link now handles skills, context file (AGENTS.md), and agents/*
 # specs — all via a single mechanism.
 
@@ -34,11 +36,26 @@ fi
 export GIT_TERMINAL_PROMPT=0
 export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
 
+_hard_reset() {
+    # Superset of `git pull --ff-only`: survives the common failure where
+    # a skill file is edited through its harness symlink, leaving local
+    # changes that would abort a merge. Discards local edits, stray local
+    # commits, and untracked leftovers, then resets to origin/main.
+    git -C "$AGENT_SKILLS_DIR" fetch --prune origin || return 1
+    git -C "$AGENT_SKILLS_DIR" reset --hard origin/main
+    git -C "$AGENT_SKILLS_DIR" clean -fd
+}
+
 if [[ -d "$AGENT_SKILLS_DIR/.git" ]]; then
     log_info "updating $AGENT_SKILLS_DIR..."
     _pre_sha="$(git -C "$AGENT_SKILLS_DIR" rev-parse HEAD)"
     _pull_rc=0
-    _pull_out="$(git -C "$AGENT_SKILLS_DIR" pull --ff-only 2>&1)" || _pull_rc=$?
+    _update_failed=0
+    _link_failed=0
+    _pull_out="$(_hard_reset 2>&1)" || _pull_rc=$?
+    if [[ "$_pull_rc" -ne 0 ]]; then
+        _update_failed=1
+    fi
     _post_sha="$(git -C "$AGENT_SKILLS_DIR" rev-parse HEAD)"
     if [[ "$_pull_rc" -ne 0 ]]; then
         log_err "agent-skills update"
@@ -87,6 +104,7 @@ if command -v python3 >/dev/null 2>&1; then
         _rc=0
         _link_out="$(python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force 2>&1)" || _rc=$?
         if [[ "$_rc" -ne 0 ]]; then
+            _link_failed=1
             log_err "synced skills into $agent"
             printf '%s\n' "$_link_out" >&2
         else
@@ -106,4 +124,11 @@ else
     log_warn "python3 not found — skipping skill linking"
 fi
 
-log_ok "agent-skills done"
+if [[ "${_link_failed:-0}" -eq 1 ]]; then
+    log_err "agent-skills done (with errors above)"
+elif [[ "${_update_failed:-0}" -eq 1 ]]; then
+    # Links ran against a stale clone — skills may be outdated, but they exist.
+    log_warn "agent-skills done (update failed — skills may be stale)"
+else
+    log_ok "agent-skills done"
+fi
