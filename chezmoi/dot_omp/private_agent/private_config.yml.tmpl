@@ -11,7 +11,7 @@ modelRoles:
   task: corti/corti-s1:max
   commit: corti/corti-s1-mini-instant
   tiny: corti/corti-s1-mini-instant
-  advisor: corti/corti-s1:max
+  advisor: corti/corti-s1-mini-beta:xhigh
   vision: corti/corti-s1-mini
 tools:
   approvalMode: yolo
@@ -64,6 +64,16 @@ hideThinkingBlock: true
 inlineToolDescriptors: auto
 advisor:
   enabled: true
+  # React faster: fast reviewer model (modelRoles.advisor), and the primary
+  # waits up to 30s for the advisor to finish before running past its backlog.
+  syncBacklog: 1
+  # React less: after one concern interrupts, further concerns ride as
+  # non-interrupting asides for this many turns. Not a startup-silence knob.
+  immuneTurns: 6
+  # React less: cap non-blocker notes per review, and only a blocker re-wakes
+  # the agent after a final answer (concerns stay as visible cards).
+  maxNotesPerUpdate: 2
+  continueSeverity: blocker
 python:
   kernelMode: session
 task:
