@@ -18,6 +18,12 @@ git config --global user.name "{{ (index .identities .identity).name }}"
 git config --global user.email "{{ (index .identities .identity).email }}"
 git config --global init.defaultBranch main
 
+# Global ignore for agent worktrees (kept out of every repo, all machines).
+# Per-repo fallback: append '.worktrees/' to .git/info/exclude.
+mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/git"
+echo '.worktrees/' >> "${XDG_CONFIG_HOME:-$HOME/.config}/git/ignore"
+git config --global core.excludesFile "${XDG_CONFIG_HOME:-$HOME/.config}/git/ignore"
+
 # insteadOf rewrites https -> ssh for github.com. Skipped in CI: keyless
 # runners would fail every HTTPS clone (brew clones taps over git).
 if ! is_ci; then
