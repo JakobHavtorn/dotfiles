@@ -18,11 +18,9 @@ git config --global user.name "{{ (index .identities .identity).name }}"
 git config --global user.email "{{ (index .identities .identity).email }}"
 git config --global init.defaultBranch main
 
-# Global ignore for agent worktrees (kept out of every repo, all machines).
-# Per-repo fallback: append '.worktrees/' to .git/info/exclude.
-mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/git"
-echo '.worktrees/' >> "${XDG_CONFIG_HOME:-$HOME/.config}/git/ignore"
-git config --global core.excludesFile "${XDG_CONFIG_HOME:-$HOME/.config}/git/ignore"
+# Global ignore file (~/.config/git/ignore) is managed declaratively as
+# chezmoi/dot_config/git/ignore — do not append to it here. git reads that
+# path as the default excludes file even without core.excludesFile set.
 
 # insteadOf rewrites https -> ssh for github.com. Skipped in CI: keyless
 # runners would fail every HTTPS clone (brew clones taps over git).
