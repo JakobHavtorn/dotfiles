@@ -42,7 +42,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/dot_config/herdr/config.toml.tmpl` | herdr keybindings + linux-only `[terminal] default_shell` (rootless fish via remote-tools.txt) |
 | `chezmoi/dot_config/k9s/config.yaml` | Minimal k9s config |
 | `chezmoi/private_dot_ssh/config.d/github.tmpl` | github.com SSH host block (UseKeychain only on darwin) |
-| `chezmoi/dot_omp/private_agent/private_config.yml.tmpl` | omp settings (templated notion deny-list; `~/.omp/agent/config.yml`, 0600) |
+| `chezmoi/dot_omp/private_agent/private_config.yml.tmpl` | omp settings (templated notion deny-list; rendered to `~/.omp/agent/config.yml` by run_onchange_after_21-omp-config.sh — omp rewrites the live file via `omp config set` and settings toggles) |
 | `chezmoi/dot_omp/private_agent/models.yml` | omp custom providers: corti (key via CORTI_BEARER env) |
 | `chezmoi/dot_omp/private_agent/mcp.json.tmpl` | omp MCP servers (templated from .chezmoidata) |
 | `chezmoi/dot_config/cortexkit/aft.jsonc` | AFT (CortexKit) config — semantic search backend, tool surface; shared across opencode + omp |
@@ -64,6 +64,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` (incl. rootless node + Pi via npm) |
 | `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only |
 | `chezmoi/run_onchange_after_20-opencode-config.sh.tmpl` | Renders opencode.jsonc.tmpl + corti models init (model list from .chezmoidata) |
+| `chezmoi/run_onchange_after_21-omp-config.sh.tmpl` | Renders omp config.yml from the template (omp rewrites the live file itself, so it is not a chezmoi-managed target) |
 | `chezmoi/run_onchange_after_22-pi-config.sh.tmpl` | Renders Pi mcp.json from .chezmoidata (Pi models.json is owned by the corti CLI) |
 | `chezmoi/run_after_30-agent-skills.sh.tmpl` | Clones/updates agent-skills, runs skillctl link (every apply — idempotent) |
 | `chezmoi/run_onchange_after_60-omf.sh.tmpl` | Installs OMF packages from manifest |

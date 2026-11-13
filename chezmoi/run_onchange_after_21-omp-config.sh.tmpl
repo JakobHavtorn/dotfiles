@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# private_config.yml.tmpl hash: {{ include "dot_omp/private_agent/private_config.yml.tmpl" | sha256sum }}
+# chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+
+# Renders ~/.omp/agent/config.yml from the template. Rendered by script rather
+# than a direct source file because omp rewrites this file itself: `omp config
+# set` and the settings UI re-serialize the whole YAML (dropping the trailing
+# newline), so a direct source file would trigger the "changed since chezmoi
+# last wrote it" prompt on every apply. Re-renders only when the template or
+# chezmoidata changes.
+
+CHEZMOI="{{ .chezmoi.executable }}"
+OMP_AGENT_DIR="${OMP_AGENT_DIR:-$HOME/.omp/agent}"
+SOURCE_DIR="{{ .chezmoi.sourceDir }}"
+BASE_CONFIG="$SOURCE_DIR/dot_omp/private_agent/private_config.yml.tmpl"
+LIVE_CONFIG="$OMP_AGENT_DIR/config.yml"
+
+log_section "omp config"
+
+mkdir -p "$OMP_AGENT_DIR"
+"$CHEZMOI" execute-template < "$BASE_CONFIG" > "$LIVE_CONFIG"
+log_ok "applied omp config.yml"
+
+log_ok "omp config done"

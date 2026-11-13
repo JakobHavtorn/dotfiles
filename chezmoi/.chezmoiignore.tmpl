@@ -26,3 +26,10 @@ manifests
 # enable/exposure toggles and `pi mcp add` servers into this file, so a
 # direct source file would revert live changes on every apply
 .pi/agent/mcp.json
+
+# omp config.yml is managed by run_onchange_after_21-omp-config.sh.tmpl
+# (template render), not by chezmoi's file mechanism — omp rewrites the file
+# itself (`omp config set` and settings toggles re-serialize the YAML,
+# dropping the trailing newline), so a direct source file would trigger the
+# "changed since chezmoi last wrote it" prompt on every apply
+.omp/agent/config.yml
