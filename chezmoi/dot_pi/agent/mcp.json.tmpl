@@ -7,7 +7,10 @@
     "slack": {
       "url": "{{ .coding_agents.mcp.servers.slack.url }}",
       "oauth": {
-        "clientId": "${SLACK_CLIENT_ID}",
+        {{- /* pi does not interpolate env references in oauth.clientId (clientSecret only), so
+             use the pre-registered literal from chezmoidata; revert to "${SLACK_CLIENT_ID}"
+             if pi resolves clientId upstream. */}}
+        "clientId": "{{ .coding_agents.mcp.servers.slack.oauth_client_id }}",
         "clientSecret": "${SLACK_CLIENT_SECRET}",
         "scope": "{{ .coding_agents.mcp.servers.slack.scope }}",
         "callbackPort": {{ .coding_agents.mcp.servers.slack.callback_port }},

@@ -71,6 +71,11 @@ coding_agents:
         callback_port: 19876
         redirect_uri: "http://127.0.0.1:19876/mcp/oauth/callback"
         auth_token_url: "https://slack.com/api/oauth.v2.user.access"
+        # Slack MCP is DCR-less: the OAuth client id must be pre-registered and is
+        # public. pi does not interpolate env references in oauth.clientId (it does
+        # for clientSecret), so pi needs the literal. If that is fixed upstream,
+        # revert the pi template to "${SLACK_CLIENT_ID}".
+        oauth_client_id: "4470912065.11815248823872"
       synapse:
         url: "https://mcp.synapse.corti.app/mcp"
         oauth_client_id: "synapse-mcp"
