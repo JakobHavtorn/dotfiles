@@ -52,7 +52,6 @@ brew "pipx"
 # Kubernetes & cloud
 brew "argocd"
 brew "awscli"
-brew "azure-cli"
 brew "helm"
 brew "kubectx"
 brew "azure/kubelogin/kubelogin"  # via azure/kubelogin tap
@@ -81,6 +80,7 @@ cask "font-fira-code-nerd-font"
 
 # GUI applications
 cask "google-chrome"
+cask "azure-cli"          # migrated from homebrew/core formula to cask
 cask "iterm2"
 cask "visual-studio-code"
 cask "slack"
