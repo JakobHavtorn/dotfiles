@@ -12,7 +12,9 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 # appends user-level servers. A direct source file would revert those live
 # changes on every apply; run_onchange re-renders only when the template or
 # chezmoidata changes.
-# Corti model wiring is handled by run_onchange_after_25-corti-models.sh.tmpl.
+# Also merges the default model from .chezmoidata into ~/.pi/agent/settings.json
+# (which Pi also writes itself), and Corti model registration is handled by
+# run_onchange_after_25-corti-models.sh.tmpl.
 
 CHEZMOI="{{ .chezmoi.executable }}"
 PI_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
@@ -25,5 +27,37 @@ log_section "pi config"
 mkdir -p "$PI_AGENT_DIR"
 "$CHEZMOI" execute-template < "$BASE_CONFIG" > "$LIVE_CONFIG"
 log_ok "applied pi mcp.json"
+
+# ── settings.json: default model ─────────────────────────────────────────────
+
+# Pi writes settings.json itself (the /model Ctrl+S default, changelog
+# version), so merge the default model from .chezmoidata.yaml instead of
+# owning the file — the same keys the model picker persists.
+DEFAULT_PROVIDER="corti"
+DEFAULT_MODEL="{{ .coding_agents.corti.default_model }}"
+SETTINGS="$PI_AGENT_DIR/settings.json"
+if [[ ! -f "$SETTINGS" ]]; then
+    printf '{\n  "defaultProvider": "%s",\n  "defaultModel": "%s"\n}\n' \
+        "$DEFAULT_PROVIDER" "$DEFAULT_MODEL" > "$SETTINGS"
+    log_ok "created pi settings.json (default: $DEFAULT_PROVIDER/$DEFAULT_MODEL)"
+elif ! command -v jq >/dev/null 2>&1; then
+    log_warn "jq not found — pi default model not set"
+else
+    tmp="$(mktemp)"
+    if jq --arg provider "$DEFAULT_PROVIDER" --arg model "$DEFAULT_MODEL" \
+        '.defaultProvider = $provider | .defaultModel = $model' \
+        "$SETTINGS" > "$tmp" 2>/dev/null; then
+        if cmp -s "$tmp" "$SETTINGS"; then
+            rm -f "$tmp"
+            log_skip "pi default model already $DEFAULT_PROVIDER/$DEFAULT_MODEL"
+        else
+            mv "$tmp" "$SETTINGS"
+            log_ok "pi default model: $DEFAULT_PROVIDER/$DEFAULT_MODEL"
+        fi
+    else
+        rm -f "$tmp"
+        log_warn "pi settings.json is not valid JSON — default model not set"
+    fi
+fi
 
 log_ok "pi config done"
