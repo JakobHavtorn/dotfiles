@@ -180,6 +180,42 @@ _install_node() {
 }
 _install_node
 
+# Install the Pi coding agent globally with the rootless node above
+# (v24.22.0 ≥ Pi's Node ≥22.19 floor). npm -g with the default prefix
+# is fine here: npm resolves its global bin against the node that runs
+# it, so the binary lands in the node tree's bin/ — the same directory
+# node/npm/npx are symlinked from. Link `pi` the same way. VERSION_DIR
+# marker makes it idempotent; bumping the version here re-installs.
+_install_pi() {
+    local pi_package="@earendil-works/pi-coding-agent@1.5.2"
+    local installed=""
+    [[ -f "$VERSION_DIR/pi" ]] && installed="$(cat "$VERSION_DIR/pi")"
+    if [[ "$installed" == "$pi_package" && -x "$LOCAL_BIN/pi" ]]; then
+        log_ok "pi: up to date"
+        return 0
+    fi
+    command -v npm >/dev/null 2>&1 || { log_warn "npm not found — skipping pi install"; return 0; }
+    log_info "installing Pi ${pi_package}..."
+    local npm_prefix
+    npm_prefix="$(npm prefix -g 2>/dev/null)" || npm_prefix=""
+    if [[ -z "$npm_prefix" ]]; then
+        log_warn "npm prefix -g failed — skipping pi install"
+        return 0
+    fi
+    if npm install -g --prefix "$npm_prefix" "$pi_package"; then
+        if [[ -x "$npm_prefix/bin/pi" ]]; then
+            ln -sf "$npm_prefix/bin/pi" "$LOCAL_BIN/pi"
+            echo "$pi_package" > "$VERSION_DIR/pi"
+            log_ok "pi installed"
+        else
+            log_warn "pi: installed but $npm_prefix/bin/pi missing"
+        fi
+    else
+        log_warn "pi npm install failed"
+    fi
+}
+_install_pi
+
 log_ok "remote tools done"
 
 {{ else -}}
