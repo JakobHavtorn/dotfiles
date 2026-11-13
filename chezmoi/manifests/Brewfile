@@ -69,7 +69,6 @@ brew "glances"
 # OpenCode
 brew "anomalyco/tap/opencode-v2", trusted: true
 brew "can1357/tap/omp"
-brew "pi-coding-agent"    # Pi coding agent CLI (pi.dev); config in ~/.pi/agent
 
 # SOFKA (k9s alternative)
 brew "nklmilojevic/sofka/sofka", trusted: true
@@ -184,6 +183,7 @@ go "honnef.co/go/tools/cmd/staticcheck"
 
 # npm globals
 npm "@openai/codex"
+npm "@earendil-works/pi-coding-agent"
 npm "@openchamber/web"
 npm "corepack"
 npm "skills-ref"
