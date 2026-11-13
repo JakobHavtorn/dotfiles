@@ -5,7 +5,7 @@ repos:
       - id: trailing-whitespace
         exclude: ^chezmoi/manifests/obsidian/
       - id: end-of-file-fixer
-        exclude: ^chezmoi/manifests/obsidian/
+        exclude: ^chezmoi/manifests/obsidian/|^chezmoi/dot_omp/private_agent/private_config\.yml\.tmpl$
       - id: check-merge-conflict
   - repo: local
     hooks:
