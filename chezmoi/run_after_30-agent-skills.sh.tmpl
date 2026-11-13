@@ -4,7 +4,7 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
-# Clone agent-skills and link skills into opencode, omp, claude, and codex.
+# Clone agent-skills and link skills into opencode, omp, claude, codex, and pi.
 # Runs on every chezmoi apply — idempotent: the update syncs the clone to
 # origin/main unconditionally (no-op when current), and skillctl link --force
 # overwrites symlinks. This ensures upstream agent-skills changes (renames,
@@ -100,7 +100,7 @@ fi
 # the log shows symlink changes (new skills, renames, redirected paths)
 # without noise from the common no-op case.
 if command -v python3 >/dev/null 2>&1; then
-    for agent in opencode omp claude codex; do
+    for agent in opencode omp claude codex pi; do
         _rc=0
         _link_out="$(python3 "$AGENT_SKILLS_DIR/bin/skillctl" link --agent "$agent" --force 2>&1)" || _rc=$?
         if [[ "$_rc" -ne 0 ]]; then

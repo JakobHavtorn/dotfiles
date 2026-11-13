@@ -38,6 +38,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/dot_config/fish/config.fish` | PATH setup, corti-cli env, gpu/oc abbreviations (interactive only) |
 | `chezmoi/dot_config/opencode/cli.json` | opencode TUI settings (symlinked) |
 | `chezmoi/dot_config/opencode/opencode.jsonc.tmpl` | opencode base config (templated from .chezmoidata; managed by run_onchange script) |
+| `chezmoi/dot_pi/agent/mcp.json.tmpl` | Pi MCP server config (templated from .chezmoidata; rendered to `~/.pi/agent/mcp.json` by run_onchange script — Pi itself writes toggles and `pi mcp add` servers into the live file) |
 | `chezmoi/dot_config/herdr/config.toml.tmpl` | herdr keybindings + linux-only `[terminal] default_shell` (rootless fish via remote-tools.txt) |
 | `chezmoi/dot_config/k9s/config.yaml` | Minimal k9s config |
 | `chezmoi/private_dot_ssh/config.d/github.tmpl` | github.com SSH host block (UseKeychain only on darwin) |
@@ -60,9 +61,10 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
 | `chezmoi/run_once_before_10-install-homebrew.sh.tmpl` | Darwin only |
-| `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` |
+| `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` (incl. rootless node + Pi via npm) |
 | `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only |
 | `chezmoi/run_onchange_after_20-opencode-config.sh.tmpl` | Renders opencode.jsonc.tmpl + corti models init (model list from .chezmoidata) |
+| `chezmoi/run_onchange_after_22-pi-config.sh.tmpl` | Renders Pi mcp.json from .chezmoidata (Pi models.json is owned by the corti CLI) |
 | `chezmoi/run_after_30-agent-skills.sh.tmpl` | Clones/updates agent-skills, runs skillctl link (every apply — idempotent) |
 | `chezmoi/run_onchange_after_60-omf.sh.tmpl` | Installs OMF packages from manifest |
 | `chezmoi/run_onchange_after_70-pipx.sh.tmpl` | Installs pipx packages from manifest |

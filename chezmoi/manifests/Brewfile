@@ -52,7 +52,6 @@ brew "pipx"
 # Kubernetes & cloud
 brew "argocd"
 brew "awscli"
-brew "azure-cli"
 brew "helm"
 brew "kubectx"
 brew "azure/kubelogin/kubelogin"  # via azure/kubelogin tap
@@ -78,6 +77,9 @@ brew "rtk"
 
 # Fonts
 cask "font-fira-code-nerd-font"
+
+# CLI via cask (migrated from homebrew-core formula)
+cask "azure-cli"
 
 # GUI applications
 cask "google-chrome"
@@ -183,6 +185,7 @@ go "honnef.co/go/tools/cmd/staticcheck"
 
 # npm globals
 npm "@openai/codex"
+npm "@earendil-works/pi-coding-agent"
 npm "@openchamber/web"
 npm "corepack"
 npm "skills-ref"

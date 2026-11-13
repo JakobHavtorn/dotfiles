@@ -20,3 +20,9 @@ manifests
 # (template render) + run_onchange_after_85-herdr-plugins.sh.tmpl (herdr integration),
 # not by chezmoi's file mechanism
 .config/opencode/cli.json
+
+# pi mcp.json is managed by run_onchange_after_22-pi-config.sh.tmpl
+# (template render), not by chezmoi's file mechanism — Pi itself writes
+# enable/exposure toggles and `pi mcp add` servers into this file, so a
+# direct source file would revert live changes on every apply
+.pi/agent/mcp.json

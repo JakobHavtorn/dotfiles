@@ -11,7 +11,7 @@ identities:
 
 # Non-secret shared facts. Available in templates as .chezmoidata.*
 
-# Coding agent config — shared across opencode + omp. Single source of truth
+# Coding agent config — shared across opencode + omp + pi. Single source of truth
 # for notion deny-list, MCP servers, corti model list.
 coding_agents:
   # Canonical notion deny-list — union of all actions denied across opencode.jsonc
