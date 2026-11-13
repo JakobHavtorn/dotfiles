@@ -85,7 +85,8 @@ coding_agents:
         url: "http://127.0.0.1:27123/mcp"
 
   # Corti model list — single source of truth for models.yml.tmpl,
-  # opencode.jsonc, and the Hermes config run script.
+  # opencode.jsonc, the Hermes config run script, and the pi config run script
+  # (default model).
   corti:
     default_model: "corti-s1"
     models:
