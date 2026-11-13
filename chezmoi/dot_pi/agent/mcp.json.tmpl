@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "linear": {
+      "url": "{{ .coding_agents.mcp.servers.linear.url }}",
+      "oauth": {}
+    },
+    "slack": {
+      "url": "{{ .coding_agents.mcp.servers.slack.url }}",
+      "oauth": {
+        "clientId": "${SLACK_CLIENT_ID}",
+        "clientSecret": "${SLACK_CLIENT_SECRET}",
+        "scope": "{{ .coding_agents.mcp.servers.slack.scope }}",
+        "callbackPort": {{ .coding_agents.mcp.servers.slack.callback_port }},
+        "callbackUrl": "{{ .coding_agents.mcp.servers.slack.redirect_uri }}"
+      }
+    },
+    "synapse": {
+      "url": "{{ .coding_agents.mcp.servers.synapse.url }}",
+      "oauth": {
+        "clientId": "{{ .coding_agents.mcp.servers.synapse.oauth_client_id }}",
+        "scope": "{{ .coding_agents.mcp.servers.synapse.oauth_scope }}"
+      }
+    },
+    "notion": {
+      "url": "{{ .coding_agents.mcp.servers.notion.url }}",
+      "oauth": {}
+    },
+    "corti_docs": {
+      "url": "{{ .coding_agents.mcp.servers.corti_docs.url }}"
+    },
+    "obsidian": {
+      "url": "{{ .coding_agents.mcp.servers.obsidian.url }}",
+      "headers": {
+        "Authorization": "Bearer ${OBSIDIAN_LOCAL_REST_MCP_TOKEN}"
+      }
+    }
+  }
+}
