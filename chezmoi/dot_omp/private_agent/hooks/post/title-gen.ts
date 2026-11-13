@@ -35,7 +35,10 @@ const API_TIMEOUT_MS = 15_000;
 const FALLBACK_MODEL = "corti-s1-instant";
 
 function extractBody(md: string): string {
-  const m = md.match(/^---\n[\s\S]*?\n---\n(.*)$/);
+  // Capture must span the multi-line body: [\s\S]* instead of .*
+  // ((.*)$ can never match a multi-line body and silently falls back
+  // to the whole file, frontmatter included).
+  const m = md.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
   return m ? m[1].trim() : md.trim();
 }
 
