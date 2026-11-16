@@ -1,0 +1,10 @@
+# macos-apps.txt — self-updating macOS apps installed from the vendor's DMG
+# Format: app_bundle|dmg_url
+# app_bundle: the .app name at the DMG root, copied to /Applications
+# Installed only when missing; the app's own updater keeps it current.
+# Use this instead of a Brewfile cask when the app's updater takes root
+# ownership of the bundle, which breaks `brew upgrade --cask` for a
+# non-admin user.
+# Lines starting with # are comments
+
+Google Chrome.app|https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg
