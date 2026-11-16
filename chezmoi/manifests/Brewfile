@@ -82,12 +82,8 @@ cask "font-fira-code-nerd-font"
 cask "azure-cli"
 
 # GUI applications
-cask "iterm2"
-cask "visual-studio-code"
 cask "slack"
 cask "obsidian"
-cask "linear"
-cask "notion"
 cask "zotero"
 cask "hermes-desktop"
 

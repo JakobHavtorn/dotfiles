@@ -9,8 +9,9 @@
 # a plain 'pipx list' does not expose them.
 set -euo pipefail
 
-# launchd sessions get /usr/bin:/bin only; put Homebrew first so brew/go/npm/fish/jq resolve
-PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+# launchd sessions get /usr/bin:/bin only; put Homebrew first so brew/go/npm/fish/jq resolve,
+# and ~/.local/bin so brew bundle dump finds `code` (linked by 19-macos-apps) for vscode lines
+PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:${PATH}"
 export PATH
 
 cd "$(chezmoi source-path)"
