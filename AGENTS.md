@@ -75,7 +75,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_81-archify.sh.tmpl` | Installs archify skill (diagrams as HTML) via `npx skills` CLI into ~/.agents/skills |
 | `chezmoi/run_onchange_after_85-herdr-plugins.sh.tmpl` | Installs herdr-annotate plugin (Full variant) across opencode, omp, claude, codex, hermes |
 | `chezmoi/run_onchange_after_88-hermes-config.sh.tmpl` | Installs/updates Corti Hermes profile distribution from hermes-profile repo; injects CORTI_BEARER, sets corti as sticky default profile |
-| `chezmoi/run_after_88-aft-plugin.sh.tmpl` | Keeps AFT plugins current every apply: `opencode plugin update` for @cortexkit/aft-opencode, `omp plugin install --force` for @cortexkit/aft-pi; pre-warms AFT binary |
+| `chezmoi/run_after_88-coding-harness-plugin-refresh.sh.tmpl` | Keeps declared harness plugins current every apply: targetless `opencode plugin update` for all configured package plugins, `omp plugin install --force` for @cortexkit/aft-pi (OMP npm plugins have no config surface); pre-warms AFT binary |
 | `chezmoi/run_onchange_after_86-obsidian-mcp.sh.tmpl` | Registers the Obsidian Local REST API MCP server with Claude Code (`claude mcp add --scope user`) and Codex (`~/.codex/config.toml`). Reads the API key from the plugin's `data.json` |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |

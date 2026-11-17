@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# run_after_88-coding-harness-plugin-refresh.sh.tmpl
+#
+# Runs on every apply: harnesses resolve "latest" once and never re-resolve
+# on their own. opencode checks for plugin updates but leaves the installed
+# package unchanged; OMP pins the installed version in omp-plugins.lock.json.
+# A stale plugin then breaks on harness upgrades — opencode 2.2.1+ (Nov 2026)
+# skipped every AFT tool registration until the plugin was updated to match.
+#
+# Declarations drive what refreshes:
+# - opencode: plugins are declared in opencode.jsonc/cli.json (rendered by
+#   run_onchange_after_20). `opencode plugin update` refreshes every outdated
+#   package plugin there; exact-version pins are skipped, so pinning a spec
+#   moves its updates back under PR review.
+# - OMP: npm plugins have no config surface — omp config has no plugins key,
+#   and config.yml `extensions:` takes filesystem paths, not package specs.
+#   The install command below is the only declaration chezmoi can hold.
+#
+# The CortexKit config file (aft.jsonc) is applied by chezmoi's file
+# mechanism. All steps are idempotent and non-fatal: a missing harness or an
+# offline network must never abort the bootstrap.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "coding harness plugin refresh (CI environment)"
+    exit 0
+fi
+
+log_section "coding harness plugin refresh"
+
+# OpenCode: update every outdated package plugin declared in opencode.jsonc
+# and cli.json. @latest specs auto-track each apply; the server hot-reloads
+# updated packages.
+if command -v opencode >/dev/null 2>&1; then
+    # </dev/null: fail-fast on interactive prompts instead of hanging apply.
+    log_run --non-fatal "opencode plugin update" \
+        opencode plugin update </dev/null || true
+else
+    log_skip "opencode plugin update (opencode not installed)"
+fi
+
+# OMP: install is a no-op when the plugin is already current; --force
+# re-resolves the @latest spec. bun is required by omp plugin install
+# (it drives the node_modules install).
+if command -v omp >/dev/null 2>&1; then
+    if command -v bun >/dev/null 2>&1; then
+        log_run --non-fatal "aft-pi plugin install" \
+            omp plugin install --force @cortexkit/aft-pi </dev/null || true
+    else
+        log_warn "bun not found — skipping AFT plugin install for OMP. Install with: brew install bun"
+    fi
+else
+    log_skip "aft-pi plugin install (omp not installed)"
+fi
+
+# Pre-warm the shared AFT binary if missing (matches the plugin version).
+# The binary is normally lazy-installed on first session start; this avoids
+# the download cost on the first session. Requires npx. The harness flag
+# only picks which integration doctor diagnoses — the binary is shared.
+if command -v npx >/dev/null 2>&1; then
+    log_info "pre-warming aft binary..."
+    log_run --non-fatal "aft binary pre-warm" \
+        npx --yes @cortexkit/aft@latest doctor --fix --harness omp </dev/null || true
+else
+    log_warn "npx not found — skipping aft binary pre-warm"
+fi
+
+log_ok "coding harness plugin refresh done"
