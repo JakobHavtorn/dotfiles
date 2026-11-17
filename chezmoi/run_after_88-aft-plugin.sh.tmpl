@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# run_after_88-aft-plugin.sh.tmpl
+#
+# Runs on every apply: both harnesses resolve "latest" once and never
+# re-resolve on their own. OMP pins the installed version in
+# ~/.omp/plugins/omp-plugins.lock.json, and opencode checks for updates
+# but leaves the installed package unchanged. A stale plugin then breaks
+# on harness upgrades — opencode 2.2.1+ (Nov 2026) skipped every AFT tool
+# registration until the plugin was updated to match.
+#
+# The CortexKit config file (aft.jsonc) is applied by chezmoi's file
+# mechanism; this script only refreshes plugin registration and the
+# shared AFT binary. All steps are idempotent and non-fatal: a missing
+# harness or an offline network must never abort the bootstrap.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "aft plugin (CI environment)"
+    exit 0
+fi
+
+log_section "aft plugin"
+
+# OpenCode: plugin update re-resolves unpinned specs (@latest) configured
+# in opencode.jsonc/cli.json. The server hot-reloads the new package.
+if command -v opencode >/dev/null 2>&1; then
+    # </dev/null: fail-fast on interactive prompts instead of hanging apply.
+    log_run --non-fatal "aft-opencode plugin update" \
+        opencode plugin update @cortexkit/aft-opencode@latest </dev/null || true
+else
+    log_skip "aft plugin (opencode not installed)"
+fi
+
+# OMP: plugin install is a no-op when the plugin is already current.
+# bun is required by omp plugin install (it drives the node_modules install).
+if command -v omp >/dev/null 2>&1; then
+    if command -v bun >/dev/null 2>&1; then
+        log_run --non-fatal "aft-pi plugin install" \
+            omp plugin install --force @cortexkit/aft-pi </dev/null || true
+    else
+        log_warn "bun not found — skipping AFT plugin install for OMP. Install with: brew install bun"
+    fi
+else
+    log_skip "aft plugin (omp not installed)"
+fi
+
+# Pre-warm the shared AFT binary if missing (matches the plugin version).
+# The binary is normally lazy-installed on first session start; this avoids
+# the download cost on the first session. Requires npx. The harness flag
+# only picks which integration doctor diagnoses — the binary is shared.
+if command -v npx >/dev/null 2>&1; then
+    log_info "pre-warming aft binary..."
+    log_run --non-fatal "aft binary pre-warm" \
+        npx --yes @cortexkit/aft@latest doctor --fix --harness omp </dev/null || true
+else
+    log_warn "npx not found — skipping aft binary pre-warm"
+fi
+
+log_ok "aft plugin done"
