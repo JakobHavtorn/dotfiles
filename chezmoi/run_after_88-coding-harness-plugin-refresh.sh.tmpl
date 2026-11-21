@@ -59,10 +59,13 @@ fi
 # The binary is normally lazy-installed on first session start; this avoids
 # the download cost on the first session. Requires npx. The harness flag
 # only picks which integration doctor diagnoses — the binary is shared.
+# No --fix: its inactive-cache cleanup needs the storage lease, which a
+# running daemon holds — so --fix reliably exits 1 on machines using AFT.
+# Cache cleanup with the daemon stopped is manual maintenance, not bootstrap.
 if command -v npx >/dev/null 2>&1; then
     log_info "pre-warming aft binary..."
     log_run --non-fatal "aft binary pre-warm" \
-        npx --yes @cortexkit/aft@latest doctor --fix --harness omp </dev/null || true
+        npx --yes @cortexkit/aft@latest doctor --harness omp </dev/null || true
 else
     log_warn "npx not found — skipping aft binary pre-warm"
 fi
