@@ -180,6 +180,7 @@ go "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 go "honnef.co/go/tools/cmd/staticcheck"
 
 # npm globals
+npm "@anthropic-ai/claude-code"
 npm "@openai/codex"
 npm "@earendil-works/pi-coding-agent"
 npm "@openchamber/web"
