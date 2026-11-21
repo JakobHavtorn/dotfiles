@@ -23,11 +23,15 @@ log_section "installing homebrew"
 
 _install_brew_failed() {
     log_err "homebrew install failed — the bootstrap continues without it"
-    log_info "admin account: run the installer in a terminal, then re-apply:"
+    log_info "admin: run the installer in a terminal, then re-apply (below):"
     log_info '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
     log_info "standard account: an admin prepares the prefix once:"
     log_info "  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):staff /opt/homebrew"
-    log_info "then: eval \"\$(/opt/homebrew/bin/brew shellenv)\" && ~/.local/bin/chezmoi apply"
+    log_info "then: eval \"\$(/opt/homebrew/bin/brew shellenv)\""
+    log_info "and reset script state so guard-skipped steps re-run (brew bundle,"
+    log_info "OMF, npx layers, duti), then apply:"
+    log_info "  ~/.local/bin/chezmoi state delete-bucket --bucket=scriptState"
+    log_info "  ~/.local/bin/chezmoi apply"
 }
 
 if (exec 3</dev/tty) 2>/dev/null; then

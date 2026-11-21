@@ -82,7 +82,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_86-obsidian-mcp.sh.tmpl` | Registers the Obsidian Local REST API MCP server with Claude Code (`claude mcp add --scope user`) and Codex (`~/.codex/config.toml`). Reads the API key from the plugin's `data.json` |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |
-| `chezmoi/run_once_after_95-vscode-default-app.sh.tmpl` | Darwin only — sets VS Code as default app for dev file types via duti |
+| `chezmoi/run_once_after_95-vscode-default-app.sh.tmpl` | Darwin only — sets VS Code as default app for dev file types via duti; non-fatal without duti (arrives with brew bundle) |
 | `chezmoi/Library/LaunchAgents/` | launchd plist for weekly dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
 
 ## Conventions

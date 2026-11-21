@@ -54,7 +54,13 @@ The installer creates `/opt/homebrew` once with sudo — the bootstrap prompts f
 sudo mkdir -p /opt/homebrew && sudo chown -R $(whoami):staff /opt/homebrew
 ```
 
-A failed Homebrew install never aborts the bootstrap; the log prints the same recovery commands. Re-run `chezmoi apply` after fixing it.
+A failed Homebrew install never aborts the bootstrap; the log prints the same recovery commands. After Homebrew is installed, reset the script state and re-apply — guard-skipped steps (brew bundle, OMF, the npx layers, duti bindings) consume their run state even when they skip, so a plain re-apply would not back-fill them:
+
+```sh
+eval "$(/opt/homebrew/bin/brew shellenv)"
+~/.local/bin/chezmoi state delete-bucket --bucket=scriptState
+~/.local/bin/chezmoi apply
+```
 
 ### Linux prerequisites
 
