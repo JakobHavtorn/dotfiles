@@ -61,6 +61,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
 | `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — `.obsidian/*.json` + `plugins/*/manifest.json` + `data.json` (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes workspace state and plugin binaries |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
+| `chezmoi/run_once_after_06-seed-github-ssh.sh.tmpl` | Interactive: runs `scripts/seed-github-ssh.sh` on the first terminal apply (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key exists; legacy `id_github` gets a migration hint |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
 | `chezmoi/run_once_before_10-install-homebrew.sh.tmpl` | Darwin only |
 | `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` (incl. rootless node + Pi via npm) |

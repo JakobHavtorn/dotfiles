@@ -16,13 +16,15 @@ agent-skills is public too, so its clone — skills for every harness — succee
 
 ### SSH for pushes
 
-The HTTPS clone pulls without auth, but pushing needs a key. Seed it whenever you like — before or after the bootstrap:
+The HTTPS clone pulls without auth, but pushing needs a key. The first `chezmoi apply` in a terminal seeds it for you: `run_once_after_06-seed-github-ssh` runs the standalone script — keygen at `~/.ssh/github`, browser opens at `github.com/settings/keys`, press Enter once the key is added, and it verifies. An aborted run never blocks the bootstrap; it logs the manual command.
+
+Headless applies (CI, cron) skip the interactive step — seed manually whenever you like, before or after the bootstrap:
 
 ```sh
 bash <(curl -fsLS https://raw.githubusercontent.com/JakobHavtorn/dotfiles/main/scripts/seed-github-ssh.sh)
 ```
 
-`scripts/seed-github-ssh.sh` is self-contained: it generates the key at `~/.ssh/github`, seeds the host block, copies the public key to the clipboard, opens `github.com/settings/keys` in the browser, waits for you to add the key, then verifies the connection.
+`scripts/seed-github-ssh.sh` is self-contained: it generates the key at `~/.ssh/github`, seeds the host block, copies the public key to the clipboard, opens `github.com/settings/keys` in the browser, waits for you to add the key, then verifies the connection. Seeding before the bootstrap is also the prerequisite for the `--ssh` clone variant.
 
 **Paste block** — works with nothing but a shell:
 
