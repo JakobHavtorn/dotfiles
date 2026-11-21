@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# run_after_99-bootstrap-doctor.sh.tmpl
+#
+# End-state report at the end of every apply: which layers are still pending?
+# Purely informational and non-fatal — convergers and presence facts do the
+# healing; this makes deferral visible instead of silent. Quiet when clean
+# (one line). Complements scripts/check-bootstrap.sh, which detects
+# interrupted applies via the chezmoi state DB; the doctor reports layers
+# deferred for any reason.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "bootstrap doctor (CI environment)"
+    exit 0
+fi
+
+log_section "bootstrap doctor"
+
+_pending=0
+_missing() {
+    _pending=1
+    log_warn "pending: $1 — $2"
+}
+_has() { command -v "$1" >/dev/null 2>&1; }
+
+if ! _has brew && [ ! -x /opt/homebrew/bin/brew ]; then
+    _missing "homebrew" "see README 'Homebrew (macOS)', then re-apply"
+fi
+_has fish || _missing "fish" "arrives with brew bundle — re-apply once homebrew exists"
+_has npx  || _missing "node/npx" "arrives with brew bundle — re-apply once homebrew exists"
+_has jq   || _missing "jq" "arrives with brew bundle — re-apply once homebrew exists"
+_has duti || _missing "duti" "arrives with brew bundle — re-apply once homebrew exists"
+_has pipx || _missing "pipx" "arrives with brew bundle — re-apply once homebrew exists"
+_has claude || _missing "claude cli" "arrives with brew bundle (npm globals) — re-apply once homebrew exists"
+_has herdr || _missing "herdr" "brew (darwin) or remote-tools (linux) — re-apply once present"
+_has taxhelper || _missing "taxhelper" "arrives with pipx — re-apply once homebrew exists"
+
+if _has fish && ! fish -c 'type -q omf' >/dev/null 2>&1; then
+    _missing "oh-my-fish" "re-runs once fish is present (run_onchange_after_60)"
+fi
+
+[ -f "$HOME/.ssh/id_github" ] || _missing "github ssh key" "re-apply in a terminal, or run scripts/seed-github-ssh.sh"
+
+if [ -f "$HOME/.env" ] && grep -q '^CORTI_BEARER=' "$HOME/.env" 2>/dev/null; then
+    :
+else
+    _missing "CORTI_BEARER" "add to ~/.env, then: npx @corti/cli@latest models init --tools opencode,pi --scope global"
+fi
+
+{{ if eq .chezmoi.os "darwin" -}}
+if [ ! -d "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian" ]; then
+    _missing "obsidian vault" "sign into iCloud, let the vault sync, then re-apply"
+fi
+{{ end -}}
+
+if [ "$_pending" -eq 0 ]; then
+    log_ok "all layers present"
+else
+    log_warn "pending layers above — each self-heals via convergers or presence facts on a later apply"
+fi
