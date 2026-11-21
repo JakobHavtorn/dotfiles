@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# run_once_after_06-seed-github-ssh.sh.tmpl
+#
+# Seed GitHub SSH interactively during the first terminal apply: delegates to
+# the standalone scripts/seed-github-ssh.sh (keygen at ~/.ssh/id_github,
+# browser add at github.com/settings/keys, ssh -T verify). Skips in CI,
+# without a controlling terminal, or when the key already exists. Never
+# blocks the bootstrap — an incomplete run logs the manual command.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "github ssh seeding (CI environment)"
+    exit 0
+fi
+
+KEY="$HOME/.ssh/id_github"
+SEED="$(dirname "{{ .chezmoi.sourceDir }}")/scripts/seed-github-ssh.sh"
+
+if [ -f "$KEY" ]; then
+    log_skip "github ssh seeding (key exists: $KEY)"
+    exit 0
+fi
+
+# A controlling terminal is required (browser + confirmation prompt).
+# Test by opening /dev/tty in a subshell — stdin may not be the terminal
+# when chezmoi invokes run scripts.
+if ! (exec 3</dev/tty) 2>/dev/null; then
+    log_warn "no interactive terminal — seed GitHub SSH with scripts/seed-github-ssh.sh"
+    exit 0
+fi
+
+if [ ! -f "$SEED" ]; then
+    log_warn "seed script not found at $SEED — run it manually from a clone"
+    exit 0
+fi
+
+log_section "github ssh seeding"
+
+# Non-fatal: an aborted or failed seeding must never stop the bootstrap.
+if bash "$SEED" </dev/tty; then
+    log_ok "github ssh seeded"
+else
+    log_warn "github ssh seeding incomplete — run scripts/seed-github-ssh.sh to finish"
+fi

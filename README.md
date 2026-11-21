@@ -1,27 +1,60 @@
 # dotfiles
 
-chezmoi-based dotfiles. Private repo.
+chezmoi-based dotfiles.
 
 ## Bootstrap
 
-Promptless (recommended):
+One command, no prerequisites — the repo is public and clones over HTTPS:
 
 ```sh
-IDENTITY=work sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply --ssh jakobhavtorn/dotfiles
+IDENTITY=work sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" init --apply jakobhavtorn/dotfiles
 ```
 
 Without `IDENTITY`, you'll be prompted for a machine identity (`work` / `personal`).
 
-**Prerequisites:**
+agent-skills is public too, so its clone — skills for every harness — succeeds without credentials during the apply. Add `--ssh` to bootstrap over SSH instead; that path needs the key seeded first (below).
 
-- **Linux only** — a minimal container or fresh box may lack these:
-  ```sh
-  apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils unzip
-  ```
-  `curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish and node archives (`.tar.xz`), `unzip` extracts the bun archive (`.zip`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
-- **SSH auth** — the repo is private. Either give the box its own key, or bootstrap through one agent-forwarded session (`ssh -A <host>` first).
+### SSH for pushes
 
-Optional personal-layer steps (`corti models init`, agent-skills clone) are non-fatal: without their credentials they log an error and the bootstrap continues. Re-run them manually once credentials are in place, or `chezmoi update`.
+The HTTPS clone pulls without auth, but pushing needs a key. The first `chezmoi apply` in a terminal seeds it for you: `run_once_after_06-seed-github-ssh` runs the standalone script — keygen at `~/.ssh/id_github`, browser opens at `github.com/settings/keys`, press Enter once the key is added, and it verifies. An aborted run never blocks the bootstrap; it logs the manual command.
+
+Headless applies (CI, cron) skip the interactive step — seed manually whenever you like, before or after the bootstrap:
+
+```sh
+bash <(curl -fsLS https://raw.githubusercontent.com/JakobHavtorn/dotfiles/main/scripts/seed-github-ssh.sh)
+```
+
+`scripts/seed-github-ssh.sh` is self-contained: it generates the key at `~/.ssh/id_github`, seeds the host block, copies the public key to the clipboard, opens `github.com/settings/keys` in the browser, waits for you to add the key, then verifies the connection. Seeding before the bootstrap is also the prerequisite for the `--ssh` clone variant.
+
+**Paste block** — works with nothing but a shell:
+
+```sh
+ssh-keygen -t ed25519 -C "$USER@$(hostname -s)" -f ~/.ssh/id_github
+cat ~/.ssh/id_github.pub    # add at github.com/settings/keys — the .pub only, never the private key
+mkdir -p ~/.ssh/config.d
+printf 'Include config.d/*\n' >> ~/.ssh/config
+printf 'Host github.com\n  AddKeysToAgent yes\n  IdentityFile ~/.ssh/id_github\n  UseKeychain yes\n' > ~/.ssh/config.d/github
+ssh -T git@github.com    # expect: Hi JakobHavtorn!
+```
+
+Omit `UseKeychain yes` on Linux. Both paths seed exactly what chezmoi manages (`private_dot_ssh/config.d/github.tmpl` + `run_once_after_05-ssh-config`), so the first apply converges with no diff. To push over SSH from an HTTPS clone: `git -C ~/.local/share/chezmoi remote set-url origin git@github.com:JakobHavtorn/dotfiles.git`.
+
+### After the apply
+
+Two optional layers skip non-fatally without credentials:
+
+- `gh auth login` (answer yes to the git credential setup) — enables `gh` usage and HTTPS pushes.
+- Add `CORTI_BEARER` to `~/.env`, then run `npx @corti/cli@latest models init --tools opencode,pi --scope global`.
+
+### Linux prerequisites
+
+A minimal container or fresh box may lack these:
+
+```sh
+apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils unzip
+```
+
+`curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish and node archives (`.tar.xz`), `unzip` extracts the bun archive (`.zip`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
 
 ## Usage
 
