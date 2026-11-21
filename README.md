@@ -46,6 +46,16 @@ Two optional layers skip non-fatally without credentials:
 - `gh auth login` (answer yes to the git credential setup) — enables `gh` usage and HTTPS pushes.
 - Add `CORTI_BEARER` to `~/.env`, then run `npx @corti/cli@latest models init --tools opencode,pi --scope global`.
 
+### Homebrew (macOS)
+
+The installer creates `/opt/homebrew` once with sudo — the bootstrap prompts for your password when it reaches this step. Standard (non-admin) accounts need the prefix prepared once by an admin:
+
+```sh
+sudo mkdir -p /opt/homebrew && sudo chown -R $(whoami):staff /opt/homebrew
+```
+
+A failed Homebrew install never aborts the bootstrap; the log prints the same recovery commands. Re-run `chezmoi apply` after fixing it.
+
 ### Linux prerequisites
 
 A minimal container or fresh box may lack these:

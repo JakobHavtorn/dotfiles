@@ -7,6 +7,12 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # Install Homebrew if not present.
 # Guard: official installer errors if brew already installed.
+#
+# The installer needs sudo once to create /opt/homebrew (Apple Silicon). With
+# a controlling terminal it runs interactively and prompts for the password;
+# headless applies try NONINTERACTIVE, which works only with passwordless or
+# cached sudo. A failed install never aborts the bootstrap — brew bundle (20)
+# skips without brew, and the log carries the recovery commands.
 
 if command -v brew >/dev/null 2>&1; then
     log_skip "homebrew already installed"
@@ -14,7 +20,28 @@ if command -v brew >/dev/null 2>&1; then
 fi
 
 log_section "installing homebrew"
-NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+_install_brew_failed() {
+    log_err "homebrew install failed — the bootstrap continues without it"
+    log_info "admin account: run the installer in a terminal, then re-apply:"
+    log_info '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    log_info "standard account: an admin prepares the prefix once:"
+    log_info "  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):staff /opt/homebrew"
+    log_info "then: eval \"\$(/opt/homebrew/bin/brew shellenv)\" && ~/.local/bin/chezmoi apply"
+}
+
+if (exec 3</dev/tty) 2>/dev/null; then
+    # Interactive: the installer prompts for the sudo password.
+    if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/tty; then
+        _install_brew_failed
+        exit 0
+    fi
+else
+    if ! NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/null; then
+        _install_brew_failed
+        exit 0
+    fi
+fi
 
 # Add brew to PATH for this script's remainder
 if [[ -x /opt/homebrew/bin/brew ]]; then

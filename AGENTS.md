@@ -63,7 +63,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
 | `chezmoi/run_once_after_06-seed-github-ssh.sh.tmpl` | Interactive: runs `scripts/seed-github-ssh.sh` on the first terminal apply (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key already exists |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
-| `chezmoi/run_once_before_10-install-homebrew.sh.tmpl` | Darwin only |
+| `chezmoi/run_once_before_10-install-homebrew.sh.tmpl` | Darwin only — installs Homebrew interactively (sudo prompts for `/opt/homebrew`); headless tries NONINTERACTIVE; failure is non-fatal with recovery commands in the log |
 | `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` (incl. rootless node + Pi via npm) |
 | `chezmoi/run_onchange_after_19-macos-apps.sh.tmpl` | Darwin only — installs apps from macos-apps.txt when missing (DMG or zip; into `/Applications` if writable, else `~/Applications`), links bundled CLIs such as `code` into `~/.local/bin`; never upgrades. Runs before brew bundle so the Brewfile's `vscode` lines find `code`. Skipped in CI |
 | `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only |
