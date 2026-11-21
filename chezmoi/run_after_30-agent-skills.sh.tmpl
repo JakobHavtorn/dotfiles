@@ -23,9 +23,10 @@ if ! command -v git >/dev/null 2>&1; then
     exit 0
 fi
 
-# Private repo — skip in CI (no auth available). On real machines a
-# clone/update failure (missing GitHub auth) is logged and never stops
-# the bootstrap.
+# Public repo — the clone needs no auth. CI still skips it to keep the
+# clean-install workflows decoupled from the agent-skills repo. On real
+# machines a clone/update failure (e.g. offline) is logged and never
+# stops the bootstrap.
 if is_ci; then
     log_skip "agent-skills (CI environment)"
     exit 0

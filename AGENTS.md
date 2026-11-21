@@ -26,6 +26,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `scripts/ci-local.sh` | Local runner for all lint checks: JSON validation, shellcheck, `set -euo pipefail` check, template rendering for both identities. Called by `.pre-commit-config.yaml` and `.github/workflows/lint.yml` — single source of truth |
 | `scripts/dump.sh` | Weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults, obsidian config. PATH-hardened for launchd |
 | `scripts/dump-pr.sh` | Opens a PR for dump.sh manifest changes (macOS, launchd). Closes stale dump PRs first. Called after dump.sh |
+| `scripts/seed-github-ssh.sh` | GitHub SSH seeder for fresh machines: keygen at `~/.ssh/github`, seed host block + Include line, copy pubkey, open settings/keys, verify `ssh -T`; curl-able pre-clone (public repo) |
 
 **`chezmoi/` — chezmoi source root (via `.chezmoiroot`):**
 
