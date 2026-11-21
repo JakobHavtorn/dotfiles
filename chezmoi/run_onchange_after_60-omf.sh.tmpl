@@ -5,6 +5,9 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 
+# presence fact — flips this script's content hash when the precondition
+# changes, so a guard-skip never permanently silences this layer:
+#   fish: {{ output "sh" "-c" "command -v fish >/dev/null 2>&1 && echo present || echo absent" | trim }}
 # Install OMF packages and themes from manifest.
 # Re-runs when this script or the manifest changes.
 # omf hash: {{ include "manifests/omf.txt" | sha256sum }}

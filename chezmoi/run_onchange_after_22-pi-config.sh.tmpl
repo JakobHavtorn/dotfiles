@@ -2,6 +2,11 @@
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
+# presence fact — flips this script's content hash when the precondition
+# changes, so a guard-skip never permanently silences this layer (the
+# mcp.json render always succeeds; this covers the jq default-model step):
+#   jq: {{ output "sh" "-c" "command -v jq >/dev/null 2>&1 && echo present || echo absent" | trim }}
+
 # mcp.json.tmpl hash: {{ include "dot_pi/agent/mcp.json.tmpl" | sha256sum }}
 # chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
 

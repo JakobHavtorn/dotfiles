@@ -3,6 +3,10 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
+# presence fact — flips this script's content hash when the precondition
+# changes, so a guard-skip never permanently silences this layer:
+#   brew: {{ output "sh" "-c" "command -v brew >/dev/null 2>&1 && echo present || echo absent" | trim }}
+
 {{ if eq .chezmoi.os "darwin" -}}
 
 # Install all formulae, casks, and extensions from the Brewfile.
@@ -12,10 +16,21 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 BREWFILE="${BREWFILE:-"{{ .chezmoi.sourceDir }}/manifests/Brewfile"}"
 
-if ! command -v brew >/dev/null 2>&1; then
+# Resolve brew directly when it is not on PATH yet — run_before_10 cannot
+# export PATH back into chezmoi's process, so a same-apply install needs this.
+BREW_BIN="$(command -v brew || true)"
+if [ -z "$BREW_BIN" ]; then
+    if [ -x /opt/homebrew/bin/brew ]; then
+        BREW_BIN=/opt/homebrew/bin/brew
+    elif [ -x /usr/local/bin/brew ]; then
+        BREW_BIN=/usr/local/bin/brew
+    fi
+fi
+if [ -z "$BREW_BIN" ]; then
     log_skip "brew bundle (homebrew not installed)"
     exit 0
 fi
+eval "$("$BREW_BIN" shellenv)"
 
 log_section "brew bundle install"
 

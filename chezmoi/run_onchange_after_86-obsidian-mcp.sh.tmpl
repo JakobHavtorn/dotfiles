@@ -17,6 +17,10 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
+# presence facts — flip this script's content hash when preconditions change,
+# so a guard-skip never permanently silences this layer:
+#   claude cli: {{ output "sh" "-c" "command -v claude >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   vault data.json: {{ if stat (joinPath .chezmoi.homeDir "Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian/plugins/obsidian-local-rest-api/data.json") }}present{{ else }}absent{{ end }}
 if is_ci; then
     log_skip "obsidian mcp (CI environment)"
     exit 0

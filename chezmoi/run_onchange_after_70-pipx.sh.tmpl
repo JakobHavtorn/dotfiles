@@ -4,6 +4,9 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 
+# presence fact — flips this script's content hash when the precondition
+# changes, so a guard-skip never permanently silences this layer:
+#   pipx: {{ output "sh" "-c" "command -v pipx >/dev/null 2>&1 && echo present || echo absent" | trim }}
 # Install pipx packages from manifest.
 # Re-runs when this script or the manifest changes.
 # pipx hash: {{ include "manifests/pipx.txt" | sha256sum }}

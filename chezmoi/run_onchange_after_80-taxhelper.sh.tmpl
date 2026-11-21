@@ -3,6 +3,9 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
+# presence fact — flips this script's content hash when the precondition
+# changes, so a guard-skip never permanently silences this layer:
+#   taxhelper: {{ output "sh" "-c" "command -v taxhelper >/dev/null 2>&1 && echo present || echo absent" | trim }}
 # Install taxhelper agent skills for opencode.
 # Taxhelper itself is installed via pipx (see manifests/pipx.txt).
 # Re-runs when this script changes.
