@@ -38,6 +38,8 @@ brew "duti"             # set default apps for file types (VS Code bindings)
 brew "tree"
 brew "wget"
 brew "yq"
+brew "jq"               # direct dep of run_onchange_after_22 (pi default model)
+brew "ripgrep"          # rg; asserted by clean-install CI, linux remote-tools parity
 brew "pandoc"
 brew "parallel"
 brew "magic-wormhole"
@@ -89,6 +91,7 @@ cask "zotero"
 cask "hermes-desktop"
 
 # VS Code extensions
+vscode "anthropic.claude-code"
 vscode "anseki.vscode-color"
 vscode "azemoh.one-monokai"
 vscode "bierner.markdown-mermaid"
