@@ -16,7 +16,7 @@ agent-skills is public too, so its clone — skills for every harness — succee
 
 ### SSH for pushes
 
-The HTTPS clone pulls without auth, but pushing needs a key. The first `chezmoi apply` in a terminal seeds it for you: `run_once_after_06-seed-github-ssh` runs the standalone script — keygen at `~/.ssh/github`, browser opens at `github.com/settings/keys`, press Enter once the key is added, and it verifies. An aborted run never blocks the bootstrap; it logs the manual command.
+The HTTPS clone pulls without auth, but pushing needs a key. The first `chezmoi apply` in a terminal seeds it for you: `run_once_after_06-seed-github-ssh` runs the standalone script — keygen at `~/.ssh/id_github`, browser opens at `github.com/settings/keys`, press Enter once the key is added, and it verifies. An aborted run never blocks the bootstrap; it logs the manual command.
 
 Headless applies (CI, cron) skip the interactive step — seed manually whenever you like, before or after the bootstrap:
 
@@ -24,26 +24,20 @@ Headless applies (CI, cron) skip the interactive step — seed manually whenever
 bash <(curl -fsLS https://raw.githubusercontent.com/JakobHavtorn/dotfiles/main/scripts/seed-github-ssh.sh)
 ```
 
-`scripts/seed-github-ssh.sh` is self-contained: it generates the key at `~/.ssh/github`, seeds the host block, copies the public key to the clipboard, opens `github.com/settings/keys` in the browser, waits for you to add the key, then verifies the connection. Seeding before the bootstrap is also the prerequisite for the `--ssh` clone variant.
+`scripts/seed-github-ssh.sh` is self-contained: it generates the key at `~/.ssh/id_github`, seeds the host block, copies the public key to the clipboard, opens `github.com/settings/keys` in the browser, waits for you to add the key, then verifies the connection. Seeding before the bootstrap is also the prerequisite for the `--ssh` clone variant.
 
 **Paste block** — works with nothing but a shell:
 
 ```sh
-ssh-keygen -t ed25519 -C "$USER@$(hostname -s)" -f ~/.ssh/github
-cat ~/.ssh/github.pub    # add at github.com/settings/keys — the .pub only, never the private key
+ssh-keygen -t ed25519 -C "$USER@$(hostname -s)" -f ~/.ssh/id_github
+cat ~/.ssh/id_github.pub    # add at github.com/settings/keys — the .pub only, never the private key
 mkdir -p ~/.ssh/config.d
 printf 'Include config.d/*\n' >> ~/.ssh/config
-printf 'Host github.com\n  AddKeysToAgent yes\n  IdentityFile ~/.ssh/github\n  UseKeychain yes\n' > ~/.ssh/config.d/github
+printf 'Host github.com\n  AddKeysToAgent yes\n  IdentityFile ~/.ssh/id_github\n  UseKeychain yes\n' > ~/.ssh/config.d/github
 ssh -T git@github.com    # expect: Hi JakobHavtorn!
 ```
 
 Omit `UseKeychain yes` on Linux. Both paths seed exactly what chezmoi manages (`private_dot_ssh/config.d/github.tmpl` + `run_once_after_05-ssh-config`), so the first apply converges with no diff. To push over SSH from an HTTPS clone: `git -C ~/.local/share/chezmoi remote set-url origin git@github.com:JakobHavtorn/dotfiles.git`.
-
-**Existing machines** (key currently at `~/.ssh/id_github`) — rename once, then re-apply:
-
-```sh
-mv ~/.ssh/id_github ~/.ssh/github && mv ~/.ssh/id_github.pub ~/.ssh/github.pub && chezmoi apply
-```
 
 ### After the apply
 

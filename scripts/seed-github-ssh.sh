@@ -10,7 +10,7 @@
 # when transferred by hand — AirDrop, USB, or paste.
 #
 # Steps:
-#   1. Generate an ed25519 key at ~/.ssh/github (the path the repo's SSH
+#   1. Generate an ed25519 key at ~/.ssh/id_github (the path the repo's SSH
 #      config expects) unless one already exists.
 #   2. Seed ~/.ssh/config.d/github and the `Include config.d/*` line in
 #      ~/.ssh/config — byte-matching what chezmoi manages, so the first
@@ -25,7 +25,7 @@ set -euo pipefail
 
 : "${USER:=$(id -un)}"
 
-KEY="$HOME/.ssh/github"
+KEY="$HOME/.ssh/id_github"
 PUB="${KEY}.pub"
 HOST_BLOCK="$HOME/.ssh/config.d/github"
 GITHUB_URL="https://github.com/settings/keys"
@@ -43,7 +43,7 @@ echo "  seeding $HOST_BLOCK..."
 {
     echo "Host github.com"
     echo "  AddKeysToAgent yes"
-    echo "  IdentityFile ~/.ssh/github"
+    echo "  IdentityFile ~/.ssh/id_github"
     if [ "$(uname)" = "Darwin" ]; then
         echo "  UseKeychain yes"
     fi

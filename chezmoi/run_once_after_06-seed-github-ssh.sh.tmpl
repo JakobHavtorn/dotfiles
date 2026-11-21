@@ -2,11 +2,10 @@
 # run_once_after_06-seed-github-ssh.sh.tmpl
 #
 # Seed GitHub SSH interactively during the first terminal apply: delegates to
-# the standalone scripts/seed-github-ssh.sh (keygen at ~/.ssh/github, browser
-# add at github.com/settings/keys, ssh -T verify). Skips in CI, without a
-# controlling terminal, or when the key already exists; a legacy key at
-# ~/.ssh/id_github gets a migration hint instead of a new key. Never blocks
-# the bootstrap — an incomplete run logs the manual command.
+# the standalone scripts/seed-github-ssh.sh (keygen at ~/.ssh/id_github,
+# browser add at github.com/settings/keys, ssh -T verify). Skips in CI,
+# without a controlling terminal, or when the key already exists. Never
+# blocks the bootstrap — an incomplete run logs the manual command.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
@@ -16,17 +15,11 @@ if is_ci; then
     exit 0
 fi
 
-KEY="$HOME/.ssh/github"
-LEGACY_KEY="$HOME/.ssh/id_github"
+KEY="$HOME/.ssh/id_github"
 SEED="$(dirname "{{ .chezmoi.sourceDir }}")/scripts/seed-github-ssh.sh"
 
 if [ -f "$KEY" ]; then
     log_skip "github ssh seeding (key exists: $KEY)"
-    exit 0
-fi
-
-if [ -f "$LEGACY_KEY" ]; then
-    log_warn "legacy key at $LEGACY_KEY — rename per README ('Existing machines'), then re-apply"
     exit 0
 fi
 
