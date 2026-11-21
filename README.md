@@ -19,7 +19,18 @@ Without `IDENTITY`, you'll be prompted for a machine identity (`work` / `persona
   apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils unzip
   ```
   `curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish and node archives (`.tar.xz`), `unzip` extracts the bun archive (`.zip`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
-- **SSH auth** — the repo is private. Either give the box its own key, or bootstrap through one agent-forwarded session (`ssh -A <host>` first).
+- **SSH auth** — the repo is private and the clone runs over SSH, but a fresh box has no GitHub key, and the repo's SSH config only applies after the first successful apply. Seed it before the bootstrap:
+
+  ```sh
+  ssh-keygen -t ed25519 -C "jdh@corti.ai" -f ~/.ssh/id_github
+  cat ~/.ssh/id_github.pub   # add at github.com/settings/keys — the .pub only, never the private key
+  mkdir -p ~/.ssh/config.d
+  printf 'Include config.d/*\n' >> ~/.ssh/config
+  printf 'Host github.com\n  AddKeysToAgent yes\n  IdentityFile ~/.ssh/id_github\n  UseKeychain yes\n' > ~/.ssh/config.d/github
+  ssh -T git@github.com      # expect: Hi JakobHavtorn!
+  ```
+
+  These files match what chezmoi manages (`private_dot_ssh/config.d/github.tmpl` + `run_once_after_05-ssh-config`), so the first apply converges with no diff. Omit `UseKeychain yes` on Linux. Alternatively, bootstrap through one agent-forwarded session (`ssh -A <host>` first).
 
 Optional personal-layer steps (`corti models init`, agent-skills clone) are non-fatal: without their credentials they log an error and the bootstrap continues. Re-run them manually once credentials are in place, or `chezmoi update`.
 
