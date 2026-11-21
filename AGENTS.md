@@ -65,8 +65,9 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` (incl. rootless node + Pi via npm) |
 | `chezmoi/run_onchange_after_19-macos-apps.sh.tmpl` | Darwin only — installs apps from macos-apps.txt when missing (DMG or zip; into `/Applications` if writable, else `~/Applications`), links bundled CLIs such as `code` into `~/.local/bin`; never upgrades. Runs before brew bundle so the Brewfile's `vscode` lines find `code`. Skipped in CI |
 | `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only |
-| `chezmoi/run_onchange_after_20-opencode-config.sh.tmpl` | Renders opencode.jsonc.tmpl + corti models init (model list from .chezmoidata) |
+| `chezmoi/run_onchange_after_20-opencode-config.sh.tmpl` | Renders opencode.jsonc + cli.json from templates; Corti model wiring lives in 25-corti-models |
 | `chezmoi/run_onchange_after_22-pi-config.sh.tmpl` | Renders Pi mcp.json from .chezmoidata (Pi models.json is owned by the corti CLI) |
+| `chezmoi/run_onchange_after_25-corti-models.sh.tmpl` | Wires Corti models into opencode + Pi via the corti CLI (npx @corti/cli models init) |
 | `chezmoi/run_after_30-agent-skills.sh.tmpl` | Clones/updates agent-skills, runs skillctl link (every apply — idempotent) |
 | `chezmoi/run_onchange_after_60-omf.sh.tmpl` | Installs OMF packages from manifest |
 | `chezmoi/run_onchange_after_70-pipx.sh.tmpl` | Installs pipx packages from manifest |
@@ -79,6 +80,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_86-obsidian-mcp.sh.tmpl` | Registers the Obsidian Local REST API MCP server with Claude Code (`claude mcp add --scope user`) and Codex (`~/.codex/config.toml`). Reads the API key from the plugin's `data.json` |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |
+| `chezmoi/run_once_after_95-vscode-default-app.sh.tmpl` | Darwin only — sets VS Code as default app for dev file types via duti |
 | `chezmoi/Library/LaunchAgents/` | launchd plist for weekly dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
 
 ## Conventions

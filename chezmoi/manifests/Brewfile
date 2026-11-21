@@ -10,7 +10,6 @@ tap "can1357/tap", trusted: true
 
 # Shells & terminal
 brew "fish"
-brew "fisher"
 brew "tmux"
 
 # Languages & runtimes
