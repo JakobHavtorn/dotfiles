@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# run_once_after_06-seed-github-ssh.sh.tmpl
+# run_after_06-seed-github-ssh.sh.tmpl
 #
-# Seed GitHub SSH interactively during the first terminal apply: delegates to
-# the standalone scripts/seed-github-ssh.sh (keygen at ~/.ssh/id_github,
-# browser add at github.com/settings/keys, ssh -T verify). Skips in CI,
-# without a controlling terminal, or when the key already exists. Never
-# blocks the bootstrap — an incomplete run logs the manual command.
+# Every-apply converger: seeds GitHub SSH interactively on a terminal apply,
+# delegating to the standalone scripts/seed-github-ssh.sh (keygen at
+# ~/.ssh/id_github, browser add at github.com/settings/keys, ssh -T verify).
+# Skips in CI, without a controlling terminal, or when the key already
+# exists; an aborted run retries on the next apply. Never blocks the
+# bootstrap. Opt out with SKIP_GITHUB_SSH_SEED=1.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
@@ -20,6 +21,11 @@ SEED="$(dirname "{{ .chezmoi.sourceDir }}")/scripts/seed-github-ssh.sh"
 
 if [ -f "$KEY" ]; then
     log_skip "github ssh seeding (key exists: $KEY)"
+    exit 0
+fi
+
+if [ -n "${SKIP_GITHUB_SSH_SEED:-}" ]; then
+    log_skip "github ssh seeding (SKIP_GITHUB_SSH_SEED set)"
     exit 0
 fi
 

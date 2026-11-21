@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
-# run_once_before_10-install-homebrew.sh.tmpl
+# run_before_10-install-homebrew.sh.tmpl
+#
+# Every-apply converger: installs Homebrew when missing, skips instantly when
+# present. The installer needs sudo once to create /opt/homebrew (Apple
+# Silicon); with a controlling terminal it runs interactively and prompts for
+# the password, headless applies try NONINTERACTIVE (works only with
+# passwordless or cached sudo). A failed install never aborts the bootstrap —
+# later layers skip without brew and self-heal on a later apply (convergers
+# plus presence facts). Opt out with SKIP_HOMEBREW_INSTALL=1.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 {{ if eq .chezmoi.os "darwin" -}}
 
-# Install Homebrew if not present.
-# Guard: official installer errors if brew already installed.
-#
-# The installer needs sudo once to create /opt/homebrew (Apple Silicon). With
-# a controlling terminal it runs interactively and prompts for the password;
-# headless applies try NONINTERACTIVE, which works only with passwordless or
-# cached sudo. A failed install never aborts the bootstrap — brew bundle (20)
-# skips without brew, and the log carries the recovery commands.
-
 if command -v brew >/dev/null 2>&1; then
     log_skip "homebrew already installed"
+    exit 0
+fi
+
+if [ -n "${SKIP_HOMEBREW_INSTALL:-}" ]; then
+    log_skip "homebrew install (SKIP_HOMEBREW_INSTALL set)"
     exit 0
 fi
 
@@ -23,15 +27,11 @@ log_section "installing homebrew"
 
 _install_brew_failed() {
     log_err "homebrew install failed — the bootstrap continues without it"
-    log_info "admin: run the installer in a terminal, then re-apply (below):"
+    log_info "admin: run the installer in a terminal:"
     log_info '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
     log_info "standard account: an admin prepares the prefix once:"
     log_info "  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):staff /opt/homebrew"
-    log_info "then: eval \"\$(/opt/homebrew/bin/brew shellenv)\""
-    log_info "and reset script state so guard-skipped steps re-run (brew bundle,"
-    log_info "OMF, npx layers, duti), then apply:"
-    log_info "  ~/.local/bin/chezmoi state delete-bucket --bucket=scriptState"
-    log_info "  ~/.local/bin/chezmoi apply"
+    log_info "then: ~/.local/bin/chezmoi apply   (convergers + presence facts back-fill)"
 }
 
 if (exec 3</dev/tty) 2>/dev/null; then
