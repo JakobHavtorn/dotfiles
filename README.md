@@ -51,13 +51,13 @@ Two optional layers skip non-fatally without credentials:
 Creating `/opt/homebrew` needs root once:
 
 - **Admin accounts**: the bootstrap prompts for your password when it reaches this step.
-- **Standard accounts** (the norm here — sudo prompts through IT's GUI helper for `jdh-admin` credentials): prepare the prefix once yourself:
+- **Standard accounts** (the norm here — sudo prompts through IT's GUI helper for `jdh-admin` credentials): the bootstrap handles it. `run_before_09-privileged-preflight` detects the missing prefix during the apply and prepares it with one sudo prompt — approve the popup. Settled machines never touch sudo (pure dir-test guards). Manual fallback if elevation fails:
 
   ```sh
-  sudo mkdir -p /opt/homebrew && sudo chown -R jdh:staff /opt/homebrew
+  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):$(id -gn) /opt/homebrew
   ```
 
-  The popup asks for the `jdh-admin` credentials. The prefix must end up owned by `jdh` — an admin-owned prefix breaks user-level brew. With a user-owned prefix, the installer needs no sudo at all.
+  The popup asks for the `jdh-admin` credentials. The prefix must end up owned by you — an admin-owned prefix breaks user-level brew. With a user-owned prefix, the installer needs no sudo at all.
 
 GUI casks install to `~/Applications` (`appdir` in the Brewfile), so nothing else ever needs elevation. A failed Homebrew install never aborts the bootstrap; the log prints the same recovery commands. Every deferred layer self-heals: after Homebrew is installed, simply re-apply — the every-apply steps re-run and the presence facts flip the deferred layers back on:
 

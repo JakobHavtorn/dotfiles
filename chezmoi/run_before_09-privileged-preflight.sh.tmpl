@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# run_before_09-privileged-preflight.sh.tmpl
+#
+# Every-apply converger for the bootstrap's root-owned prerequisites — the
+# steps a Standard account cannot do, executed via one sudo elevation when
+# needed (work machines: IT's GUI askpass pops for jdh-admin credentials).
+# Guards are pure file/dir tests, so settled machines never touch sudo and
+# headless applies never block on a hidden GUI prompt. A failed elevation is
+# non-fatal: the log carries the manual command, and the layers depending on
+# the prerequisite (brew install, brew bundle) skip and self-heal later.
+#
+# BREW_PREFIX is an env override for testing; default /opt/homebrew.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "privileged preflight (CI environment)"
+    exit 0
+fi
+
+BREW_PREFIX="${BREW_PREFIX:-/opt/homebrew}"
+
+_missing=()
+
+{{ if eq .chezmoi.os "darwin" -}}
+# Homebrew installs into the prefix unprivileged once it exists and is
+# user-writable (run_before_10 needs no sudo after this).
+if [ ! -d "$BREW_PREFIX" ] || [ ! -w "$BREW_PREFIX" ]; then
+    _missing+=("brew-prefix")
+fi
+{{ end -}}
+
+if [ "${#_missing[@]}" -eq 0 ]; then
+    log_skip "privileged preflight (nothing to do)"
+    exit 0
+fi
+
+if ! (exec 3</dev/tty) 2>/dev/null; then
+    log_warn "privileged prerequisites pending: ${_missing[*]} — no terminal to elevate; as an admin, run:"
+    log_warn "  sudo mkdir -p $BREW_PREFIX && sudo chown -R $(id -un):$(id -gn) $BREW_PREFIX"
+    exit 0
+fi
+
+for item in "${_missing[@]}"; do
+    case "$item" in
+        brew-prefix)
+            log_info "preparing $BREW_PREFIX — approve the elevation prompt..."
+            if sudo sh -c "mkdir -p '$BREW_PREFIX' && chown -R '$(id -un):$(id -gn)' '$BREW_PREFIX'"; then
+                log_ok "brew prefix ready — $BREW_PREFIX owned by $(id -un)"
+            else
+                log_warn "elevation failed — as an admin, run: sudo mkdir -p $BREW_PREFIX && sudo chown -R $(id -un):$(id -gn) $BREW_PREFIX"
+            fi
+            ;;
+    esac
+done
