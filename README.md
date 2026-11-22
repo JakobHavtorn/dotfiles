@@ -51,7 +51,7 @@ Two optional layers skip non-fatally without credentials:
 Creating `/opt/homebrew` needs root once:
 
 - **Admin accounts**: the bootstrap prompts for your password when it reaches this step.
-- **Standard accounts** (the norm here — sudo prompts through IT's GUI helper for `jdh-admin` credentials): the bootstrap handles it. `run_before_09-privileged-preflight` detects the missing prefix during the apply and prepares it with one sudo prompt — approve the popup. Settled machines never touch sudo (pure dir-test guards). Manual fallback if elevation fails:
+- **Regular accounts** (a separate admin account exists, e.g. `jdh-admin`): the bootstrap handles it. `run_before_09-privileged-preflight` detects the missing prefix during the apply and prepares it with one elevation — on regular accounts it opens the native administrator dialog, the same one application updaters show; enter the admin account's credentials. Settled machines never prompt (pure dir-test guards). Manual fallback if elevation fails:
 
   ```sh
   sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):$(id -gn) /opt/homebrew
