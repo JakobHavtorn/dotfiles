@@ -48,13 +48,18 @@ Two optional layers skip non-fatally without credentials:
 
 ### Homebrew (macOS)
 
-The installer creates `/opt/homebrew` once with sudo — the bootstrap prompts for your password when it reaches this step. Standard (non-admin) accounts need the prefix prepared once by an admin:
+Creating `/opt/homebrew` needs root once:
 
-```sh
-sudo mkdir -p /opt/homebrew && sudo chown -R $(whoami):staff /opt/homebrew
-```
+- **Admin accounts**: the bootstrap prompts for your password when it reaches this step.
+- **Standard accounts** (the norm here — sudo prompts through IT's GUI helper for `jdh-admin` credentials): prepare the prefix once yourself:
 
-A failed Homebrew install never aborts the bootstrap; the log prints the same recovery commands. Every deferred layer self-heals: after Homebrew is installed, simply re-apply — the every-apply steps re-run and the presence facts flip the deferred layers back on:
+  ```sh
+  sudo mkdir -p /opt/homebrew && sudo chown -R jdh:staff /opt/homebrew
+  ```
+
+  The popup asks for the `jdh-admin` credentials. The prefix must end up owned by `jdh` — an admin-owned prefix breaks user-level brew. With a user-owned prefix, the installer needs no sudo at all.
+
+GUI casks install to `~/Applications` (`appdir` in the Brewfile), so nothing else ever needs elevation. A failed Homebrew install never aborts the bootstrap; the log prints the same recovery commands. Every deferred layer self-heals: after Homebrew is installed, simply re-apply — the every-apply steps re-run and the presence facts flip the deferred layers back on:
 
 ```sh
 eval "$(/opt/homebrew/bin/brew shellenv)"

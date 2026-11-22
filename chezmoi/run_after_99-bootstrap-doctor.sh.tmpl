@@ -50,6 +50,13 @@ else
 fi
 
 {{ if eq .chezmoi.os "darwin" -}}
+# Cask GUI apps — /Applications (admin installs) or ~/Applications (appdir,
+# non-admin accounts). Missing means the cask layer has not landed yet.
+for _app in "Slack.app" "Obsidian.app" "Zotero.app" "Hermes.app"; do
+    if [ ! -d "/Applications/$_app" ] && [ ! -d "$HOME/Applications/$_app" ]; then
+        _missing "$_app" "brew bundle cask — re-apply (appdir installs to ~/Applications on non-admin accounts)"
+    fi
+done
 if [ ! -d "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian" ]; then
     _missing "obsidian vault" "sign into iCloud, let the vault sync, then re-apply"
 fi

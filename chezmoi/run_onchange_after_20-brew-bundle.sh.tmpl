@@ -43,10 +43,15 @@ if is_ci; then
     brew bundle install --file "$BREWFILE_FILTERED"
     rm -f "$BREWFILE_FILTERED"
 else
-    brew bundle install --file "$BREWFILE"
+    # Non-fatal: one bad entry (offline tap, a cask without an appdir on a
+    # non-admin account) must not halt the apply — the doctor reports and
+    # the next apply self-heals.
+    if brew bundle install --file "$BREWFILE"; then
+        log_ok "brew bundle done"
+    else
+        log_warn "brew bundle: some entries failed (see output above) — bootstrap continues"
+    fi
 fi
-
-log_ok "brew bundle done"
 
 {{ else -}}
 

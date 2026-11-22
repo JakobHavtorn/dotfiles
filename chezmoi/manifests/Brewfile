@@ -83,11 +83,13 @@ cask "font-fira-code-nerd-font"
 # CLI via cask (migrated from homebrew-core formula)
 cask "azure-cli"
 
-# GUI applications
-cask "slack"
-cask "obsidian"
-cask "zotero"
-cask "hermes-desktop"
+# GUI applications. appdir: non-admin accounts cannot write /Applications,
+# so casks install to ~/Applications there; identical on admin machines.
+# brew bundle dump strips args — re-add them during dump-PR review.
+cask "slack",          args: { appdir: "~/Applications" }
+cask "obsidian",       args: { appdir: "~/Applications" }
+cask "zotero",         args: { appdir: "~/Applications" }
+cask "hermes-desktop", args: { appdir: "~/Applications" }
 
 # VS Code extensions
 vscode "anthropic.claude-code"
