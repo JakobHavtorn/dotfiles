@@ -181,6 +181,84 @@ dump_obsidian() {
 }
 
 # ---------------------------------------------------------------------------
+# iTerm2 — settings plist under an allowlist: the committed manifest IS
+# the allowlist. Each dump refreshes values for tracked keys only; live
+# keys not yet tracked are reported for review and never captured; keys
+# gone from the live domain keep their last known value (reported) so a
+# second machine's dump can never silently drop a setting. Bootstrap
+# (first capture on a machine with no manifest): strip the machine-local
+# and junk classes — NoSync* (incl. search history — the known leak
+# class), NS*/SU*/kCPK*/PM* (AppKit, Sparkle, color/print panels), window
+# arrangements, command-palette favorites, version stamps, folder-mode
+# pointers. The install side (run_onchange_after_87-iterm2-config)
+# imports the manifest only on machines with no settings yet; dump is
+# the source of truth here.
+# ---------------------------------------------------------------------------
+dump_iterm2() {
+    if [ "$(uname)" != "Darwin" ] || ! defaults read com.googlecode.iterm2 >/dev/null 2>&1; then
+        echo "  iterm2 settings not found, skipping"
+        return 0
+    fi
+
+    echo "  iterm2 settings..."
+    mkdir -p manifests/iterm2
+    python3 - <<'PY'
+import os, plistlib, subprocess, tempfile
+
+MANIFEST = "manifests/iterm2/com.googlecode.iterm2.plist"
+JUNK_PREFIXES = ("NoSync", "NS", "SU", "kCPK", "PM")
+JUNK_KEYS = {
+    "Window Arrangements", "kCPFavoritesUserDefaultsKey",
+    "LoadPrefsFromCustomFolder", "PrefsCustomFolder", "iTerm Version",
+}
+
+def is_junk(k):
+    return k.startswith(JUNK_PREFIXES) or k in JUNK_KEYS
+
+tmp = tempfile.mktemp(suffix=".plist")
+subprocess.run(["defaults", "export", "com.googlecode.iterm2", tmp], check=True)
+with open(tmp, "rb") as f:
+    live = plistlib.load(f)
+os.unlink(tmp)
+
+if os.path.exists(MANIFEST):
+    with open(MANIFEST, "rb") as f:
+        kept = plistlib.load(f)
+    tracked = set(kept)
+    for k, v in live.items():
+        if k in tracked:
+            kept[k] = v
+    for k in sorted(set(live) - tracked):
+        if not is_junk(k):
+            print(f"    iterm2 new key (not tracked — add deliberately if wanted): {k}")
+    for k in sorted(tracked - set(live)):
+        print(f"    iterm2 key gone (last value kept — remove deliberately if dead): {k}")
+else:
+    kept = {k: v for k, v in live.items() if not is_junk(k)}
+    print(f"    iterm2 bootstrap capture: {len(kept)} keys")
+
+with open(MANIFEST, "wb") as f:
+    plistlib.dump(kept, f, fmt=plistlib.FMT_XML)
+PY
+}
+
+# ---------------------------------------------------------------------------
+# Karabiner-Elements — karabiner.json (the whole config). Same rule as
+# iterm2: install only where absent; dump observes the source machine.
+# ---------------------------------------------------------------------------
+dump_karabiner() {
+    local src="$HOME/.config/karabiner/karabiner.json"
+    if [ ! -f "$src" ]; then
+        echo "  karabiner config not found, skipping"
+        return 0
+    fi
+
+    echo "  karabiner config..."
+    mkdir -p manifests/karabiner
+    cp "$src" manifests/karabiner/karabiner.json
+}
+
+# ---------------------------------------------------------------------------
 # Run all sections in sequence.
 # ---------------------------------------------------------------------------
 dump_brew
@@ -188,6 +266,8 @@ dump_pipx
 dump_omf
 dump_macos_defaults
 dump_obsidian
+dump_iterm2
+dump_karabiner
 ../scripts/check-bootstrap.sh || echo "  (non-fatal: incomplete bootstrap reported above)"
 
 echo ""

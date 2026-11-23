@@ -16,3 +16,6 @@ Visual Studio Code.app|https://update.code.visualstudio.com/latest/darwin-univer
 iTerm.app|https://iterm2.com/downloads/stable/latest|-
 Linear.app|https://releases.linear.app/mac|-
 Notion.app|https://www.notion.so/desktop/mac-universal/download|-
+# Rectangle: version-pinned vendor URL (no latest-serving link exists; the
+# app self-updates via Sparkle and this layer only installs when missing)
+Rectangle.app|https://download.rectangleapp.com/Rectangle2.0.5.dmg|-

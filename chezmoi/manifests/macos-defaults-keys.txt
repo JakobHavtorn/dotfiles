@@ -8,3 +8,12 @@ com.apple.finder|ShowPathbar|-bool true
 com.apple.finder|ShowStatusBar|-bool true
 com.apple.dock|autohide|-bool true
 com.apple.dock|show-recents|-bool false
+# Rectangle — window manager preferences (shortcuts follow alternateDefaultShortcuts)
+com.knollsoft.Rectangle|alternateDefaultShortcuts|-bool true
+com.knollsoft.Rectangle|hideMenubarIcon|-bool true
+com.knollsoft.Rectangle|specifiedHeight|-int 1050
+com.knollsoft.Rectangle|specifiedWidth|-int 1680
+com.knollsoft.Rectangle|snapEdgeMarginBottom|-int 5
+com.knollsoft.Rectangle|snapEdgeMarginLeft|-int 5
+com.knollsoft.Rectangle|snapEdgeMarginRight|-int 5
+com.knollsoft.Rectangle|snapEdgeMarginTop|-int 5
