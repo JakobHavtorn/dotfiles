@@ -23,7 +23,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # presence fact — flips this script's content hash when the precondition
 # changes, so a guard-skip never permanently silences this layer:
-#   hermes: {{ output "sh" "-c" "command -v hermes >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   hermes: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v hermes >/dev/null 2>&1 && echo present || echo absent" | trim }}
 # ── Guards ──────────────────────────────────────────────────────────────────
 
 if is_ci; then

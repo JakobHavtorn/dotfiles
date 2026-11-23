@@ -42,3 +42,17 @@ case ":$PATH:" in
     *":$HOME/.local/bin:"*) ;;
     *) if [[ -d "$HOME/.local/bin" ]]; then PATH="$HOME/.local/bin:$PATH"; fi ;;
 esac
+
+# Homebrew's bin dir — same rationale as ~/.local/bin above: run scripts
+# find brew-installed tools via `command -v` even when the invoking shell
+# (or chezmoi's own render/apply process) carries no brew PATH — e.g. a
+# fresh machine's first apply, where Homebrew lands mid-apply and the
+# shell that started chezmoi predates it. Prepend (shellenv order) so
+# brew tools keep precedence over system ones.
+for _brewbin in /opt/homebrew/bin /usr/local/bin; do
+    case ":$PATH:" in
+        *":$_brewbin:"*) ;;
+        *) if [[ -d "$_brewbin" ]]; then PATH="$_brewbin:$PATH"; fi ;;
+    esac
+done
+unset _brewbin

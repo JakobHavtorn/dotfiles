@@ -9,9 +9,13 @@ end
 
 set PATH $PATH $HOME/.local/bin
 
+# Homebrew — prepend so brew tools shadow system ones (macOS only;
+# fish_add_path skips dirs that do not exist, so this is inert on Linux)
+fish_add_path /opt/homebrew/bin /opt/homebrew/sbin
+
 # Export go path (skip when go is not installed)
 if command -v go >/dev/null
-    set PATH $PATH:$(go env GOPATH)/bin
+    fish_add_path (go env GOPATH)/bin
 end
 
 # >>> corti-cli >>>

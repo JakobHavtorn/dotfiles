@@ -6,7 +6,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # presence fact — flips this script's content hash when the precondition
 # changes, so a guard-skip never permanently silences this layer:
-#   npx: {{ output "sh" "-c" "command -v npx >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   npx: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v npx >/dev/null 2>&1 && echo present || echo absent" | trim }}
 # Wire Corti models into all supported coding agent harnesses via the
 # corti CLI. Centralized here so all harnesses stay in sync from a
 # single invocation. The model list + default come from .chezmoidata.yaml.

@@ -28,14 +28,14 @@ _has() { command -v "$1" >/dev/null 2>&1; }
 if ! _has brew && [ ! -x /opt/homebrew/bin/brew ]; then
     _missing "homebrew" "see README 'Homebrew (macOS)', then re-apply"
 fi
-_has fish || _missing "fish" "arrives with brew bundle — re-apply once homebrew exists"
-_has npx  || _missing "node/npx" "arrives with brew bundle — re-apply once homebrew exists"
-_has jq   || _missing "jq" "arrives with brew bundle — re-apply once homebrew exists"
-_has duti || _missing "duti" "arrives with brew bundle — re-apply once homebrew exists"
-_has pipx || _missing "pipx" "arrives with brew bundle — re-apply once homebrew exists"
-_has claude || _missing "claude cli" "arrives with brew bundle (npm globals) — re-apply once homebrew exists"
+_has fish || _missing "fish" "arrives with brew bundle — re-apply from any shell to pick it up"
+_has npx  || _missing "node/npx" "arrives with brew bundle — re-apply from any shell to pick it up"
+_has jq   || _missing "jq" "arrives with brew bundle — re-apply from any shell to pick it up"
+_has duti || _missing "duti" "arrives with brew bundle — re-apply from any shell to pick it up"
+_has pipx || _missing "pipx" "arrives with brew bundle — re-apply from any shell to pick it up"
+_has claude || _missing "claude cli" "arrives with brew bundle (npm globals) — re-apply from any shell to pick it up"
 _has herdr || _missing "herdr" "brew (darwin) or remote-tools (linux) — re-apply once present"
-_has taxhelper || _missing "taxhelper" "arrives with pipx — re-apply once homebrew exists"
+_has taxhelper || _missing "taxhelper" "arrives with pipx — re-apply from any shell to pick it up"
 
 if _has fish && ! fish -c 'type -q omf' >/dev/null 2>&1; then
     _missing "oh-my-fish" "re-runs once fish is present (run_onchange_after_60)"

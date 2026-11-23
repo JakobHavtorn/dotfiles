@@ -16,7 +16,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # presence fact — flips this script's content hash when the precondition
 # changes, so a guard-skip never permanently silences this layer:
-#   npx: {{ output "sh" "-c" "command -v npx >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   npx: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v npx >/dev/null 2>&1 && echo present || echo absent" | trim }}
 if is_ci; then
     log_skip "archify skill (CI environment)"
     exit 0

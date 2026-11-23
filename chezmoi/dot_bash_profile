@@ -1,0 +1,8 @@
+# ~/.bash_profile — login-bash PATH: Homebrew + ~/.local/bin
+# Conda init and the Corti CE+ loader were dropped deliberately (uv owns
+# Python; fish is the interactive shell) — do not re-add them.
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+[ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
+export PATH
