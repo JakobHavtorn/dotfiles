@@ -13,8 +13,9 @@
 // A direct API call returns in ~1s.  A subprocess loads the full coding
 // agent context and takes 10-45s, racing the hook budget.
 //
-// API endpoint, auth, and model come from opencode's configured corti
-// provider (opencode.jsonc) at runtime, falling back to corti-s1-instant.
+// API endpoint (CORTI_BASE_URL) and model (corti-s1-instant) are constants,
+// matching the corti provider in opencode.jsonc; auth comes from the
+// CORTI_BEARER env var. No runtime config read.
 //
 // Ported from the omp hook (dot_omp/private_agent/hooks/post/title-gen.ts).
 // Node runtime — no Bun APIs; use node:fs/promises and fetch.

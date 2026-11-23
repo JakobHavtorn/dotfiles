@@ -1,7 +1,8 @@
 {{- /*
   Promptless bootstrap: set IDENTITY=work (or personal) in the env to skip
-  the prompt entirely. Without it, chezmoi prompts once and caches the answer
-  in its state DB; subsequent applies reuse the cached value.
+  the prompt entirely. Without it, chezmoi prompts once and writes the answer
+  into ~/.config/chezmoi/chezmoi.toml under [data]; subsequent applies reuse
+  it from there.
 */ -}}
 {{- $identity := env "IDENTITY" -}}
 {{- if not $identity -}}

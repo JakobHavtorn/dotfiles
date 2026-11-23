@@ -13,7 +13,8 @@ shared
 manifests
 
 # opencode.jsonc is managed by run_onchange_after_20-opencode-config.sh.tmpl
-# (template render + corti models init), not by chezmoi's file mechanism
+# (template render; model wiring lives in run_onchange_after_25-corti-models.sh.tmpl),
+# not by chezmoi's file mechanism
 .config/opencode/opencode.jsonc
 
 # cli.json is managed by run_onchange_after_20-opencode-config.sh.tmpl

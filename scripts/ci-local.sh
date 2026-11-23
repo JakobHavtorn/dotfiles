@@ -49,7 +49,7 @@ unset _f
 if command -v shellcheck >/dev/null 2>&1; then
     log_info "running shellcheck..."
     # Only .sh files; .sh.tmpl contains Go template syntax ({{ }}) that
-    # is not valid bash. CI's action has the same behavior.
+    # is not valid bash.
     _sc_files=()
     while IFS= read -r _f; do
         _sc_files+=("$_f")

@@ -15,8 +15,8 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 # than a direct chezmoi source file because Pi writes into this file itself:
 # /mcp saves enable/exposure toggles to the defining file and `pi mcp add`
 # appends user-level servers. A direct source file would revert those live
-# changes on every apply; run_onchange re-renders only when the template or
-# chezmoidata changes.
+# changes on every apply; run_onchange re-renders only when its rendered
+# content changes — the template, chezmoidata, or jq presence.
 # Also merges the default model from .chezmoidata into ~/.pi/agent/settings.json
 # (which Pi also writes itself), and Corti model registration is handled by
 # run_onchange_after_25-corti-models.sh.tmpl.

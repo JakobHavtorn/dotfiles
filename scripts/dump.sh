@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # dump.sh — snapshot current machine state into manifests/.
-# Run daily via launchd (macOS). No auto-commit; review and commit by hand.
+# Run daily via launchd (macOS); dump-pr.sh then commits to a dated branch
+# and opens a PR — review happens there.
 #
 # Generated manifests are observed state, not declarations: git diff shows what
 # the machine consciously drifted, and PR review is the gate. pipx.txt is the

@@ -47,6 +47,8 @@ echo "  seeding $HOST_BLOCK..."
     if [ "$(uname)" = "Darwin" ]; then
         echo "  UseKeychain yes"
     fi
+    # Trailing blank line byte-matches chezmoi's render of the host block.
+    echo ""
 } > "$HOST_BLOCK"
 
 # Prepend the Include line if missing (same behavior as
