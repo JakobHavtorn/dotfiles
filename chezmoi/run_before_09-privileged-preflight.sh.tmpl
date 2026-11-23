@@ -24,6 +24,9 @@
 # pattern). Everything here runs before the file phase and all after-
 # scripts, so prerequisites land ahead of whatever depends on them.
 #
+# Prerequisites today: the Homebrew prefix; Karabiner-Elements (its pkg
+# needs root — a brew cask cannot elevate on a regular account).
+#
 # BREW_PREFIX is an env override for testing; default /opt/homebrew.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
@@ -47,6 +50,13 @@ _missing=()
 # user-writable (run_before_10 needs no sudo after this).
 if [ ! -d "$BREW_PREFIX" ] || [ ! -w "$BREW_PREFIX" ]; then
     _missing+=("brew-prefix")
+fi
+# Karabiner-Elements: its pkg installer needs root, which the brew cask
+# cannot provide on regular accounts — installed here instead, one
+# elevated installer run per machine. The brew-present gate defers this
+# to the apply after Homebrew lands on a fresh machine.
+if [ ! -d "/Applications/Karabiner-Elements.app" ] && command -v brew >/dev/null 2>&1; then
+    _missing+=("karabiner-install")
 fi
 {{ end -}}
 
@@ -93,6 +103,28 @@ for item in "${_missing[@]}"; do
                 log_warn "elevation failed — as an admin, run:"
                 _manual_cmd
             fi
+            ;;
+        karabiner-install)
+            log_info "installing Karabiner-Elements — downloading the installer..."
+            _dmg="$(brew --cache --cask karabiner-elements)"
+            if [ ! -f "$_dmg" ]; then
+                if ! brew fetch --cask karabiner-elements >/dev/null 2>&1; then
+                    log_warn "karabiner download failed — get it from https://karabiner-elements.pqrs.org"
+                    continue
+                fi
+            fi
+            _mnt="$(mktemp -d)"
+            if ! hdiutil attach -nobrowse -readonly -mountpoint "$_mnt" "$_dmg" >/dev/null 2>&1; then
+                log_warn "karabiner mount failed — get it from https://karabiner-elements.pqrs.org"
+                rm -rf "$_mnt"
+                continue
+            fi
+            if elevate "installer -pkg '$_mnt/Karabiner-Elements.pkg' -target /"; then
+                log_ok "Karabiner-Elements installed — approve its driver on first launch"
+            else
+                log_warn "karabiner install failed — an admin can run the installer from https://karabiner-elements.pqrs.org"
+            fi
+            hdiutil detach "$_mnt" >/dev/null 2>&1 || true
             ;;
     esac
 done
