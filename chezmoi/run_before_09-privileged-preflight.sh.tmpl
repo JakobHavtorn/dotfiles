@@ -13,6 +13,17 @@
 # A failed elevation is non-fatal: layers depending on the prerequisite
 # (brew install, brew bundle) skip and self-heal later.
 #
+# This is the home for new root-requiring one-time setup — anything the
+# bootstrap needs that a regular account cannot do. To add a prerequisite:
+#   1. append a guard to the _missing collect block — a cheap test that runs
+#      unprivileged and passes when the prerequisite is satisfied
+#   2. add a matching case arm below that fixes it with ONE batched root
+#      command (via elevate)
+# Requirements: the fix must be idempotent, and the need must be one-shot —
+# recurring privilege gets designed away instead (see the cask `appdir`
+# pattern). Everything here runs before the file phase and all after-
+# scripts, so prerequisites land ahead of whatever depends on them.
+#
 # BREW_PREFIX is an env override for testing; default /opt/homebrew.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
