@@ -36,6 +36,9 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
+# presence fact — flips this script's content hash when the vault appears
+# (iCloud sync), so a guard-skip never permanently silences this layer:
+#   obsidian vault: {{ if stat (joinPath .chezmoi.homeDir "Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian") }}present{{ else }}absent{{ end }}
 # ── Guards ──────────────────────────────────────────────────────────────────
 
 if is_ci; then

@@ -46,6 +46,26 @@ Two optional layers skip non-fatally without credentials:
 - `gh auth login` (answer yes to the git credential setup) — enables `gh` usage and HTTPS pushes.
 - Add `CORTI_BEARER` to `~/.env`, then run `npx @corti/cli@latest models init --tools opencode,pi --scope global`.
 
+### Homebrew (macOS)
+
+Creating `/opt/homebrew` needs root once:
+
+- **Admin accounts**: the bootstrap prompts for your password when it reaches this step.
+- **Regular accounts** (a separate admin account exists, e.g. `jdh-admin`): the bootstrap handles it. `run_before_09-privileged-preflight` detects the missing prefix during the apply and prepares it with one elevation — on regular accounts it opens the native administrator dialog, the same one application updaters show; enter the admin account's credentials. Settled machines never prompt (pure dir-test guards). Manual fallback if elevation fails:
+
+  ```sh
+  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):$(id -gn) /opt/homebrew
+  ```
+
+  The popup asks for the `jdh-admin` credentials. The prefix must end up owned by you — an admin-owned prefix breaks user-level brew. With a user-owned prefix, the installer needs no sudo at all.
+
+GUI casks install to `~/Applications` (`appdir` in the Brewfile), so nothing else ever needs elevation. A failed Homebrew install never aborts the bootstrap; the log prints the same recovery commands. Every deferred layer self-heals: after Homebrew is installed, simply re-apply — the every-apply steps re-run and the presence facts flip the deferred layers back on:
+
+```sh
+eval "$(/opt/homebrew/bin/brew shellenv)"
+~/.local/bin/chezmoi apply
+```
+
 ### Linux prerequisites
 
 A minimal container or fresh box may lack these:

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_once_after_95-vscode-default-app.sh.tmpl
+# run_after_95-vscode-default-app.sh.tmpl
 # Sets VS Code as the default app for common dev file types via duti.
 # Uses extension-based binding (."ext") — the UTI form is unreliable for
 # many languages (fabricated UTIs silently fail).
@@ -12,8 +12,8 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 log_section "setting VS Code as default app for dev file types"
 
 if ! command -v duti >/dev/null 2>&1; then
-    log_err "duti not found — run 'brew install duti' first"
-    exit 1
+    log_warn "duti not found — arrives with brew bundle; re-apply once Homebrew is installed"
+    exit 0
 fi
 
 APP="com.microsoft.VSCode"
@@ -46,7 +46,9 @@ for ext in "${EXTENSIONS[@]}"; do
     if duti -s "$APP" ".$ext" all 2>/dev/null; then
         log_info ".$ext"
     else
-        log_warn ".$ext (duti failed — skipping)"
+        # Permanent failures (extensions without a UTI) — info, not warn:
+        # this script runs on every apply and the same extensions always fail.
+        log_info ".$ext (duti failed — skipping)"
     fi
 done
 

@@ -61,12 +61,13 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
 | `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — `.obsidian/*.json` + `plugins/*/manifest.json` + `data.json` (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes workspace state and plugin binaries |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
-| `chezmoi/run_once_after_06-seed-github-ssh.sh.tmpl` | Interactive: runs `scripts/seed-github-ssh.sh` on the first terminal apply (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key already exists |
+| `chezmoi/run_after_06-seed-github-ssh.sh.tmpl` | Runs on every apply: seeds GitHub SSH via `scripts/seed-github-ssh.sh` on terminal applies (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key exists; opt out with `SKIP_GITHUB_SSH_SEED` |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
-| `chezmoi/run_once_before_10-install-homebrew.sh.tmpl` | Darwin only |
+| `chezmoi/run_before_09-privileged-preflight.sh.tmpl` | Runs on every apply — root-owned prerequisites (brew prefix): pure dir-test guards — settled machines never elevate; elevation is mode-matched (admin: sudo via terminal; regular: native administrator dialog via GUI session); non-fatal |
+| `chezmoi/run_before_10-install-homebrew.sh.tmpl` | Darwin only — runs on every apply: installs Homebrew interactively when missing (sudo prompts for `/opt/homebrew`); headless tries NONINTERACTIVE; non-fatal with recovery commands; opt out with `SKIP_HOMEBREW_INSTALL` |
 | `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` (incl. rootless node + Pi via npm) |
 | `chezmoi/run_onchange_after_19-macos-apps.sh.tmpl` | Darwin only — installs apps from macos-apps.txt when missing (DMG or zip; into `/Applications` if writable, else `~/Applications`), links bundled CLIs such as `code` into `~/.local/bin`; never upgrades. Runs before brew bundle so the Brewfile's `vscode` lines find `code`. Skipped in CI |
-| `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only |
+| `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only — installs the Brewfile; resolves brew by direct path (works in the same apply as the install); non-fatal: one failed entry never halts the apply |
 | `chezmoi/run_onchange_after_20-opencode-config.sh.tmpl` | Renders opencode.jsonc + cli.json from templates; Corti model wiring lives in 25-corti-models |
 | `chezmoi/run_onchange_after_22-pi-config.sh.tmpl` | Renders Pi mcp.json from .chezmoidata (Pi models.json is owned by the corti CLI) |
 | `chezmoi/run_onchange_after_25-corti-models.sh.tmpl` | Wires Corti models into opencode + Pi via the corti CLI (npx @corti/cli models init) |
@@ -82,7 +83,8 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_86-obsidian-mcp.sh.tmpl` | Registers the Obsidian Local REST API MCP server with Claude Code (`claude mcp add --scope user`) and Codex (`~/.codex/config.toml`). Reads the API key from the plugin's `data.json` |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |
-| `chezmoi/run_once_after_95-vscode-default-app.sh.tmpl` | Darwin only — sets VS Code as default app for dev file types via duti |
+| `chezmoi/run_after_95-vscode-default-app.sh.tmpl` | Darwin only — every apply: sets VS Code as default app for dev file types via duti; non-fatal without duti (arrives with brew bundle) |
+| `chezmoi/run_after_99-bootstrap-doctor.sh.tmpl` | End-state report: prints pending layers with recovery hints at the end of every apply; quiet when clean; complements `scripts/check-bootstrap.sh` (interrupted-apply detection) |
 | `chezmoi/Library/LaunchAgents/` | launchd plist for weekly dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
 
 ## Conventions
@@ -94,11 +96,19 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 - `run_after_*` / `run_before_*` (no `once`/`onchange`) — executes on every `chezmoi apply`. Use for idempotent operations that must track upstream changes (e.g. agent-skills: `git pull` + `skillctl link`). The script itself must be safe to re-run.
 - `run_onchange_*` — re-executes when the script's own content changes. Embed manifest hashes as comments to trigger on manifest edits: `# Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}`
 - `before_` / `after_` — relative to file application. The number controls ordering within a phase.
+
+### Run-script trigger policy
+
+- `run_before_*`/`run_after_*` (no once/onchange) — every apply. Use for interactive or precondition-dependent steps; guard-first and idempotent, so a settled machine pays only a guard test. Opt-outs: `SKIP_HOMEBREW_INSTALL`, `SKIP_GITHUB_SSH_SEED`.
+- `run_onchange_*` — embed a presence fact for every installable precondition, so a guard-skip cannot permanently silence the layer: `#   brew: {{ output "sh" "-c" "command -v brew >/dev/null 2>&1 && echo present || echo absent" | trim }}`. When the fact flips, the rendered content hash changes and the script re-runs.
+- `run_once_*` — only when nothing can defer (`run_once_after_05-ssh-config`, `run_once_after_90-macos-defaults`).
+- Root-requiring one-time setup belongs in `run_before_09-privileged-preflight` — add a cheap unprivileged guard to its collect block and a `case` arm that fixes it with one batched root command. Prerequisites must be one-shot and idempotent; recurring privilege needs get designed away instead (see the cask `appdir` pattern).
+- `run_after_99-bootstrap-doctor` reports pending layers at the end of every apply; `scripts/check-bootstrap.sh` still detects interrupted applies via the state DB.
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.
 - Shared helpers (`shared/`): `log.sh` for colored logging, `env.sh` for runtime checks (`is_ci`, `is_darwin`, `is_linux`), `manifest.sh` for `manifest_each`. Source these instead of reimplementing the same capture/loop/gate patterns. `log_run "label" cmd…` replaces inline `output="$()"` capture-and-log; `log_run --non-fatal` logs the error but returns 0 (no `|| true` needed under `set -e`).
 - corti models init (opencode config script) and agent-skills are optional personal-layer steps: a missing-auth failure there is logged non-fatally and must never abort the rest of the bootstrap — catch the failure, print the tool's own error, exit 0. Platform/resource guards (`command -v`, os checks) handle the rest.
 - `uv` owns Python interpreters. Do not `brew install python`.
-- The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate. Same gate applies to all dump-generated manifests; pipx.txt is dumped from the venvs' pipx metadata (`package_or_url`) so install sources survive regeneration.
+- The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate. Cask `args: { appdir: "~/Applications" }` entries (non-admin support) are part of that curation — `brew bundle dump` strips them; re-add on review. Same gate applies to all dump-generated manifests; pipx.txt is dumped from the venvs' pipx metadata (`package_or_url`) so install sources survive regeneration.
 - `remote-tools.txt` is a pipe-delimited manifest: `name|url|path_in_archive`. `path_in_archive` is the relative path to the binary inside the archive, or `-` for direct binary download. Architecture is x86_64; add aarch64 entries when needed.
 - Linux is subtractive: gets fish (via remote-tools.txt) + fish config, git config, opencode, omp config, agent-skills, and a short list of CLI binaries installed rootless to `~/.local/bin`. Does not get Homebrew, casks, macOS defaults, or k9s. Herdr's `default_shell` is set to the rootless fish binary since `chsh` is unavailable. Platform is detected from `.chezmoi.os`, not from a role datum.
 

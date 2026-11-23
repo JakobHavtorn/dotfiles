@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# run_before_10-install-homebrew.sh.tmpl
+#
+# Runs on every apply: installs Homebrew when missing, skips instantly when
+# present. The installer needs sudo once to create /opt/homebrew (Apple
+# Silicon); with a controlling terminal it runs interactively and prompts for
+# the password, headless applies try NONINTERACTIVE (works only with
+# passwordless or cached sudo). A failed install never aborts the bootstrap —
+# later layers skip without brew and self-heal on a later apply (every-apply
+# steps plus presence facts). Opt out with SKIP_HOMEBREW_INSTALL=1.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+
+{{ if eq .chezmoi.os "darwin" -}}
+
+if command -v brew >/dev/null 2>&1; then
+    log_skip "homebrew already installed"
+    exit 0
+fi
+
+if [ -n "${SKIP_HOMEBREW_INSTALL:-}" ]; then
+    log_skip "homebrew install (SKIP_HOMEBREW_INSTALL set)"
+    exit 0
+fi
+
+log_section "installing homebrew"
+
+_install_brew_failed() {
+    log_err "homebrew install failed — the bootstrap continues without it"
+    log_info "admin: run the installer in a terminal:"
+    log_info '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    log_info "standard account: an admin prepares the prefix once:"
+    log_info "  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):staff /opt/homebrew"
+    log_info "then: ~/.local/bin/chezmoi apply   (every-apply steps and presence facts back-fill)"
+}
+
+if (exec 3</dev/tty) 2>/dev/null; then
+    # Interactive: the installer prompts for the sudo password.
+    if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/tty; then
+        _install_brew_failed
+        exit 0
+    fi
+else
+    if ! NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/null; then
+        _install_brew_failed
+        exit 0
+    fi
+fi
+
+# Add brew to PATH for this script's remainder
+if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+log_ok "homebrew installed"
+
+{{ else -}}
+
+log_skip "homebrew install (not darwin)"
+
+{{ end -}}

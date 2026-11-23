@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# run_before_09-privileged-preflight.sh.tmpl
+#
+# Runs on every apply: prepares the bootstrap's root-owned prerequisites —
+# steps a regular account cannot do. Elevation is mode-matched:
+#   - admin accounts: plain sudo (terminal prompt, timestamp-cached)
+#   - regular accounts: the native administrator dialog — the same one
+#     application updaters show — where any admin account's credentials are
+#     accepted (e.g. jdh-admin on work machines)
+# Guards are pure file/dir tests, so settled machines never elevate; runs
+# without the needed interaction context (no terminal for sudo, no GUI
+# session for the dialog) skip with the manual command instead of blocking.
+# A failed elevation is non-fatal: layers depending on the prerequisite
+# (brew install, brew bundle) skip and self-heal later.
+#
+# This is the home for new root-requiring one-time setup — anything the
+# bootstrap needs that a regular account cannot do. To add a prerequisite:
+#   1. append a guard to the _missing collect block — a cheap test that runs
+#      unprivileged and passes when the prerequisite is satisfied
+#   2. add a matching case arm below that fixes it with ONE batched root
+#      command (via elevate)
+# Requirements: the fix must be idempotent, and the need must be one-shot —
+# recurring privilege gets designed away instead (see the cask `appdir`
+# pattern). Everything here runs before the file phase and all after-
+# scripts, so prerequisites land ahead of whatever depends on them.
+#
+# BREW_PREFIX is an env override for testing; default /opt/homebrew.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "privileged preflight (CI environment)"
+    exit 0
+fi
+
+BREW_PREFIX="${BREW_PREFIX:-/opt/homebrew}"
+
+_manual_cmd() {
+    log_warn "  sudo mkdir -p $BREW_PREFIX && sudo chown -R $(id -un):$(id -gn) $BREW_PREFIX"
+}
+
+_missing=()
+
+{{ if eq .chezmoi.os "darwin" -}}
+# Homebrew installs into the prefix unprivileged once it exists and is
+# user-writable (run_before_10 needs no sudo after this).
+if [ ! -d "$BREW_PREFIX" ] || [ ! -w "$BREW_PREFIX" ]; then
+    _missing+=("brew-prefix")
+fi
+{{ end -}}
+
+if [ "${#_missing[@]}" -eq 0 ]; then
+    log_skip "privileged preflight (nothing to do)"
+    exit 0
+fi
+
+# Pick the elevation mode and its interaction gate.
+if id -nG | grep -qw admin; then
+    if ! (exec 3</dev/tty) 2>/dev/null; then
+        log_warn "privileged prerequisites pending: ${_missing[*]} — no terminal for the sudo prompt; as an admin, run:"
+        _manual_cmd
+        exit 0
+    fi
+    ELEVATION="sudo"
+else
+    if ! pgrep -q WindowServer; then
+        log_warn "privileged prerequisites pending: ${_missing[*]} — no GUI session for the administrator dialog; as an admin, run:"
+        _manual_cmd
+        exit 0
+    fi
+    ELEVATION="osascript"
+fi
+
+# Run a command as root via the selected elevation mode.
+elevate() {
+    if [ "$ELEVATION" = "sudo" ]; then
+        sudo sh -c "$1"
+    else
+        # The dialog accepts any admin account's credentials; the command
+        # runs as root. Only single quotes inside $1 (AppleScript string).
+        osascript -e "do shell script \"$1\" with administrator privileges"
+    fi
+}
+
+for item in "${_missing[@]}"; do
+    case "$item" in
+        brew-prefix)
+            log_info "preparing $BREW_PREFIX — approve the elevation prompt..."
+            if elevate "mkdir -p '$BREW_PREFIX' && chown -R '$(id -un):$(id -gn)' '$BREW_PREFIX'"; then
+                log_ok "brew prefix ready — $BREW_PREFIX owned by $(id -un)"
+            else
+                log_warn "elevation failed — as an admin, run:"
+                _manual_cmd
+            fi
+            ;;
+    esac
+done
