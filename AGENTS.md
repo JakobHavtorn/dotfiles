@@ -39,7 +39,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/dot_config/fish/config.fish` | PATH setup, corti-cli env, gpu/oc abbreviations (interactive only) |
 | `chezmoi/dot_config/git/ignore` | Global gitignore at ~/.config/git/ignore — git reads it as the default excludes file (see run_onchange_after_10) |
 | `chezmoi/dot_config/opencode/cli.json.tmpl` | opencode TUI settings; rendered to `~/.config/opencode/cli.json` by run_onchange_after_20 (not the file mechanism) |
-| `chezmoi/dot_config/opencode/tui-preferences.jsonc` | Shared OpenCode TUI plugin preferences — one top-level key per plugin; safe to hand-edit, plugins update individual keys and preserve the rest |
+| `chezmoi/dot_config/opencode/tui-preferences.jsonc` | Shared OpenCode TUI plugin preferences; safe to hand-edit — plugins update individual keys and preserve the rest |
 | `chezmoi/dot_config/opencode/opencode.jsonc.tmpl` | opencode base config (templated from .chezmoidata; managed by run_onchange script) |
 | `chezmoi/dot_config/opencode/plugins/title-gen.ts` | opencode session-title plugin — direct Corti API call per session (title spec from agents/title.md, CORTI_BEARER auth) |
 | `chezmoi/dot_pi/agent/mcp.json.tmpl` | Pi MCP server config (templated from .chezmoidata; rendered to `~/.pi/agent/mcp.json` by run_onchange script — Pi itself writes toggles and `pi mcp add` servers into the live file) |
@@ -64,7 +64,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/pipx.txt` | pipx install declaration — dumped from venvs' pipx metadata (package_or_url: git URLs, extras) |
 | `chezmoi/manifests/macos-defaults-keys.txt` | Shared (domain\|key\|value) list — read by dump.sh (observes) and run_once_after_90-macos-defaults.sh.tmpl (writes) |
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
-| `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — fixed 11-file list of vault config files (incl. workspaces.json, saved layouts) + plugin manifests/data (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes the volatile workspace.json and plugin binaries |
+| `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — fixed list of vault config files (incl. workspaces.json, saved layouts) + plugin manifests/data (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes the volatile workspace.json and plugin binaries |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
 | `chezmoi/run_after_06-seed-github-ssh.sh.tmpl` | Runs on every apply: seeds GitHub SSH via `scripts/seed-github-ssh.sh` on terminal applies (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key exists; opt out with `SKIP_GITHUB_SSH_SEED` |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
@@ -80,7 +80,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_60-omf.sh.tmpl` | Installs OMF packages from manifest |
 | `chezmoi/run_onchange_after_70-pipx.sh.tmpl` | Installs pipx packages from manifest |
 | `chezmoi/run_onchange_after_80-launchd-load.sh.tmpl` | Darwin only — loads dump.sh launchd job |
-| `chezmoi/run_onchange_after_80-taxhelper.sh.tmpl` | Installs taxhelper agent skills into ~/.agents/skills (universal store read by opencode, omp, claude, codex) |
+| `chezmoi/run_onchange_after_80-taxhelper.sh.tmpl` | Installs taxhelper agent skills into ~/.agents/skills (universal agent-skills store) |
 | `chezmoi/run_onchange_after_81-archify.sh.tmpl` | Installs archify skill (diagrams as HTML) via `npx skills` CLI into ~/.agents/skills |
 | `chezmoi/run_onchange_after_85-herdr-plugins.sh.tmpl` | Installs herdr-annotate plugin (Full variant) across opencode, omp, claude, codex, hermes |
 | `chezmoi/run_onchange_after_88-hermes-config.sh.tmpl` | Installs/updates Corti Hermes profile distribution from hermes-profile repo; injects CORTI_BEARER, sets corti as sticky default profile |

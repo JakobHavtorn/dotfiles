@@ -153,7 +153,7 @@ Runs all four `ci-local.sh` checks (JSON, shellcheck, pipefail, template renderi
 scripts/ci-local.sh
 ```
 
-The four ci-local.sh checks, runnable on demand (pre-commit adds three hygiene hooks). CI (`.github/workflows/lint.yml`) calls this script too — single source of truth.
+The ci-local.sh checks, runnable on demand; pre-commit adds hygiene hooks on top. CI (`.github/workflows/lint.yml`) calls this script too — single source of truth.
 
 ## Layout
 
