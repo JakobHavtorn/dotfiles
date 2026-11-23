@@ -62,7 +62,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/macos-apps.txt` | Self-updating macOS apps installed from vendor downloads instead of casks (`app_bundle\|url\|bin_in_bundle`) — for apps whose updater takes ownership of the bundle away from the user (Chrome, VS Code, iTerm2, Linear, Notion) |
 | `chezmoi/manifests/omf.txt` | OMF packages/themes — dumped from `omf list` (consumed by run_onchange_after_60-omf.sh) |
 | `chezmoi/manifests/pipx.txt` | pipx install declaration — dumped from venvs' pipx metadata (package_or_url: git URLs, extras) |
-| `chezmoi/manifests/macos-defaults-keys.txt` | Shared (domain\|key\|value) list — read by dump.sh (observes) and run_once_after_90-macos-defaults.sh.tmpl (writes) |
+| `chezmoi/manifests/macos-defaults-keys.txt` | Shared (domain\|key\|value) list — read by dump.sh (observes) and run_onchange_after_90-macos-defaults.sh.tmpl (writes) |
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
 | `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — fixed list of vault config files (incl. workspaces.json, saved layouts) + plugin manifests/data (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes the volatile workspace.json and plugin binaries |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
@@ -87,7 +87,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_after_88-coding-harness-plugin-refresh.sh.tmpl` | Keeps declared harness plugins current every apply: targetless `opencode plugin update` for all configured package plugins, `omp plugin install --force` for @cortexkit/aft-pi (OMP npm plugins have no config surface); pre-warms AFT binary |
 | `chezmoi/run_onchange_after_86-obsidian-mcp.sh.tmpl` | Registers the Obsidian Local REST API MCP server with Claude Code (`claude mcp add --scope user`) and Codex (`~/.codex/config.toml`). Reads the API key from the plugin's `data.json` |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
-| `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |
+| `chezmoi/run_onchange_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults (re-runs when the keys file changes) |
 | `chezmoi/run_after_95-vscode-default-app.sh.tmpl` | Darwin only — every apply: sets VS Code as default app for dev file types via duti; non-fatal without duti (arrives with brew bundle) |
 | `chezmoi/run_after_99-bootstrap-doctor.sh.tmpl` | End-state report: prints pending layers with recovery hints at the end of every apply; quiet when clean; complements `scripts/check-bootstrap.sh` (interrupted-apply detection) |
 | `chezmoi/Library/LaunchAgents/` | launchd plist for daily dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
@@ -106,7 +106,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 
 - `run_before_*`/`run_after_*` (no once/onchange) — every apply. Use for interactive or precondition-dependent steps; guard-first and idempotent, so a settled machine pays only a guard test. Opt-outs: `SKIP_HOMEBREW_INSTALL`, `SKIP_GITHUB_SSH_SEED`.
 - `run_onchange_*` — embed a presence fact for every installable precondition, so a guard-skip cannot permanently silence the layer: `#   brew: {{ output "sh" "-c" "command -v brew >/dev/null 2>&1 && echo present || echo absent" | trim }}`. When the fact flips, the rendered content hash changes and the script re-runs.
-- `run_once_*` — only when nothing can defer (`run_once_after_05-ssh-config`, `run_once_after_90-macos-defaults`).
+- `run_once_*` — only when nothing can defer (`run_once_after_05-ssh-config`).
 - Root-requiring one-time setup belongs in `run_before_09-privileged-preflight` — add a cheap unprivileged guard to its collect block and a `case` arm that fixes it with one batched root command. Prerequisites must be one-shot and idempotent; recurring privilege needs get designed away instead (see the cask `appdir` pattern).
 - `run_after_99-bootstrap-doctor` reports pending layers at the end of every apply; `scripts/check-bootstrap.sh` still detects interrupted applies via the state DB.
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.

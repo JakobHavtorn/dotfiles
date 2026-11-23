@@ -1,5 +1,5 @@
 # macOS defaults — shared key list (domain|key|value)
-# Consumed by run_once_after_90-macos-defaults.sh.tmpl (writes) and scripts/dump.sh (reads+observes).
+# Consumed by run_onchange_after_90-macos-defaults.sh.tmpl (writes) and scripts/dump.sh (reads+observes).
 # Lines: domain|key|value where value is the raw args to 'defaults write'.
 # e.g. NSGlobalDomain|AppleShowAllExtensions|-bool true
 # Edit this file to add/remove a managed default — both sides pick it up.
