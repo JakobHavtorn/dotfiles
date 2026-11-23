@@ -11,7 +11,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # presence fact — flips this script's content hash when the precondition
 # changes, so a guard-skip never permanently silences this layer:
-#   herdr: {{ output "sh" "-c" "command -v herdr >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   herdr: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v herdr >/dev/null 2>&1 && echo present || echo absent" | trim }}
 # Install the herdr-annotate plugin (Full variant) and Herdr integrations
 # across opencode, omp, claude, codex, hermes.
 # Herdr itself is installed via brew (darwin) or remote-tools.txt (remote linux).

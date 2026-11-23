@@ -1,0 +1,8 @@
+# ~/.zprofile — login-zsh PATH: Homebrew + ~/.local/bin
+# zsh is the bootstrap shell on fresh Macs; this puts brew in every new
+# terminal before the login shell switches to fish.
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+[ -d "$HOME/.local/bin" ] && PATH="$HOME/.local/bin:$PATH"
+export PATH

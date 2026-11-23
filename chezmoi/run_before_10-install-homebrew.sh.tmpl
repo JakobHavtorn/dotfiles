@@ -11,6 +11,7 @@
 # Opt out with SKIP_HOMEBREW_INSTALL=1.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 {{ if eq .chezmoi.os "darwin" -}}
 
