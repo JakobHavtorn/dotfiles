@@ -2,8 +2,8 @@
 # run_after_99-bootstrap-doctor.sh.tmpl
 #
 # End-state report at the end of every apply: which layers are still pending?
-# Purely informational and non-fatal — convergers and presence facts do the
-# healing; this makes deferral visible instead of silent. Quiet when clean
+# Purely informational and non-fatal — every-apply steps and presence facts
+# do the healing; this makes deferral visible instead of silent. Quiet when clean
 # (one line). Complements scripts/check-bootstrap.sh, which detects
 # interrupted applies via the chezmoi state DB; the doctor reports layers
 # deferred for any reason.
@@ -65,5 +65,5 @@ fi
 if [ "$_pending" -eq 0 ]; then
     log_ok "all layers present"
 else
-    log_warn "pending layers above — each self-heals via convergers or presence facts on a later apply"
+    log_warn "pending layers above — each self-heals on a later apply (every-apply steps re-run; presence facts re-trigger)"
 fi

@@ -47,7 +47,7 @@ for ext in "${EXTENSIONS[@]}"; do
         log_info ".$ext"
     else
         # Permanent failures (extensions without a UTI) — info, not warn:
-        # this converger runs on every apply and the same extensions always fail.
+        # this script runs on every apply and the same extensions always fail.
         log_info ".$ext (duti failed — skipping)"
     fi
 done

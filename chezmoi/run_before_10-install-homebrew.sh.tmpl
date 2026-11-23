@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # run_before_10-install-homebrew.sh.tmpl
 #
-# Every-apply converger: installs Homebrew when missing, skips instantly when
+# Runs on every apply: installs Homebrew when missing, skips instantly when
 # present. The installer needs sudo once to create /opt/homebrew (Apple
 # Silicon); with a controlling terminal it runs interactively and prompts for
 # the password, headless applies try NONINTERACTIVE (works only with
 # passwordless or cached sudo). A failed install never aborts the bootstrap —
-# later layers skip without brew and self-heal on a later apply (convergers
-# plus presence facts). Opt out with SKIP_HOMEBREW_INSTALL=1.
+# later layers skip without brew and self-heal on a later apply (every-apply
+# steps plus presence facts). Opt out with SKIP_HOMEBREW_INSTALL=1.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
@@ -31,7 +31,7 @@ _install_brew_failed() {
     log_info '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
     log_info "standard account: an admin prepares the prefix once:"
     log_info "  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):staff /opt/homebrew"
-    log_info "then: ~/.local/bin/chezmoi apply   (convergers + presence facts back-fill)"
+    log_info "then: ~/.local/bin/chezmoi apply   (every-apply steps and presence facts back-fill)"
 }
 
 if (exec 3</dev/tty) 2>/dev/null; then
