@@ -3,13 +3,14 @@
 #
 # Called after dump.sh finishes. If manifests/ have uncommitted changes, this
 # script creates a dated branch, commits, closes any stale dump PRs, and opens
-# a fresh one. If nothing changed, it exits silently.
+# a fresh one. If nothing changed, it prints a skip line and exits.
 #
 # Run daily via launchd after dump.sh, or manually:
 #   bash scripts/dump.sh && bash scripts/dump-pr.sh
 #
-# Requires: gh CLI authenticated (gh auth status). dump.sh's PATH hardening
-# covers launchd sessions.
+# Requires: gh CLI authenticated (gh auth status). This script hardens PATH
+# itself — gh must resolve in launchd sessions (dump.sh's PATH export dies
+# with its process).
 #
 # Output appends to ~/Library/Logs/dotfiles-dump.log via the launchd plist
 # ProgramArguments redirect. Each run starts with a timestamp separator.
@@ -36,7 +37,10 @@ cd "$(chezmoi source-path)"
 
 # ── Check for changes ────────────────────────────────────────────────────────
 
-if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+# The dirty-check and the commit are both scoped to manifests/ — a dirty
+# file elsewhere in the worktree must not trigger a (would-be-empty) dump
+# PR that leaves the repo on the dump branch.
+if git diff --quiet -- manifests/ && [ -z "$(git ls-files --others --exclude-standard -- manifests/)" ]; then
     echo "  no manifest changes, skipping PR creation"
     exit 0
 fi

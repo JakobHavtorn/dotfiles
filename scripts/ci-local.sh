@@ -85,7 +85,7 @@ while IFS= read -r _f; do
         log_err "missing 'set -euo pipefail': $_f"
         _missing=1
     fi
-done < <(find chezmoi/run_once_* chezmoi/run_onchange_* chezmoi/run_after_* scripts/*.sh chezmoi/shared/*.sh 2>/dev/null | sort)
+done < <(find chezmoi/run_before_* chezmoi/run_once_* chezmoi/run_onchange_* chezmoi/run_after_* scripts/*.sh chezmoi/shared/*.sh 2>/dev/null | sort)
 if [[ $_missing -eq 0 ]]; then
     log_ok "all scripts have 'set -euo pipefail'"
 else
