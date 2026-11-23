@@ -3,7 +3,7 @@
 #
 # Called after dump.sh finishes. If manifests/ have uncommitted changes, this
 # script creates a dated branch, commits, closes any stale dump PRs, and opens
-# a fresh one. If nothing changed, it prints one skip line and exits.
+# a fresh one. If nothing changed, it prints a skip line and exits.
 #
 # Run daily via launchd after dump.sh, or manually:
 #   bash scripts/dump.sh && bash scripts/dump-pr.sh
