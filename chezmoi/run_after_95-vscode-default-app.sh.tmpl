@@ -12,7 +12,7 @@ source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 log_section "setting VS Code as default app for dev file types"
 
 if ! command -v duti >/dev/null 2>&1; then
-    log_warn "duti not found — arrives with brew bundle; reset script state and re-apply once Homebrew is installed"
+    log_warn "duti not found — arrives with brew bundle; re-apply once Homebrew is installed"
     exit 0
 fi
 
