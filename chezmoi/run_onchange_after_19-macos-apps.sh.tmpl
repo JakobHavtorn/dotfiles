@@ -124,7 +124,7 @@ install_macos_app() {
     app_path="$(find_app "$app")"
 
     if [[ -n "$app_path" ]]; then
-        log_ok "$app: installed at $(dirname "$app_path") (updates itself)"
+        log_ok "$app: already installed at $(dirname "$app_path") (updates itself)"
     else
         local dest_dir download="$WORK_DIR/download"
         dest_dir="$(install_dir)"
