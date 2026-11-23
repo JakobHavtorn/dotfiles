@@ -16,7 +16,7 @@ agent-skills is public too, so its clone — skills for every harness — succee
 
 ### SSH for pushes
 
-The HTTPS clone pulls without auth, but pushing needs a key. The first `chezmoi apply` in a terminal seeds it for you: `run_once_after_06-seed-github-ssh` runs the standalone script — keygen at `~/.ssh/id_github`, browser opens at `github.com/settings/keys`, press Enter once the key is added, and it verifies. An aborted run never blocks the bootstrap; it logs the manual command.
+The HTTPS clone pulls without auth, but pushing needs a key. Every terminal `chezmoi apply` seeds it for you: `run_after_06-seed-github-ssh` runs the standalone script — keygen at `~/.ssh/id_github`, browser opens at `github.com/settings/keys`, press Enter once the key is added, and it verifies; it skips once the key exists. An aborted run never blocks the bootstrap; it logs the manual command.
 
 Headless applies (CI, cron) skip the interactive step — seed manually whenever you like, before or after the bootstrap:
 
@@ -33,7 +33,7 @@ ssh-keygen -t ed25519 -C "$USER@$(hostname -s)" -f ~/.ssh/id_github
 cat ~/.ssh/id_github.pub    # add at github.com/settings/keys — the .pub only, never the private key
 mkdir -p ~/.ssh/config.d
 printf 'Include config.d/*\n' >> ~/.ssh/config
-printf 'Host github.com\n  AddKeysToAgent yes\n  IdentityFile ~/.ssh/id_github\n  UseKeychain yes\n' > ~/.ssh/config.d/github
+printf 'Host github.com\n  AddKeysToAgent yes\n  IdentityFile ~/.ssh/id_github\n  UseKeychain yes\n\n' > ~/.ssh/config.d/github
 ssh -T git@github.com    # expect: Hi JakobHavtorn!
 ```
 
@@ -43,8 +43,8 @@ Omit `UseKeychain yes` on Linux. Both paths seed exactly what chezmoi manages (`
 
 Two optional layers skip non-fatally without credentials:
 
-- `gh auth login` (answer yes to the git credential setup) — enables `gh` usage and HTTPS pushes.
-- Add `CORTI_BEARER` to `~/.env`, then run `npx @corti/cli@latest models init --tools opencode,pi --scope global`.
+- `gh auth login` (answer yes to the git credential setup) — enables `gh` usage (pushes already work over SSH via the seeded key).
+- Add `CORTI_BEARER` to `~/.env`, then run `npx --yes @corti/cli@latest models init --tools opencode,pi --scope global --yes --no-shell-rc --model <corti model list>` — copy the `--model` list from `run_onchange_after_25-corti-models.sh.tmpl` (rendered from `.chezmoidata.yaml`).
 
 ### Homebrew (macOS)
 
@@ -74,7 +74,7 @@ A minimal container or fresh box may lack these:
 apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git xz-utils unzip
 ```
 
-`curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish and node archives (`.tar.xz`), `unzip` extracts the bun archive (`.zip`), `ca-certificates` validates HTTPS to GitHub. macOS has all of these pre-installed.
+`curl` runs the one-liner, `git` clones the repo, `xz-utils` extracts the fish and node archives (`.tar.xz`), `unzip` extracts the bun archive (`.zip`), `ca-certificates` validates HTTPS to GitHub. macOS needs none of them — darwin installs fish, node, and bun via Homebrew instead of extracting archives.
 
 ## Usage
 
@@ -106,7 +106,7 @@ This bites everyone exactly once.
 
 ## Brew repair
 
-When `chezmoi apply` fails inside `20-brew-bundle`, or the weekly dump reports
+When the apply log reports failed entries inside `20-brew-bundle` (non-fatal), or the daily dump reports
 `brew bundle check` failing, repair by hand. `brew update` alone does not fix
 it. The two failure classes previously seen:
 
@@ -124,7 +124,7 @@ Then re-run and expect a quiet check before applying:
 
 ```sh
 brew bundle install --file chezmoi/manifests/Brewfile
-brew bundle check
+brew bundle check --file chezmoi/manifests/Brewfile
 chezmoi diff && chezmoi apply
 ```
 
@@ -153,7 +153,7 @@ Runs all four `ci-local.sh` checks (JSON, shellcheck, pipefail, template renderi
 scripts/ci-local.sh
 ```
 
-Same checks as pre-commit, runnable on demand. CI (`.github/workflows/lint.yml`) calls this script too — single source of truth.
+The ci-local.sh checks, runnable on demand; pre-commit adds hygiene hooks on top. CI (`.github/workflows/lint.yml`) calls this script too — single source of truth.
 
 ## Layout
 

@@ -33,8 +33,8 @@ staged, ran = {}, {v.get("name", "") for v in state.get("scriptState", {}).value
 for key in state.get("entryState", {}):
     base = key.rsplit("/", 1)[-1]
     # run_* sources stage under their plain name, always number-prefixed
-    # (e.g. 'run_onchange_before_15-...' -> '15-...sh'); sourced helpers like
-    # shared/log.sh also stage as *.sh but carry no number prefix.
+    # (e.g. 'run_onchange_before_15-...' -> '15-...sh'). shared/ helpers are
+    # ignored via .chezmoiignore and never stage; the digit filter is defensive.
     if base.endswith(".sh") and base[:1].isdigit():
         staged[base] = key
 unrun = [b for b in sorted(staged) if b not in ran]

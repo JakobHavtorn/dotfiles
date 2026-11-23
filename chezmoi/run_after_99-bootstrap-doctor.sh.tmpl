@@ -50,11 +50,11 @@ else
 fi
 
 {{ if eq .chezmoi.os "darwin" -}}
-# Cask GUI apps — /Applications (admin installs) or ~/Applications (appdir,
-# non-admin accounts). Missing means the cask layer has not landed yet.
+# Cask GUI apps — installed to ~/Applications (appdir); /Applications is
+# checked for pre-appdir installs. Missing means the cask layer has not landed yet.
 for _app in "Slack.app" "Obsidian.app" "Zotero.app" "Hermes.app"; do
     if [ ! -d "/Applications/$_app" ] && [ ! -d "$HOME/Applications/$_app" ]; then
-        _missing "$_app" "brew bundle cask — re-apply (appdir installs to ~/Applications on non-admin accounts)"
+        _missing "$_app" "brew bundle cask — run: brew bundle install --file chezmoi/manifests/Brewfile"
     fi
 done
 if [ ! -d "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian" ]; then
@@ -65,5 +65,5 @@ fi
 if [ "$_pending" -eq 0 ]; then
     log_ok "all layers present"
 else
-    log_warn "pending layers above — each self-heals on a later apply (every-apply steps re-run; presence facts re-trigger)"
+    log_warn "pending layers above — brew-provided tools self-heal once Homebrew lands; a failed brew-bundle entry needs a manual 'brew bundle install --file chezmoi/manifests/Brewfile'"
 fi

@@ -24,7 +24,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `.github/workflows/` | CI |
 | `scripts/check-bootstrap.sh` | Platform-agnostic interrupted-apply detector; called from dump.sh and CI |
 | `scripts/ci-local.sh` | Local runner for all lint checks: JSON validation, shellcheck, `set -euo pipefail` check, template rendering for both identities. Called by `.pre-commit-config.yaml` and `.github/workflows/lint.yml` — single source of truth |
-| `scripts/dump.sh` | Weekly dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults, obsidian config. PATH-hardened for launchd |
+| `scripts/dump.sh` | Daily dump to manifests/ (macOS, launchd): brew, pipx, omf, macOS defaults, obsidian config. PATH-hardened for launchd |
 | `scripts/dump-pr.sh` | Opens a PR for dump.sh manifest changes (macOS, launchd). Closes stale dump PRs first. Called after dump.sh |
 | `scripts/seed-github-ssh.sh` | GitHub SSH seeder for fresh machines: keygen at `~/.ssh/id_github`, seed host block + Include line, copy pubkey, open settings/keys, verify `ssh -T`; curl-able pre-clone (public repo) |
 
@@ -37,16 +37,21 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/.chezmoidata.yaml` | Non-secret shared facts (identities, notion deny-list, MCP servers, corti models) — single source of truth for templates |
 | `chezmoi/dot_config/` | Maps to `~/.config/` |
 | `chezmoi/dot_config/fish/config.fish` | PATH setup, corti-cli env, gpu/oc abbreviations (interactive only) |
-| `chezmoi/dot_config/opencode/cli.json` | opencode TUI settings (symlinked) |
+| `chezmoi/dot_config/git/ignore` | Global gitignore at ~/.config/git/ignore — git reads it as the default excludes file (see run_onchange_after_10) |
+| `chezmoi/dot_config/opencode/cli.json.tmpl` | opencode TUI settings; rendered to `~/.config/opencode/cli.json` by run_onchange_after_20 (not the file mechanism) |
+| `chezmoi/dot_config/opencode/tui-preferences.jsonc` | Shared OpenCode TUI plugin preferences; safe to hand-edit — plugins update individual keys and preserve the rest |
 | `chezmoi/dot_config/opencode/opencode.jsonc.tmpl` | opencode base config (templated from .chezmoidata; managed by run_onchange script) |
+| `chezmoi/dot_config/opencode/plugins/title-gen.ts` | opencode session-title plugin — direct Corti API call per session (title spec from agents/title.md, CORTI_BEARER auth) |
 | `chezmoi/dot_pi/agent/mcp.json.tmpl` | Pi MCP server config (templated from .chezmoidata; rendered to `~/.pi/agent/mcp.json` by run_onchange script — Pi itself writes toggles and `pi mcp add` servers into the live file) |
+| `chezmoi/dot_pi/agent/extensions/title-gen.ts` | pi session-title extension — same shared title spec and direct Corti API call as the opencode plugin |
 | `chezmoi/dot_config/herdr/config.toml.tmpl` | herdr keybindings + linux-only `[terminal] default_shell` (rootless fish via remote-tools.txt) |
 | `chezmoi/dot_config/k9s/config.yaml` | Minimal k9s config |
 | `chezmoi/private_dot_ssh/config.d/github.tmpl` | github.com SSH host block (UseKeychain only on darwin) |
 | `chezmoi/dot_omp/private_agent/private_config.yml.tmpl` | omp settings (templated notion deny-list; `~/.omp/agent/config.yml`, 0600; no trailing newline — omp rewrites the file via `omp config set` and the template must stay byte-identical to its output) |
-| `chezmoi/dot_omp/private_agent/models.yml` | omp custom providers: corti (key via CORTI_BEARER env) |
+| `chezmoi/dot_omp/private_agent/models.yml.tmpl` | omp custom providers: corti (key via CORTI_BEARER env; model list from .chezmoidata) |
 | `chezmoi/dot_omp/private_agent/mcp.json.tmpl` | omp MCP servers (templated from .chezmoidata) |
-| `chezmoi/dot_config/cortexkit/aft.jsonc` | AFT (CortexKit) config — semantic search backend, tool surface; shared across opencode + omp |
+| `chezmoi/dot_omp/private_agent/hooks/post/title-gen.ts` | omp session-title hook — same shared title spec and direct Corti API call as the opencode plugin |
+| `chezmoi/dot_config/cortexkit/aft.jsonc` | AFT (CortexKit) config — semantic search backend; shared across opencode + omp |
 | `chezmoi/shared/` | Bash helpers sourced by run scripts (not home targets) |
 | `chezmoi/shared/log.sh` | Colored logging: log_section, log_ok, log_warn, log_err, log_info, log_skip, log_run |
 | `chezmoi/shared/env.sh` | Runtime env helpers: is_ci, is_darwin, is_linux |
@@ -59,12 +64,12 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/pipx.txt` | pipx install declaration — dumped from venvs' pipx metadata (package_or_url: git URLs, extras) |
 | `chezmoi/manifests/macos-defaults-keys.txt` | Shared (domain\|key\|value) list — read by dump.sh (observes) and run_once_after_90-macos-defaults.sh.tmpl (writes) |
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
-| `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — `.obsidian/*.json` + `plugins/*/manifest.json` + `data.json` (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes workspace state and plugin binaries |
+| `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — fixed list of vault config files (incl. workspaces.json, saved layouts) + plugin manifests/data (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes the volatile workspace.json and plugin binaries |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
 | `chezmoi/run_after_06-seed-github-ssh.sh.tmpl` | Runs on every apply: seeds GitHub SSH via `scripts/seed-github-ssh.sh` on terminal applies (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key exists; opt out with `SKIP_GITHUB_SSH_SEED` |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
 | `chezmoi/run_before_09-privileged-preflight.sh.tmpl` | Runs on every apply — root-owned prerequisites (brew prefix): pure dir-test guards — settled machines never elevate; elevation is mode-matched (admin: sudo via terminal; regular: native administrator dialog via GUI session); non-fatal |
-| `chezmoi/run_before_10-install-homebrew.sh.tmpl` | Darwin only — runs on every apply: installs Homebrew interactively when missing (sudo prompts for `/opt/homebrew`); headless tries NONINTERACTIVE; non-fatal with recovery commands; opt out with `SKIP_HOMEBREW_INSTALL` |
+| `chezmoi/run_before_10-install-homebrew.sh.tmpl` | Darwin only — runs on every apply: installs Homebrew interactively when missing; normally unprivileged after 09-preflight prepared the prefix (sudo only as the fallback); headless tries NONINTERACTIVE; non-fatal with recovery commands; opt out with `SKIP_HOMEBREW_INSTALL` |
 | `chezmoi/run_onchange_before_15-remote-tools.sh.tmpl` | Linux only — installs to `~/.local/bin` (incl. rootless node + Pi via npm) |
 | `chezmoi/run_onchange_after_19-macos-apps.sh.tmpl` | Darwin only — installs apps from macos-apps.txt when missing (DMG or zip; into `/Applications` if writable, else `~/Applications`), links bundled CLIs such as `code` into `~/.local/bin`; never upgrades. Runs before brew bundle so the Brewfile's `vscode` lines find `code`. Skipped in CI |
 | `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only — installs the Brewfile; resolves brew by direct path (works in the same apply as the install); non-fatal: one failed entry never halts the apply |
@@ -75,7 +80,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_60-omf.sh.tmpl` | Installs OMF packages from manifest |
 | `chezmoi/run_onchange_after_70-pipx.sh.tmpl` | Installs pipx packages from manifest |
 | `chezmoi/run_onchange_after_80-launchd-load.sh.tmpl` | Darwin only — loads dump.sh launchd job |
-| `chezmoi/run_onchange_after_80-taxhelper.sh.tmpl` | Installs taxhelper agent skills for opencode |
+| `chezmoi/run_onchange_after_80-taxhelper.sh.tmpl` | Installs taxhelper agent skills into ~/.agents/skills (universal agent-skills store) |
 | `chezmoi/run_onchange_after_81-archify.sh.tmpl` | Installs archify skill (diagrams as HTML) via `npx skills` CLI into ~/.agents/skills |
 | `chezmoi/run_onchange_after_85-herdr-plugins.sh.tmpl` | Installs herdr-annotate plugin (Full variant) across opencode, omp, claude, codex, hermes |
 | `chezmoi/run_onchange_after_88-hermes-config.sh.tmpl` | Installs/updates Corti Hermes profile distribution from hermes-profile repo; injects CORTI_BEARER, sets corti as sticky default profile |
@@ -85,15 +90,15 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_once_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults |
 | `chezmoi/run_after_95-vscode-default-app.sh.tmpl` | Darwin only — every apply: sets VS Code as default app for dev file types via duti; non-fatal without duti (arrives with brew bundle) |
 | `chezmoi/run_after_99-bootstrap-doctor.sh.tmpl` | End-state report: prints pending layers with recovery hints at the end of every apply; quiet when clean; complements `scripts/check-bootstrap.sh` (interrupted-apply detection) |
-| `chezmoi/Library/LaunchAgents/` | launchd plist for weekly dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
+| `chezmoi/Library/LaunchAgents/` | launchd plist for daily dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
 
 ## Conventions
 
-- Two config management strategies. Authored configs (fish, herdr, k9s, SSH, git, omp, LaunchAgents plists) live as chezmoi source files in `dot_config/`, `dot_omp/`, `Library/`. You write them, chezmoi applies them. Observed state from external tools (Brewfile, pipx.txt, omf.txt, macOS defaults, Obsidian vault config) lives in `manifests/`. `dump.sh` captures it weekly, PR review is the curation gate, `run_onchange` scripts install it. The split: if you hand-write it, it is a source file; if a tool generates it, it is a manifest.
+- Two config management strategies. Authored configs (fish, herdr, k9s, SSH, git, omp, LaunchAgents plists) live as chezmoi source files in `dot_config/`, `dot_omp/`, `Library/`. You write them, chezmoi applies them. Observed state from external tools (Brewfile, pipx.txt, omf.txt, macOS defaults, Obsidian vault config) lives in `manifests/`. `dump.sh` captures it daily, PR review is the curation gate, `run_onchange` scripts install it. The split: if you hand-write it, it is a source file; if a tool generates it, it is a manifest.
 - Some authored configs live in their own repos rather than as chezmoi source files. The Hermes profile distribution is one example: it has a native install mechanism (`hermes profile install github.com/...`) that expects a standalone git repo, so the dotfiles repo invokes it via `run_onchange_after_88-hermes-config.sh.tmpl` without containing the content. This mirrors how the Brewfile and pipx.txt reference packages by name or URL rather than inlining them — the dotfiles repo holds references, not the packages themselves. Obsidian config, by contrast, has no equivalent distribution mechanism, so it lives as a manifest in `manifests/obsidian/` and is installed by a copy script.
 
 - `run_once_*` — executes exactly once per machine. Guard with `command -v` checks; the prefix is a guard, not idempotency.
-- `run_after_*` / `run_before_*` (no `once`/`onchange`) — executes on every `chezmoi apply`. Use for idempotent operations that must track upstream changes (e.g. agent-skills: `git pull` + `skillctl link`). The script itself must be safe to re-run.
+- `run_after_*` / `run_before_*` (no `once`/`onchange`) — executes on every `chezmoi apply`. Use for idempotent operations that must track upstream changes (e.g. agent-skills: sync clone to `origin/main` + `skillctl link`). The script itself must be safe to re-run.
 - `run_onchange_*` — re-executes when the script's own content changes. Embed manifest hashes as comments to trigger on manifest edits: `# Brewfile hash: {{ include "manifests/Brewfile" | sha256sum }}`
 - `before_` / `after_` — relative to file application. The number controls ordering within a phase.
 

@@ -2,12 +2,13 @@
 # run_before_10-install-homebrew.sh.tmpl
 #
 # Runs on every apply: installs Homebrew when missing, skips instantly when
-# present. The installer needs sudo once to create /opt/homebrew (Apple
-# Silicon); with a controlling terminal it runs interactively and prompts for
-# the password, headless applies try NONINTERACTIVE (works only with
-# passwordless or cached sudo). A failed install never aborts the bootstrap —
-# later layers skip without brew and self-heal on a later apply (every-apply
-# steps plus presence facts). Opt out with SKIP_HOMEBREW_INSTALL=1.
+# present. run_before_09 prepares /opt/homebrew user-owned first, so the
+# installer normally runs unprivileged — it needs sudo only when that failed.
+# With a controlling terminal it runs interactively, headless applies try
+# NONINTERACTIVE (works only with passwordless or cached sudo). A failed
+# install never aborts the bootstrap — later layers skip without brew and
+# self-heal on a later apply (every-apply steps plus presence facts).
+# Opt out with SKIP_HOMEBREW_INSTALL=1.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
@@ -30,12 +31,13 @@ _install_brew_failed() {
     log_info "admin: run the installer in a terminal:"
     log_info '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
     log_info "standard account: an admin prepares the prefix once:"
-    log_info "  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):staff /opt/homebrew"
+    log_info "  sudo mkdir -p /opt/homebrew && sudo chown -R $(id -un):$(id -gn) /opt/homebrew"
     log_info "then: ~/.local/bin/chezmoi apply   (every-apply steps and presence facts back-fill)"
 }
 
 if (exec 3</dev/tty) 2>/dev/null; then
-    # Interactive: the installer prompts for the sudo password.
+    # Interactive: the installer asks for the sudo password only when
+    # 09-preflight could not prepare the prefix.
     if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" </dev/tty; then
         _install_brew_failed
         exit 0

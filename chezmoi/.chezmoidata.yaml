@@ -1,6 +1,6 @@
 # Machine identity — determines git author. The .chezmoi.toml.tmpl prompt
 # sets .identity to "work" or "personal"; run_onchange_after_10-git-config
-# reads .chezmoidata.identities[.identity] for name + email.
+# reads .identities[.identity] for name + email.
 identities:
   work:
     name: "Jakob Havtorn"
@@ -9,15 +9,16 @@ identities:
     name: "Jakob Havtorn"
     email: "havtorn93@gmail.com"
 
-# Non-secret shared facts. Available in templates as .chezmoidata.*
+# Non-secret shared facts. Available in templates as top-level variables (e.g. .identities, .coding_agents).
 
 # Coding agent config — shared across opencode + omp + pi. Single source of truth
 # for notion deny-list, MCP servers, corti model list.
 coding_agents:
   # Canonical notion deny-list — union of all actions denied across opencode.jsonc
-  # and private_config.yml. Each entry is an explicit notion tool suffix (without
-  # the notion_ prefix). Hyphenated in canonical form; omp templates replace
-  # hyphens with underscores.
+  # and private_config.yml. Entries are hyphenated tool suffixes without the
+  # notion_ prefix — except notion-convert-page-to-skill, which carries a
+  # notion- prefix. The omp template strips 'notion-' then swaps hyphens for
+  # underscores; opencode prefixes each entry with notion_notion-.
   notion:
     deny_actions:
       - create-attachment
@@ -85,8 +86,7 @@ coding_agents:
         url: "http://127.0.0.1:27123/mcp"
 
   # Corti model list — single source of truth for models.yml.tmpl,
-  # opencode.jsonc, the Hermes config run script, and the pi config run script
-  # (default model).
+  # opencode.jsonc, and the pi config run script (default model).
   corti:
     default_model: "corti-s1"
     models:
