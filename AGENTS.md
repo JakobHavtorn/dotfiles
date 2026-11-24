@@ -91,7 +91,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_87-iterm2-config.sh.tmpl` | Darwin only — installs the iTerm2 settings manifest via `defaults import` when the machine has no iTerm2 settings; existing settings are never overwritten (dump.sh observes them) |
 | `chezmoi/run_onchange_after_87-karabiner-config.sh.tmpl` | Darwin only — installs the Karabiner-Elements config manifest when the machine has none; existing config is never overwritten (dump.sh observes it) |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
-| `chezmoi/run_onchange_after_90-macos-defaults.sh.tmpl` | Darwin only — sets Finder/Dock defaults (re-runs when the keys file changes) |
+| `chezmoi/run_onchange_after_90-macos-defaults.sh.tmpl` | Darwin only — sets the shared defaults keys; per-key non-fatal (re-runs when the keys file changes) |
 | `chezmoi/run_after_95-vscode-default-app.sh.tmpl` | Darwin only — every apply: sets VS Code as default app for dev file types via duti; non-fatal without duti (arrives with brew bundle) |
 | `chezmoi/run_after_99-bootstrap-doctor.sh.tmpl` | End-state report: prints pending layers with recovery hints at the end of every apply; quiet when clean; complements `scripts/check-bootstrap.sh` (interrupted-apply detection) |
 | `chezmoi/Library/LaunchAgents/` | launchd plist for daily dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
