@@ -78,7 +78,10 @@ brew "nklmilojevic/sofka/sofka", trusted: true
 brew "rtk"
 
 # Fonts
+# Prompt fonts — referenced by the iTerm profiles in manifests/iterm2:
+#   Jakob (default): FiraCodeNFM · tmux: UbuntuMono — the powerline derivative
 cask "font-fira-code-nerd-font"
+cask "font-ubuntu-mono-derivative-powerline"
 
 # CLI via cask (migrated from homebrew-core formula)
 cask "azure-cli"
