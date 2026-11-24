@@ -94,7 +94,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_onchange_after_90-macos-defaults.sh.tmpl` | Darwin only — sets the shared defaults keys; per-key non-fatal (re-runs when the keys file changes) |
 | `chezmoi/run_after_95-vscode-default-app.sh.tmpl` | Darwin only — every apply: sets VS Code as default for dev file types via duti (typed extensions) plus an LSHandlers fallback (UTI-less extensions, one atomic merge-write); non-fatal without duti (arrives with brew bundle) |
-| `chezmoi/run_after_99-bootstrap-doctor.sh.tmpl` | End-state report: prints pending layers with recovery hints at the end of every apply; quiet when clean; complements `scripts/check-bootstrap.sh` (interrupted-apply detection) |
+| `chezmoi/run_after_99-bootstrap-report.sh.tmpl` | End-of-run report: replays warn/error lines from the session log, prints pending layers with recovery hints and the log path; quiet when clean; complements scripts/check-bootstrap.sh (interrupted-apply detection) |
 | `chezmoi/Library/LaunchAgents/` | launchd plist for daily dump.sh + dump-pr.sh (no `dot_` prefix — Library is not hidden) |
 
 ## Conventions
@@ -114,7 +114,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 - `run_onchange_*` — embed a presence fact for every installable precondition, so a guard-skip cannot permanently silence the layer: `#   brew: {{ output "sh" "-c" "<probe>" | trim }}` (copy the exact form from any `run_onchange_*` header). The probe must find the tool without the shell's PATH — chezmoi renders facts in its own environment. When the fact flips, the rendered hash changes and the script re-runs.
 - `run_once_*` — only when nothing can defer (`run_once_after_05-ssh-config`).
 - Root-requiring one-time setup belongs in `run_before_09-privileged-preflight` — add a cheap unprivileged guard to its collect block and a `case` arm that fixes it with one batched root command. Prerequisites must be one-shot and idempotent; recurring privilege needs get designed away instead (see the cask `appdir` pattern).
-- `run_after_99-bootstrap-doctor` reports pending layers at the end of every apply; `scripts/check-bootstrap.sh` still detects interrupted applies via the state DB.
+- `run_after_99-bootstrap-report` replays the session log's warnings and reports pending layers at the end of every apply; `scripts/check-bootstrap.sh` still detects interrupted applies via the state DB.
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.
 - Shared helpers (`shared/`): `log.sh` for colored logging, `env.sh` for runtime checks (`is_ci`, `is_darwin`, `is_linux`), `manifest.sh` for `manifest_each`. Source these instead of reimplementing the same capture/loop/gate patterns. `log_run "label" cmd…` replaces inline `output="$()"` capture-and-log; `log_run --non-fatal` logs the error but returns 0 (no `|| true` needed under `set -e`).
 - Session log: every `log_*` call tees a plain-text line to `~/.local/state/dotfiles/last-apply.log`; `run_before_00` rotates it at apply start; loud non-interactive commands stream through `log_tee`; `log_run` output is recorded automatically.

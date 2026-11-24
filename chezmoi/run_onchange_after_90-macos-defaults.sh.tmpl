@@ -21,7 +21,7 @@ fi
 # Lines: domain|key|value — value is the raw args to 'defaults write'.
 # Per-key non-fatal: a bad domain (corrupt plist, wedged cfprefd, or a
 # restricted key) logs the underlying error and never blocks the apply —
-# later layers (duti, the doctor) and the next apply depend on that.
+# later layers (duti, the report) and the next apply depend on that.
 # A refused write falls back to a read-back: when the current value already
 # matches, the key counts as set and stays quiet — a TCC/App-Management-
 # locked plist (seen on a managed MacBook) stops nagging once the value is

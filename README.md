@@ -16,7 +16,7 @@ agent-skills is public too, so its clone — skills for every harness — succee
 
 ### Before, during, and after the run
 
-Nothing blocks the run — missing pieces defer, and the doctor (the last step of every apply) prints what is left, each line with its fix. To finish in one pass:
+Nothing blocks the run — missing pieces defer, and the report (the last step of every apply) replays every warning and failure from the run, prints what is left with its fix, and points at the full log. To finish in one pass:
 
 **Before running:**
 
@@ -37,7 +37,8 @@ Headless applies skip the interactive steps and print the manual commands instea
 
 **After the run:**
 
-- Read the doctor's pending lines; each names its fix. Fix, then re-apply — deferred layers self-heal.
+- Read the report's summary: warnings and failures from the run, pending layers with their fixes, and the log path. Fix, then re-apply — deferred layers self-heal.
+- Apply logs live at `~/.local/state/dotfiles/last-apply.log`; the previous apply sits alongside as `previous-apply.log`.
 - Added `CORTI_BEARER` to `~/.env` after the run? Re-apply — the models wiring re-runs once the bearer is present.
 - Sign into iCloud and let the Obsidian vault sync, then re-apply.
 - `gh auth login` (answer yes to the git credential setup) — enables `gh`; pushes already work over the seeded SSH key.
