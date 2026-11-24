@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
-# run_onchange_after_87-karabiner-config.sh.tmpl
+# run_after_87-karabiner-config.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # Installs the Karabiner-Elements config manifest onto machines with no
-# config yet. A machine with existing config is never overwritten — it is
-# the source of truth and dump.sh observes it; to reset, delete the live
-# file and re-apply. The manifest appears once dump.sh captures a
-# configured machine (glob-guarded: rendering must not fail while absent).
-# presence fact — flips the hash when the live config appears/disappears:
-#   live karabiner.json: {{ output "sh" "-c" "test -f $HOME/.config/karabiner/karabiner.json && echo present || echo absent" | trim }}
-# karabiner manifest: {{ if (glob "manifests/karabiner/karabiner.json") }}{{ include "manifests/karabiner/karabiner.json" | sha256sum }}{{ else }}absent{{ end }}
+# config yet. Runs every apply; the guard is the whole state check. The
+# manifest appears once dump.sh captures a configured machine — until
+# then the runtime guard skips cleanly.
 
 {{ if eq .chezmoi.os "darwin" -}}
 

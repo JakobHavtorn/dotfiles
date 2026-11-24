@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
-# run_onchange_after_87-iterm2-config.sh.tmpl
+# run_after_87-iterm2-config.sh.tmpl
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
 # Installs the iTerm2 settings manifest onto machines that have no iTerm2
-# settings yet. A machine with existing settings is never overwritten —
-# it is the source of truth and dump.sh observes it; to reset a machine to
-# the repo state, delete the live plist and re-apply.
-# presence fact — flips the hash when the live plist appears/disappears:
-#   live iterm2 plist: {{ output "sh" "-c" "test -f $HOME/Library/Preferences/com.googlecode.iterm2.plist && echo present || echo absent" | trim }}
-# iterm2 manifest hash: {{ include "manifests/iterm2/com.googlecode.iterm2.plist" | sha256sum }}
+# settings yet. Runs every apply; the guard is the whole state check —
+# evaluated at execution time, so "delete the live plist and re-apply"
+# always works. A machine with existing settings is never overwritten —
+# it is the source of truth and dump.sh observes it.
 
 {{ if eq .chezmoi.os "darwin" -}}
 
