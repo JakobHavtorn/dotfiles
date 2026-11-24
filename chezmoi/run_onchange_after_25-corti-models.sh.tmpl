@@ -7,6 +7,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 # presence fact — flips this script's content hash when the precondition
 # changes, so a guard-skip never permanently silences this layer:
 #   npx: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v npx >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   bearer: {{ output "sh" "-c" "test -f $HOME/.env && grep -q ^CORTI_BEARER= $HOME/.env && echo present || echo absent" | trim }}
 # Wire Corti models into all supported coding agent harnesses via the
 # corti CLI. Centralized here so all harnesses stay in sync from a
 # single invocation. The model list + default come from .chezmoidata.yaml.
@@ -15,8 +16,11 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 # contain non-Corti models or manual overrides). The CLI handles opencode,
 # and any other --tools passed below.
 #
-# Re-runs when this script or .chezmoidata.yaml changes.
+# Re-runs when this script, .chezmoidata.yaml, the opencode config template,
+# or a presence fact changes. The bearer fact retries the wiring once the
+# secret lands in ~/.env — a bootstrap that ran without it is not stuck.
 # chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+# opencode.jsonc.tmpl hash: {{ include "dot_config/opencode/opencode.jsonc.tmpl" | sha256sum }}
 
 if is_ci; then
     log_skip "corti models init (CI environment)"
