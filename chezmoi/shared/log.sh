@@ -18,6 +18,10 @@ fi
 # Session log — every log_* call also appends a plain-text line to the file
 # below; log_run records its captured output blocks too. The file is the
 # apply's record: plain text, no colors, timestamps for correlation.
+# Captured output (log_run) is recorded verbatim minus ANSI/CSI sequences
+# and carriage returns, so a plain `cat` of the log is safe; log_tee's
+# live output is recorded as-is — streaming cannot be filtered without
+# changing terminal behavior.
 # run_before_00-init-session-log starts each apply — it rotates the previous
 # apply's log and truncates, so every line in last-apply.log belongs to the
 # current apply by construction. Line format (a contract — the end-of-apply
@@ -40,15 +44,19 @@ _bs_write() {
 
 _bs_write_output() {
     # $1 = captured command output. Appends it indented so it can never
-    # collide with the LEVEL-line format above.
+    # collide with the LEVEL-line format above. ANSI/CSI sequences and
+    # carriage returns are stripped first, so a plain `cat` of the log
+    # is safe (cursor-control codes must not reach the terminal on
+    # readback).
     [ -n "$1" ] || return 0
     if [ ! -d "$_BS_STATE_DIR" ]; then
         mkdir -p "$_BS_STATE_DIR" 2>/dev/null || return 0
     fi
     local _bs_line
-    while IFS= read -r _bs_line; do
+    printf '%s\n' "$1" | sed -e $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g' -e $'s/\r//g' | while IFS= read -r _bs_line; do
         printf '    %s\n' "$_bs_line" >> "$_BS_LOG" 2>/dev/null || return 0
-    done <<< "$1"
+    done
+    return 0
 }
 
 # Pipe a loud non-interactive command's live output through the session log:
