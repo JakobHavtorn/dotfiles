@@ -46,7 +46,7 @@ fi
 if [ -f "$HOME/.env" ] && grep -q '^CORTI_BEARER=' "$HOME/.env" 2>/dev/null; then
     :
 else
-    _missing "CORTI_BEARER" "add to ~/.env, then: npx @corti/cli@latest models init --tools opencode,pi --scope global"
+    _missing "CORTI_BEARER" "add to ~/.env, then re-apply — the models wiring re-runs once the bearer is present"
 fi
 
 {{ if eq .chezmoi.os "darwin" -}}
