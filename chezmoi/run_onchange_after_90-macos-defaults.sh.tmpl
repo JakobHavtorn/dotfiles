@@ -19,19 +19,34 @@ if [[ ! -f "$KEYS_FILE" ]]; then
 fi
 
 # Lines: domain|key|value — value is the raw args to 'defaults write'.
+# Per-key non-fatal: a bad domain (corrupt plist, wedged cfprefd, or a
+# restricted key) logs the underlying error and never blocks the apply —
+# later layers (duti, the doctor) and the next apply depend on that.
+# Failed keys do not auto-retry (chezmoi records the successful run), but
+# dump.sh observes every key weekly, so a never-landing key stays visible
+# in macos-defaults.txt until fixed by hand.
+_failed=0
 while IFS='|' read -r domain key value; do
     # skip comments and blank lines
     [[ "$domain" =~ ^[[:space:]]*# ]] && continue
     [[ -z "$domain" ]] && continue
-    log_info "defaults write $domain $key $value"
-    defaults write "$domain" "$key" $value
+    if _out="$(defaults write "$domain" "$key" $value 2>&1)"; then
+        log_info "defaults write $domain $key $value"
+    else
+        log_warn "defaults write failed: $domain $key — $_out"
+        _failed=1
+    fi
 done < "$KEYS_FILE"
 
 # Apply changes
 killall Dock 2>/dev/null || true
 killall Finder 2>/dev/null || true
 
-log_ok "macOS defaults set"
+if [[ "$_failed" -eq 1 ]]; then
+    log_err "some defaults failed — see warnings above; dump.sh reports the drift weekly until fixed"
+else
+    log_ok "macOS defaults set"
+fi
 
 {{ else -}}
 
