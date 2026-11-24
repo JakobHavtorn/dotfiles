@@ -25,7 +25,9 @@
 # scripts, so prerequisites land ahead of whatever depends on them.
 #
 # Prerequisites today: the Homebrew prefix; Karabiner-Elements (its pkg
-# needs root — a brew cask cannot elevate on a regular account).
+# needs root — a brew cask cannot elevate on a regular account); fish as
+# the login shell (/etc/shells + UserShell are root writes — chsh prompts
+# for the user's own password, which scripts never handle).
 #
 # BREW_PREFIX is an env override for testing; default /opt/homebrew.
 set -euo pipefail
@@ -57,6 +59,15 @@ fi
 # to the apply after Homebrew lands on a fresh machine.
 if [ ! -d "/Applications/Karabiner-Elements.app" ] && command -v brew >/dev/null 2>&1; then
     _missing+=("karabiner-install")
+fi
+# Fish as the login shell: /etc/shells needs the fish entry and UserShell
+# needs setting — both root writes. Deferred until fish exists; fresh
+# machines get it on the apply after brew bundle lands it.
+if [ -x /opt/homebrew/bin/fish ]; then
+    _shell="$(dscl . -read "/Users/$(id -un)" UserShell 2>/dev/null | awk '{print $2}')"
+    if [ "$_shell" != "/opt/homebrew/bin/fish" ] || ! grep -qx /opt/homebrew/bin/fish /etc/shells; then
+        _missing+=("fish-login-shell")
+    fi
 fi
 {{ end -}}
 
@@ -125,6 +136,14 @@ for item in "${_missing[@]}"; do
                 log_warn "karabiner install failed — an admin can run the installer from https://karabiner-elements.pqrs.org"
             fi
             hdiutil detach "$_mnt" >/dev/null 2>&1 || true
+            ;;
+        fish-login-shell)
+            log_info "setting fish as the login shell — approve the elevation prompt..."
+            if elevate "grep -qx /opt/homebrew/bin/fish /etc/shells || echo /opt/homebrew/bin/fish >> /etc/shells; dscl . -create /Users/$(id -un) UserShell /opt/homebrew/bin/fish"; then
+                log_ok "fish is the login shell — new terminal windows open it (existing sessions unchanged)"
+            else
+                log_warn "could not set the login shell — an admin can run: chsh -s /opt/homebrew/bin/fish $(id -un)"
+            fi
             ;;
     esac
 done
