@@ -21,7 +21,8 @@ if ! command -v taxhelper >/dev/null 2>&1; then
 fi
 
 log_section "taxhelper skills"
-taxhelper install-skills --target agents --force 2>/dev/null || {
+# stderr stays discarded (as before); only stdout reaches the session log
+taxhelper install-skills --target agents --force 2>/dev/null | log_tee || {
     log_warn "taxhelper install-skills failed"
 }
 log_ok "taxhelper skills done"

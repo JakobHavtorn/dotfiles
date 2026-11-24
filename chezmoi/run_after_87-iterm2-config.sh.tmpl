@@ -26,7 +26,7 @@ if [ -f "$LIVE" ]; then
     exit 0
 fi
 
-defaults import com.googlecode.iterm2 "$MANIFEST"
+defaults import com.googlecode.iterm2 "$MANIFEST" 2>&1 | log_tee
 log_ok "iterm2 settings installed — load on first iTerm2 launch"
 
 {{ else -}}

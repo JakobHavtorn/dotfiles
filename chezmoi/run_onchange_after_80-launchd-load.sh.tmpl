@@ -22,7 +22,7 @@ log_section "loading dump.sh launchd job"
 
 # Unload if already loaded, then load fresh
 launchctl unload "$PLIST" 2>/dev/null || true
-launchctl load "$PLIST"
+launchctl load "$PLIST" 2>&1 | log_tee
 
 log_ok "loaded: $PLIST"
 log_info "schedule: daily at 10:00 (catch-up if missed)"

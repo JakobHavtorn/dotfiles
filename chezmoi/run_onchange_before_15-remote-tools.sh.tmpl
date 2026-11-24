@@ -52,13 +52,13 @@ install_remote_tool() {
         mkdir -p "$cached"
         if [[ "$path_in_archive" == "-" ]]; then
             # Direct binary download
-            curl -fsSL "$url" -o "$cached/$name"
+            curl -fsSL "$url" -o "$cached/$name" 2>&1 | log_tee
         else
             # Archive download + extract. tar xf auto-detects compression
             # (gzip, xz, bzip2) from file magic — but needs the matching
             # decompressor binary installed (gzip, xz, bzip2 respectively).
-            curl -fsSL "$url" -o "$cached/archive"
-            tar xf "$cached/archive" -C "$cached"
+            curl -fsSL "$url" -o "$cached/archive" 2>&1 | log_tee
+            tar xf "$cached/archive" -C "$cached" 2>&1 | log_tee
         fi
     fi
 
@@ -92,7 +92,7 @@ manifest_each "$MANIFEST" "|" install_remote_tool
 # (agent-skills skillctl, etc.) find it.
 if [[ -x "$LOCAL_BIN/uv" ]]; then
     log_info "installing Python 3.12 via uv..."
-    "$LOCAL_BIN/uv" python install 3.12 || log_warn "uv python install failed"
+    "$LOCAL_BIN/uv" python install 3.12 2>&1 | log_tee || log_warn "uv python install failed"
 
     _py_bin_dir=""
     _py_bin_dir="$(dirname "$("$LOCAL_BIN/uv" python find 3.12 2>/dev/null)" 2>/dev/null)" || true
@@ -114,7 +114,7 @@ if [[ -x "$LOCAL_BIN/uv" ]]; then
         log_ok "pipx: up to date"
     else
         log_info "installing pipx via uv tool..."
-        "$LOCAL_BIN/uv" tool install pipx || log_warn "uv tool install pipx failed"
+        "$LOCAL_BIN/uv" tool install pipx 2>&1 | log_tee || log_warn "uv tool install pipx failed"
     fi
 fi
 
@@ -165,7 +165,7 @@ _install_node() {
     local node_dest="$HOME/.local/share/node-${node_version}"
     local tmp_dir
     tmp_dir="$(mktemp -d)"
-    if curl -fsSL "$node_url" -o "$tmp_dir/node.tar.xz" && tar xf "$tmp_dir/node.tar.xz" -C "$tmp_dir"; then
+    if curl -fsSL "$node_url" -o "$tmp_dir/node.tar.xz" 2>&1 | log_tee && tar xf "$tmp_dir/node.tar.xz" -C "$tmp_dir" 2>&1 | log_tee; then
         rm -rf "$node_dest"
         mv "$tmp_dir/node-${node_version}-linux-x64" "$node_dest"
         ln -sf "$node_dest/bin/node" "$LOCAL_BIN/node"
@@ -202,7 +202,7 @@ _install_pi() {
         log_warn "npm prefix -g failed — skipping pi install"
         return 0
     fi
-    if npm install -g --prefix "$npm_prefix" "$pi_package"; then
+    if npm install -g --prefix "$npm_prefix" "$pi_package" 2>&1 | log_tee; then
         if [[ -x "$npm_prefix/bin/pi" ]]; then
             ln -sf "$npm_prefix/bin/pi" "$LOCAL_BIN/pi"
             echo "$pi_package" > "$VERSION_DIR/pi"

@@ -20,7 +20,7 @@ fi
 # Install OMF itself if missing
 if ! fish -c 'type -q omf' 2>/dev/null; then
     log_info "installing Oh My Fish..."
-    curl -fsSL https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install -o /tmp/omf-install.fish
+    curl -fsSL https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install -o /tmp/omf-install.fish 2>&1 | log_tee
     if fish /tmp/omf-install.fish --noninteractive --yes >/dev/null 2>&1; then
         log_ok "Oh My Fish installed"
     else

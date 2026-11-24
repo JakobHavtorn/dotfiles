@@ -31,7 +31,7 @@ install_pipx_package() {
         log_ok "$pkg: already installed"
     else
         log_info "installing $pkg..."
-        pipx install "$install_target"
+        pipx install "$install_target" 2>&1 | log_tee
     fi
 }
 
