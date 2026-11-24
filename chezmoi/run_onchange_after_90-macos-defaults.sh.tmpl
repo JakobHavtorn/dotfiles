@@ -22,9 +22,12 @@ fi
 # Per-key non-fatal: a bad domain (corrupt plist, wedged cfprefd, or a
 # restricted key) logs the underlying error and never blocks the apply —
 # later layers (duti, the doctor) and the next apply depend on that.
-# Failed keys do not auto-retry (chezmoi records the successful run), but
-# dump.sh observes every key weekly, so a never-landing key stays visible
-# in macos-defaults.txt until fixed by hand.
+# A refused write falls back to a read-back: when the current value already
+# matches, the key counts as set and stays quiet — a TCC/App-Management-
+# locked plist (seen on a managed MacBook) stops nagging once the value is
+# right. Failed keys do not auto-retry (chezmoi records the successful run),
+# but dump.sh observes every key weekly, so a never-landing key stays
+# visible in macos-defaults.txt until fixed by hand.
 _failed=0
 while IFS='|' read -r domain key value; do
     # skip comments and blank lines
@@ -33,8 +36,19 @@ while IFS='|' read -r domain key value; do
     if _out="$(defaults write "$domain" "$key" $value 2>&1)"; then
         log_info "defaults write $domain $key $value"
     else
-        log_warn "defaults write failed: $domain $key — $_out"
-        _failed=1
+        _want=""
+        case "$value" in
+            "-bool true")  _want="1" ;;
+            "-bool false") _want="0" ;;
+            -int*|-float*|-string*) _want="${value#-* }" ;;
+        esac
+        _cur="$(defaults read "$domain" "$key" 2>/dev/null)" || _cur=""
+        if [ -n "$_want" ] && [ "$_cur" = "$_want" ]; then
+            log_info "defaults $domain $key already $_cur (write refused, value correct)"
+        else
+            log_warn "defaults write failed: $domain $key — $_out"
+            _failed=1
+        fi
     fi
 done < "$KEYS_FILE"
 
