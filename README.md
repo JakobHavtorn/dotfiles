@@ -14,6 +14,37 @@ Without `IDENTITY`, you'll be prompted for a machine identity (`work` / `persona
 
 agent-skills is public too, so its clone — skills for every harness — succeeds without credentials during the apply. Add `--ssh` to bootstrap over SSH instead; that path needs the key seeded first (below).
 
+### Before, during, and after the run
+
+Nothing blocks the run — missing pieces defer, and the doctor (the last step of every apply) prints what is left, each line with its fix. To finish in one pass:
+
+**Before running:**
+
+- macOS: admin credentials at hand — the run elevates once per machine (Homebrew prefix, Karabiner-Elements, fish as the login shell). Fresh machines see the prefix elevation on the first apply; Karabiner and fish on a later one, once Homebrew lands them.
+- A GitHub account you can sign into — the browser opens to add a new SSH key.
+- `CORTI_BEARER` in `~/.env` (from your password manager) — without it the Corti model wiring defers.
+- Linux: `curl ca-certificates git xz-utils unzip` (see [Linux prerequisites](#linux-prerequisites)).
+- The machine identity: `work` or `personal` — `IDENTITY=work` in the env skips the prompt.
+
+**During the run — input is expected at:**
+
+- The identity prompt, when `IDENTITY` is not set.
+- The elevation prompt on macOS (log line: `approve the elevation prompt...`).
+- The GitHub SSH step: the public key is on the clipboard, the browser opens at `github.com/settings/keys` — add the key, then press Enter in the terminal.
+- Homebrew's installer prompts — only when the prefix could not be prepared beforehand.
+
+Headless applies skip the interactive steps and print the manual commands instead. Opt-outs: `SKIP_HOMEBREW_INSTALL`, `SKIP_GITHUB_SSH_SEED`.
+
+**After the run:**
+
+- Read the doctor's pending lines; each names its fix. Fix, then re-apply — deferred layers self-heal.
+- Added `CORTI_BEARER` to `~/.env` after the run? Re-apply — the models wiring re-runs once the bearer is present.
+- Sign into iCloud and let the Obsidian vault sync, then re-apply.
+- `gh auth login` (answer yes to the git credential setup) — enables `gh`; pushes already work over the seeded SSH key.
+- Open new terminal windows for the login shell and PATH changes; restart opencode for config changes.
+- Karabiner-Elements asks to approve its driver on first launch (macOS).
+- A few macOS settings (e.g. Ctrl+Scroll zoom) may need one logout and login to take effect.
+
 ### SSH for pushes
 
 The HTTPS clone pulls without auth, but pushing needs a key. Every terminal `chezmoi apply` seeds it for you: `run_after_06-seed-github-ssh` runs the standalone script — keygen at `~/.ssh/id_github`, browser opens at `github.com/settings/keys`, press Enter once the key is added, and it verifies; it skips once the key exists. An aborted run never blocks the bootstrap; it logs the manual command.
@@ -38,13 +69,6 @@ ssh -T git@github.com    # expect: Hi JakobHavtorn!
 ```
 
 Omit `UseKeychain yes` on Linux. Both paths seed exactly what chezmoi manages (`private_dot_ssh/config.d/github.tmpl` + `run_once_after_05-ssh-config`), so the first apply converges with no diff. To push over SSH from an HTTPS clone: `git -C ~/.local/share/chezmoi remote set-url origin git@github.com:JakobHavtorn/dotfiles.git`.
-
-### After the apply
-
-Two optional layers skip non-fatally without credentials:
-
-- `gh auth login` (answer yes to the git credential setup) — enables `gh` usage (pushes already work over SSH via the seeded key).
-- Add `CORTI_BEARER` to `~/.env`, then run `npx --yes @corti/cli@latest models init --tools opencode,pi --scope global --yes --no-shell-rc --model <corti model list>` — copy the `--model` list from `run_onchange_after_25-corti-models.sh.tmpl` (rendered from `.chezmoidata.yaml`).
 
 ### Homebrew (macOS)
 
