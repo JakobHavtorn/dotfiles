@@ -15,21 +15,19 @@ else
     _BOLD='' _GREEN='' _YELLOW='' _RED='' _BLUE='' _DIM='' _RESET=''
 fi
 
-# Session log — every log_* call also appends a plain-text line to the file
-# below; log_run records its captured output blocks too. The file is the
-# apply's record: plain text, no colors, timestamps for correlation.
-# Captured output (log_run) is recorded verbatim minus ANSI/CSI sequences
-# and carriage returns, so a plain `cat` of the log is safe; log_tee's
-# live output is recorded as-is — streaming cannot be filtered without
+# Session log — every log_* call appends one plain-text line to
+# $_SESSION_LOG. log_run records its captured output stripped of ANSI/CSI
+# sequences and carriage returns, so a plain `cat` of the log is safe;
+# log_tee records live output as-is — streaming cannot be filtered without
 # changing terminal behavior.
-# run_before_00-init-session-log starts each apply — it rotates the previous
-# apply's log and truncates, so every line in last-apply.log belongs to the
-# current apply by construction. Line format (a contract — the end-of-apply
-# report reads warn/error lines back):
+# run_before_00-init-session-log rotates and truncates $_SESSION_LOG at
+# apply start, so every line in it belongs to the current apply by
+# construction. Line format (a contract — the end-of-apply report reads
+# warn/error lines back):
 #   HH:MM:SS LEVEL message            levels: section ok info skip warn error
 #       <indented output lines>       4-space indent, from log_run/log_tee
-# All writes are fail-safe: an unusable state dir degrades logging to
-# terminal-only and never fails the calling script.
+# All writes are fail-safe: an unusable $_SESSION_STATE_DIR degrades
+# logging to terminal-only; no write path can fail the calling script.
 _SESSION_STATE_DIR="$HOME/.local/state/dotfiles"
 _SESSION_LOG="$_SESSION_STATE_DIR/last-apply.log"
 _SESSION_PREV_LOG="$_SESSION_STATE_DIR/previous-apply.log"
@@ -43,11 +41,9 @@ _session_write() {
 }
 
 _session_write_output() {
-    # $1 = captured command output. Appends it indented so it can never
-    # collide with the LEVEL-line format above. ANSI/CSI sequences and
-    # carriage returns are stripped first, so a plain `cat` of the log
-    # is safe (cursor-control codes must not reach the terminal on
-    # readback).
+    # $1 = captured command output. The indent keeps these lines from
+    # colliding with the LEVEL-line format; the stripping keeps a plain
+    # `cat` of the log safe.
     [ -n "$1" ] || return 0
     if [ ! -d "$_SESSION_STATE_DIR" ]; then
         mkdir -p "$_SESSION_STATE_DIR" 2>/dev/null || return 0
@@ -56,15 +52,17 @@ _session_write_output() {
     printf '%s\n' "$1" | sed -e $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g' -e $'s/\r//g' | while IFS= read -r _session_line; do
         printf '    %s\n' "$_session_line" >> "$_SESSION_LOG" 2>/dev/null || return 0
     done
+    # The loop runs in a pipe subshell; without this, a sed failure would
+    # surface through the caller's pipefail and break the never-fails
+    # contract.
     return 0
 }
 
 # Pipe a loud non-interactive command's live output through the session log:
 #   brew bundle install --file "$BREWFILE" 2>&1 | log_tee
-# Streams to the terminal unchanged and appends to the session log; the
-# command's exit code still propagates (pipefail). Falls back to cat when
-# the state dir is unusable, so logging can never fail the pipeline.
-# Never use this on interactive commands (prompts would land in the file).
+# pipefail lets the command's exit code propagate through the pipeline;
+# the cat fallback keeps an unusable session state dir from failing it.
+# Never use this on interactive commands — prompts would land in the log.
 log_tee() {
     if mkdir -p "$_SESSION_STATE_DIR" 2>/dev/null && [ -w "$_SESSION_STATE_DIR" ]; then
         _session_write output "(live output follows)"

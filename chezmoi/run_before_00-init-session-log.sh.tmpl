@@ -4,9 +4,10 @@
 # First script of every apply: starts the session log that shared/log.sh
 # writes to. Rotates last-apply.log → previous-apply.log, truncates, and
 # writes a header (date, identity, os, source revision). The rotation is
-# what makes the log honest: every line in last-apply.log belongs to the
-# current apply by construction. Fail-safe: when the state dir cannot be
-# created, scripts log to the terminal only (log.sh degrades silently).
+# what makes the log honest: every line in the session log belongs to the
+# current apply by construction. Fail-safe: when the session state dir
+# cannot be created, scripts log to the terminal only (log.sh degrades
+# silently).
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
