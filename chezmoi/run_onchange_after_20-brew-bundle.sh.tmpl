@@ -48,7 +48,8 @@ else
     # The swallowed failure does not flip this script's hash: a plain
     # re-apply retries nothing. Retry manually: brew bundle install --file
     # chezmoi/manifests/Brewfile (or edit the Brewfile to re-trigger).
-    if brew bundle install --file "$BREWFILE"; then
+    # Output also lands in the session log (log_tee).
+    if brew bundle install --file "$BREWFILE" 2>&1 | log_tee; then
         log_ok "brew bundle done"
     else
         log_warn "brew bundle: some entries failed (see output above) — bootstrap continues"

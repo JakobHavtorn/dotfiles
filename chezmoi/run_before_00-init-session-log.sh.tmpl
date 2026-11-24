@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# run_before_00-init-session-log.sh.tmpl
+#
+# First script of every apply: starts the session log that shared/log.sh
+# writes to. Rotates last-apply.log → previous-apply.log, truncates, and
+# writes a header (date, identity, os, source revision). The rotation is
+# what makes the log honest: every line in the session log belongs to the
+# current apply by construction. Fail-safe: when the session state dir
+# cannot be created, scripts log to the terminal only (log.sh degrades
+# silently).
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+
+mkdir -p "$_SESSION_STATE_DIR"
+chmod 700 "$_SESSION_STATE_DIR"
+
+if [ -f "$_SESSION_LOG" ]; then
+    mv -f "$_SESSION_LOG" "$_SESSION_PREV_LOG"
+    chmod 600 "$_SESSION_PREV_LOG"
+fi
+
+: > "$_SESSION_LOG"
+chmod 600 "$_SESSION_LOG"
+
+{
+    echo "================ bootstrap apply ================"
+    echo "date:     $(date '+%Y-%m-%d %H:%M:%S %z')"
+    echo "identity: {{ .identity }}"
+    echo "os:       {{ .chezmoi.os }}"
+    echo "source:   $(git -C "{{ .chezmoi.sourceDir }}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    echo "=================================================="
+} >> "$_SESSION_LOG"
+
+log_info "apply log: $_SESSION_LOG"

@@ -53,7 +53,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/dot_omp/private_agent/hooks/post/title-gen.ts` | omp session-title hook — same shared title spec and direct Corti API call as the opencode plugin |
 | `chezmoi/dot_config/cortexkit/aft.jsonc` | AFT (CortexKit) config — semantic search backend; shared across opencode + omp |
 | `chezmoi/shared/` | Bash helpers sourced by run scripts (not home targets) |
-| `chezmoi/shared/log.sh` | Colored logging: log_section, log_ok, log_warn, log_err, log_info, log_skip, log_run |
+| `chezmoi/shared/log.sh` | Colored logging + session-log tee: log_section, log_ok, log_warn, log_err, log_info, log_skip, log_run (--non-fatal), log_tee; every log_* call also appends a plain-text line to the session log — fail-safe |
 | `chezmoi/shared/env.sh` | Runtime env helpers: is_ci, is_darwin, is_linux |
 | `chezmoi/shared/manifest.sh` | `manifest_each <file> <sep> <callback>` — pipe-delimited manifest iteration |
 | `chezmoi/manifests/` | Readable in git, never written to `$HOME` |
@@ -67,6 +67,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — fixed list of vault config files (incl. workspaces.json, saved layouts) + plugin manifests/data (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes the volatile workspace.json and plugin binaries |
 | `chezmoi/manifests/iterm2/` | iTerm2 settings plist under an allowlist — the manifest IS the allowlist: dump.sh refreshes values for tracked keys only, reports new keys for deliberate addition, keeps gone keys' last values; junk classes stripped at bootstrap only; installed by run_after_87-iterm2-config only where no settings exist yet |
 | `chezmoi/manifests/karabiner/` | Karabiner-Elements `karabiner.json` — dumped by dump.sh, installed by run_after_87-karabiner-config only where no config exists yet |
+| `chezmoi/run_before_00-init-session-log.sh.tmpl` | First script of every apply: rotates the session log (previous apply's last-apply.log → previous-apply.log), truncates, writes the header (date, identity, os, source rev); announces the path |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
 | `chezmoi/run_after_06-seed-github-ssh.sh.tmpl` | Runs on every apply: seeds GitHub SSH via `scripts/seed-github-ssh.sh` on terminal applies (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key exists; opt out with `SKIP_GITHUB_SSH_SEED` |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
@@ -116,6 +117,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 - `run_after_99-bootstrap-doctor` reports pending layers at the end of every apply; `scripts/check-bootstrap.sh` still detects interrupted applies via the state DB.
 - Script house style: `set -euo pipefail`, a guard clause at the top, echo what it's about to do.
 - Shared helpers (`shared/`): `log.sh` for colored logging, `env.sh` for runtime checks (`is_ci`, `is_darwin`, `is_linux`), `manifest.sh` for `manifest_each`. Source these instead of reimplementing the same capture/loop/gate patterns. `log_run "label" cmd…` replaces inline `output="$()"` capture-and-log; `log_run --non-fatal` logs the error but returns 0 (no `|| true` needed under `set -e`).
+- Session log: every `log_*` call tees a plain-text line to `~/.local/state/dotfiles/last-apply.log`; `run_before_00` rotates it at apply start; loud non-interactive commands stream through `log_tee`; `log_run` output is recorded automatically.
 - corti models init (opencode config script) and agent-skills are optional personal-layer steps: a missing-auth failure there is logged non-fatally and must never abort the rest of the bootstrap — catch the failure, print the tool's own error, exit 0. Platform/resource guards (`command -v`, os checks) handle the rest.
 - `uv` owns Python interpreters. Do not `brew install python`.
 - The Brewfile is hand-curated, not a raw dump output. `dump.sh` overwrites it, but PR review is the curation gate. Cask `args: { appdir: "~/Applications" }` entries (non-admin support) are part of that curation — `brew bundle dump` strips them; re-add on review. Same gate applies to all dump-generated manifests; pipx.txt is dumped from the venvs' pipx metadata (`package_or_url`) so install sources survive regeneration.
