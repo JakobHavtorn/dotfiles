@@ -17,3 +17,6 @@ com.knollsoft.Rectangle|snapEdgeMarginBottom|-int 5
 com.knollsoft.Rectangle|snapEdgeMarginLeft|-int 5
 com.knollsoft.Rectangle|snapEdgeMarginRight|-int 5
 com.knollsoft.Rectangle|snapEdgeMarginTop|-int 5
+# Accessibility — scroll-gesture zoom (Ctrl+Scroll; Ctrl is the default modifier — no key set)
+com.apple.universalaccess|closeViewScrollWheelToggle|-bool true
+com.apple.universalaccess|closeViewDesiredZoomFactor|-float 2.047523021697998
