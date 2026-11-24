@@ -44,7 +44,7 @@ if is_ci; then
     rm -f "$BREWFILE_FILTERED"
 else
     # Non-fatal: one bad entry (offline tap, a cask without an appdir on a
-    # non-admin account) must not halt the apply — the doctor reports it.
+    # non-admin account) must not halt the apply — the report replays it at the end of the apply.
     # The swallowed failure does not flip this script's hash: a plain
     # re-apply retries nothing. Retry manually: brew bundle install --file
     # chezmoi/manifests/Brewfile (or edit the Brewfile to re-trigger).

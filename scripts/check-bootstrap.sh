@@ -43,6 +43,7 @@ if unrun:
     for b in unrun:
         print(f"    {b}   (state key: {staged[b]})", file=sys.stderr)
     print("    repair: chezmoi state delete --bucket=entryState --key=<state key>; chezmoi diff && chezmoi apply", file=sys.stderr)
+    print("    partial apply log: ~/.local/state/dotfiles/last-apply.log", file=sys.stderr)
     sys.exit(1)
 else:
     print("  ok — every staged run_ script has a runAt record")
