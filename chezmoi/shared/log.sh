@@ -30,31 +30,31 @@ fi
 #       <indented output lines>       4-space indent, from log_run/log_tee
 # All writes are fail-safe: an unusable state dir degrades logging to
 # terminal-only and never fails the calling script.
-_BS_STATE_DIR="$HOME/.local/state/dotfiles"
-_BS_LOG="$_BS_STATE_DIR/last-apply.log"
-_BS_PREV="$_BS_STATE_DIR/previous-apply.log"
+_SESSION_STATE_DIR="$HOME/.local/state/dotfiles"
+_SESSION_LOG="$_SESSION_STATE_DIR/last-apply.log"
+_SESSION_PREV_LOG="$_SESSION_STATE_DIR/previous-apply.log"
 
-_bs_write() {
+_session_write() {
     # $1 = level, $2 = message. Never fails; never prints to the terminal.
-    if [ ! -d "$_BS_STATE_DIR" ]; then
-        mkdir -p "$_BS_STATE_DIR" 2>/dev/null || return 0
+    if [ ! -d "$_SESSION_STATE_DIR" ]; then
+        mkdir -p "$_SESSION_STATE_DIR" 2>/dev/null || return 0
     fi
-    printf '%s %s %s\n' "$(date +%H:%M:%S)" "$1" "$2" >> "$_BS_LOG" 2>/dev/null || true
+    printf '%s %s %s\n' "$(date +%H:%M:%S)" "$1" "$2" >> "$_SESSION_LOG" 2>/dev/null || true
 }
 
-_bs_write_output() {
+_session_write_output() {
     # $1 = captured command output. Appends it indented so it can never
     # collide with the LEVEL-line format above. ANSI/CSI sequences and
     # carriage returns are stripped first, so a plain `cat` of the log
     # is safe (cursor-control codes must not reach the terminal on
     # readback).
     [ -n "$1" ] || return 0
-    if [ ! -d "$_BS_STATE_DIR" ]; then
-        mkdir -p "$_BS_STATE_DIR" 2>/dev/null || return 0
+    if [ ! -d "$_SESSION_STATE_DIR" ]; then
+        mkdir -p "$_SESSION_STATE_DIR" 2>/dev/null || return 0
     fi
-    local _bs_line
-    printf '%s\n' "$1" | sed -e $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g' -e $'s/\r//g' | while IFS= read -r _bs_line; do
-        printf '    %s\n' "$_bs_line" >> "$_BS_LOG" 2>/dev/null || return 0
+    local _session_line
+    printf '%s\n' "$1" | sed -e $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g' -e $'s/\r//g' | while IFS= read -r _session_line; do
+        printf '    %s\n' "$_session_line" >> "$_SESSION_LOG" 2>/dev/null || return 0
     done
     return 0
 }
@@ -66,9 +66,9 @@ _bs_write_output() {
 # the state dir is unusable, so logging can never fail the pipeline.
 # Never use this on interactive commands (prompts would land in the file).
 log_tee() {
-    if mkdir -p "$_BS_STATE_DIR" 2>/dev/null && [ -w "$_BS_STATE_DIR" ]; then
-        _bs_write output "(live output follows)"
-        tee -a "$_BS_LOG"
+    if mkdir -p "$_SESSION_STATE_DIR" 2>/dev/null && [ -w "$_SESSION_STATE_DIR" ]; then
+        _session_write output "(live output follows)"
+        tee -a "$_SESSION_LOG"
     else
         cat
     fi
@@ -77,32 +77,32 @@ log_tee() {
 log_section() {
     echo ""
     echo -e "${_BOLD}${_BLUE}▶ $1${_RESET}"
-    _bs_write section "$1"
+    _session_write section "$1"
 }
 
 log_ok() {
     echo -e "  ${_GREEN}✓${_RESET} $1"
-    _bs_write ok "$1"
+    _session_write ok "$1"
 }
 
 log_warn() {
     echo -e "  ${_YELLOW}⚠${_RESET} $1"
-    _bs_write warn "$1"
+    _session_write warn "$1"
 }
 
 log_err() {
     echo -e "  ${_RED}✗${_RESET} $1" >&2
-    _bs_write error "$1"
+    _session_write error "$1"
 }
 
 log_info() {
     echo -e "  ${_DIM}$1${_RESET}"
-    _bs_write info "$1"
+    _session_write info "$1"
 }
 
 log_skip() {
     echo -e "  ${_DIM}⊘ $1${_RESET}"
-    _bs_write skip "$1"
+    _session_write skip "$1"
 }
 
 # Run a command, capture its output, and log the result.
@@ -128,10 +128,10 @@ log_run() {
     local _output
     if _output="$("$@" 2>&1)"; then
         log_ok "$_label"
-        _bs_write_output "$_output"
+        _session_write_output "$_output"
     else
         log_err "$_label"
-        _bs_write_output "$_output"
+        _session_write_output "$_output"
         printf '%s\n' "$_output" >&2
         [[ "$_non_fatal" -eq 1 ]] && return 0
         return 1

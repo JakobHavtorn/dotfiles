@@ -10,16 +10,16 @@
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 
-mkdir -p "$_BS_STATE_DIR"
-chmod 700 "$_BS_STATE_DIR"
+mkdir -p "$_SESSION_STATE_DIR"
+chmod 700 "$_SESSION_STATE_DIR"
 
-if [ -f "$_BS_LOG" ]; then
-    mv -f "$_BS_LOG" "$_BS_PREV"
-    chmod 600 "$_BS_PREV"
+if [ -f "$_SESSION_LOG" ]; then
+    mv -f "$_SESSION_LOG" "$_SESSION_PREV_LOG"
+    chmod 600 "$_SESSION_PREV_LOG"
 fi
 
-: > "$_BS_LOG"
-chmod 600 "$_BS_LOG"
+: > "$_SESSION_LOG"
+chmod 600 "$_SESSION_LOG"
 
 {
     echo "================ bootstrap apply ================"
@@ -28,6 +28,6 @@ chmod 600 "$_BS_LOG"
     echo "os:       {{ .chezmoi.os }}"
     echo "source:   $(git -C "{{ .chezmoi.sourceDir }}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
     echo "=================================================="
-} >> "$_BS_LOG"
+} >> "$_SESSION_LOG"
 
-log_info "apply log: $_BS_LOG"
+log_info "apply log: $_SESSION_LOG"
