@@ -65,8 +65,8 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/manifests/macos-defaults-keys.txt` | Shared (domain\|key\|value) list — read by dump.sh (observes) and run_onchange_after_90-macos-defaults.sh.tmpl (writes) |
 | `chezmoi/manifests/macos-defaults.txt` | Observed values for keys in macos-defaults-keys.txt (dumped by dump.sh) |
 | `chezmoi/manifests/obsidian/` | Obsidian vault config snapshot — fixed list of vault config files (incl. workspaces.json, saved layouts) + plugin manifests/data (dumped by dump.sh, installed by run_onchange_after_89-obsidian-config.sh.tmpl). Excludes the volatile workspace.json and plugin binaries |
-| `chezmoi/manifests/iterm2/` | iTerm2 settings plist under an allowlist — the manifest IS the allowlist: dump.sh refreshes values for tracked keys only, reports new keys for deliberate addition, keeps gone keys' last values; junk classes stripped at bootstrap only; installed by run_onchange_after_87-iterm2-config only where no settings exist yet |
-| `chezmoi/manifests/karabiner/` | Karabiner-Elements `karabiner.json` — dumped by dump.sh, installed by run_onchange_after_87-karabiner-config only where no config exists yet |
+| `chezmoi/manifests/iterm2/` | iTerm2 settings plist under an allowlist — the manifest IS the allowlist: dump.sh refreshes values for tracked keys only, reports new keys for deliberate addition, keeps gone keys' last values; junk classes stripped at bootstrap only; installed by run_after_87-iterm2-config only where no settings exist yet |
+| `chezmoi/manifests/karabiner/` | Karabiner-Elements `karabiner.json` — dumped by dump.sh, installed by run_after_87-karabiner-config only where no config exists yet |
 | `chezmoi/run_once_after_05-ssh-config.sh.tmpl` | Ensures `Include config.d/*` in `~/.ssh/config` (prepends if missing, never rewrites existing content) |
 | `chezmoi/run_after_06-seed-github-ssh.sh.tmpl` | Runs on every apply: seeds GitHub SSH via `scripts/seed-github-ssh.sh` on terminal applies (keygen, browser add, `ssh -T` verify); skips in CI/headless or when the key exists; opt out with `SKIP_GITHUB_SSH_SEED` |
 | `chezmoi/run_onchange_after_10-git-config.sh.tmpl` | Sets git name/email from `.identity` via `git config --global` (insteadOf skipped in CI) |
@@ -88,8 +88,8 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_88-hermes-config.sh.tmpl` | Installs/updates Corti Hermes profile distribution from hermes-profile repo; injects CORTI_BEARER, sets corti as sticky default profile |
 | `chezmoi/run_after_88-coding-harness-plugin-refresh.sh.tmpl` | Keeps declared harness plugins current every apply: targetless `opencode plugin update` for all configured package plugins, `omp plugin install --force` for @cortexkit/aft-pi (OMP npm plugins have no config surface); pre-warms AFT binary |
 | `chezmoi/run_onchange_after_86-obsidian-mcp.sh.tmpl` | Registers the Obsidian Local REST API MCP server with Claude Code (`claude mcp add --scope user`) and Codex (`~/.codex/config.toml`). Reads the API key from the plugin's `data.json` |
-| `chezmoi/run_onchange_after_87-iterm2-config.sh.tmpl` | Darwin only — installs the iTerm2 settings manifest via `defaults import` when the machine has no iTerm2 settings; existing settings are never overwritten (dump.sh observes them) |
-| `chezmoi/run_onchange_after_87-karabiner-config.sh.tmpl` | Darwin only — installs the Karabiner-Elements config manifest when the machine has none; existing config is never overwritten (dump.sh observes it) |
+| `chezmoi/run_after_87-iterm2-config.sh.tmpl` | Darwin only — every apply: installs the iTerm2 settings manifest via `defaults import` when the machine has no iTerm2 settings; existing settings are never overwritten (dump.sh observes them) |
+| `chezmoi/run_after_87-karabiner-config.sh.tmpl` | Darwin only — every apply: installs the Karabiner-Elements config manifest when the machine has none; existing config is never overwritten (dump.sh observes it) |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |
 | `chezmoi/run_onchange_after_90-macos-defaults.sh.tmpl` | Darwin only — sets the shared defaults keys; per-key non-fatal (re-runs when the keys file changes) |
 | `chezmoi/run_after_95-vscode-default-app.sh.tmpl` | Darwin only — every apply: sets VS Code as default app for dev file types via duti; non-fatal without duti (arrives with brew bundle) |
@@ -108,6 +108,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 
 ### Run-script trigger policy
 
+- Trigger choice follows where the decision's state lives: `run_onchange_*` + an embedded input hash when the repo input is authoritative and the layer is expensive to re-run (brew bundle, OMF, pipx); `run_after_*` + guard when machine state decides — the guard tests reality at execution time, so recovery flows ("delete the file and re-apply") always work. Presence facts are the price of keeping an expensive machine-state layer on `run_onchange_*`; never pay it for a cheap layer.
 - `run_before_*`/`run_after_*` (no once/onchange) — every apply. Use for interactive or precondition-dependent steps; guard-first and idempotent, so a settled machine pays only a guard test. Opt-outs: `SKIP_HOMEBREW_INSTALL`, `SKIP_GITHUB_SSH_SEED`.
 - `run_onchange_*` — embed a presence fact for every installable precondition, so a guard-skip cannot permanently silence the layer: `#   brew: {{ output "sh" "-c" "<probe>" | trim }}` (copy the exact form from any `run_onchange_*` header). The probe must find the tool without the shell's PATH — chezmoi renders facts in its own environment. When the fact flips, the rendered hash changes and the script re-runs.
 - `run_once_*` — only when nothing can defer (`run_once_after_05-ssh-config`).
