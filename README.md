@@ -39,7 +39,7 @@ Headless applies skip the interactive steps and print the manual commands instea
 
 - Read the report's summary: warnings and failures from the run, deferred layers with their fixes, and the log path. Fix, then re-apply — deferred layers self-heal.
 - Apply logs live at `~/.local/state/dotfiles/last-apply.log`; the previous apply sits alongside as `previous-apply.log`.
-- Added `CORTI_BEARER` to `~/.env` after the run? Re-apply — the models wiring re-runs once the bearer is present.
+- Added `CORTI_BEARER` to `~/.env` after the run? Re-apply — the models wiring re-runs once the bearer is present — and restart the opencode service if it was started earlier: services keep the environment they launched with.
 - Sign into iCloud and let the Obsidian vault sync, then re-apply.
 - `gh auth login` (answer yes to the git credential setup) — enables `gh`; pushes already work over the seeded SSH key.
 - Open new terminal windows for the login shell and PATH changes; restart opencode for config changes.
