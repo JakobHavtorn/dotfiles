@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# run_after_98-layer-defers.sh.tmpl
+#
+# Runs on every apply, right before the report. Probes each layer's
+# machine-state preconditions; a missing one records
+# log_defer "<thing> — <fix>", which the report replays at the end of the
+# apply. Because this script runs every apply, the defer window is always
+# fresh: a fixed precondition clears on the next apply, with no state
+# kept anywhere. This is the probe home — a new layer adds its probe
+# here and the report never changes. Silent when clean: no section
+# header, zero output when nothing defers. Defers cover machine state
+# only — a layer that runs and fails records warn/error itself.
+#
+# The probes run with env.sh's PATH corrections, like the layer scripts
+# they mirror — they find tools on disk regardless of the invoking
+# shell's PATH. A defer means the tool is genuinely absent, not merely
+# outside a stale PATH: an apply from launchd or a pre-brew shell
+# records no false defers on a healthy machine.
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+if is_ci; then
+    log_skip "layer defers (CI environment)"
+    exit 0
+fi
+
+_has() { command -v "$1" >/dev/null 2>&1; }
+
+if ! _has brew && [ ! -x /opt/homebrew/bin/brew ]; then
+    log_defer "homebrew — see README 'Homebrew (macOS)', then re-apply"
+fi
+_has fish || log_defer "fish — arrives with brew bundle — re-apply from any shell to pick it up"
+_has npx  || log_defer "node/npx — arrives with brew bundle — re-apply from any shell to pick it up"
+_has jq   || log_defer "jq — arrives with brew bundle — re-apply from any shell to pick it up"
+_has duti || log_defer "duti — arrives with brew bundle — re-apply from any shell to pick it up"
+_has pipx || log_defer "pipx — arrives with brew bundle — re-apply from any shell to pick it up"
+_has bun  || log_defer "bun — arrives with brew bundle — re-apply from any shell to pick it up"
+_has claude || log_defer "claude cli — arrives with brew bundle (npm globals) — re-apply from any shell to pick it up"
+_has herdr || log_defer "herdr — brew (darwin) or remote-tools (linux) — re-apply once present"
+_has taxhelper || log_defer "taxhelper — arrives with pipx — re-apply from any shell to pick it up"
+
+if _has fish && ! fish -c 'type -q omf' >/dev/null 2>&1; then
+    log_defer "oh-my-fish — re-runs once fish is present (run_onchange_after_60)"
+fi
+
+[ -f "$HOME/.ssh/id_github" ] || log_defer "github ssh key — re-apply in a terminal, or run scripts/seed-github-ssh.sh"
+
+if [ -f "$HOME/.env" ] && grep -q '^CORTI_BEARER=' "$HOME/.env" 2>/dev/null; then
+    :
+else
+    log_defer "CORTI_BEARER — add to ~/.env, then re-apply — the models wiring re-runs once the bearer is present"
+fi
+
+{{ if eq .chezmoi.os "darwin" -}}
+# Cask GUI apps — installed to ~/Applications (appdir); /Applications is
+# checked for pre-appdir installs. Missing means the cask layer has not landed yet.
+for _app in "Slack.app" "Obsidian.app" "Zotero.app" "Hermes.app"; do
+    if [ ! -d "/Applications/$_app" ] && [ ! -d "$HOME/Applications/$_app" ]; then
+        log_defer "$_app — brew bundle cask — run: brew bundle install --file chezmoi/manifests/Brewfile"
+    fi
+done
+if [ ! -d "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian" ]; then
+    log_defer "obsidian vault — sign into iCloud, let the vault sync, then re-apply"
+fi
+{{ end -}}

@@ -52,7 +52,7 @@ else
     if brew bundle install --file "$BREWFILE" 2>&1 | log_tee; then
         log_ok "brew bundle done"
     else
-        log_warn "brew bundle: some entries failed (see output above) — bootstrap continues"
+        log_warn "brew bundle: some entries failed (see output above) — bootstrap continues; retry: brew bundle install --file chezmoi/manifests/Brewfile"
     fi
 fi
 

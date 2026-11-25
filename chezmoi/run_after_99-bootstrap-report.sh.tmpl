@@ -4,11 +4,12 @@
 # End-of-run report — the last step of every apply:
 #   1. replays every warning and failure recorded during this apply
 #      (warn/error lines from the session log),
-#   2. reports which layers are still pending, with recovery hints,
+#   2. replays every defer recorded by the layer probes
+#      (defer lines from the session log),
 #   3. prints the log path.
-# Purely informational and non-fatal — every-apply steps and presence facts
-# do the healing; this makes deferral visible instead of silent. Quiet when
-# clean (one line). Complements scripts/check-bootstrap.sh, which detects
+# Pure presentation — no machine probing; run_after_98-layer-defers is
+# the probe home. Purely informational and non-fatal. Quiet when clean
+# (one line). Complements scripts/check-bootstrap.sh, which detects
 # interrupted applies via the chezmoi state DB.
 #
 # Renamed from run_after_99-bootstrap-doctor: the step summarizes the run,
@@ -25,16 +26,20 @@ fi
 
 log_section "bootstrap report"
 
-# 1. Warnings & failures from this apply. Read the session log BEFORE any
-# of this script's own log calls, so this script's lines can never aggregate
-# themselves; run_before_00's rotation already guarantees every line in the
-# log belongs to this apply. Replays print via raw printf, not log_warn /
-# log_err, so they are not appended to the log again. Level lines are
-# "HH:MM:SS LEVEL message": the level starts at char 9 — warn at offset 14,
-# error at offset 15 (the message slice offsets follow).
+# Warnings, failures, and defers from this apply. Read the session log
+# BEFORE any of this script's own log calls, so this script's lines can
+# never aggregate themselves; run_before_00's rotation already guarantees
+# every line in the log belongs to this apply. Replays print via raw
+# printf, not log_warn / log_err / log_defer, so they are not appended
+# to the log again. Level lines are "HH:MM:SS LEVEL message": the level
+# starts at char 9 — warn at offset 14, error and defer at offset 15
+# (the message slice offsets follow).
 _issues=0
+_defers=0
 if [ -f "$_SESSION_LOG" ]; then
     _agg="$(grep -E '^[0-9]{2}:[0-9]{2}:[0-9]{2} (warn|error) ' "$_SESSION_LOG" 2>/dev/null | awk '!seen[$0]++' || true)"
+    _dagg="$(grep -E '^[0-9]{2}:[0-9]{2}:[0-9]{2} defer ' "$_SESSION_LOG" 2>/dev/null | awk '!seen[$0]++' || true)"
+
     if [ -n "$_agg" ]; then
         _count="$(printf '%s\n' "$_agg" | grep -c .)"
         log_warn "from this apply ($_count):"
@@ -47,62 +52,24 @@ if [ -f "$_SESSION_LOG" ]; then
         done <<< "$_agg"
         _issues=1
     fi
+
+    if [ -n "$_dagg" ]; then
+        _count="$(printf '%s\n' "$_dagg" | grep -c .)"
+        log_warn "deferred ($_count):"
+        while IFS= read -r _line; do
+            printf '      %s⊘%s %s\n' "$_YELLOW" "$_RESET" "${_line:15}"
+        done <<< "$_dagg"
+        _defers=1
+    fi
 else
     log_skip "session log missing — replay skipped"
 fi
 
-# 2. Pending layers.
-_pending=0
-_missing() {
-    _pending=1
-    log_warn "pending: $1 — $2"
-}
-_has() { command -v "$1" >/dev/null 2>&1; }
-
-if ! _has brew && [ ! -x /opt/homebrew/bin/brew ]; then
-    _missing "homebrew" "see README 'Homebrew (macOS)', then re-apply"
-fi
-_has fish || _missing "fish" "arrives with brew bundle — re-apply from any shell to pick it up"
-_has npx  || _missing "node/npx" "arrives with brew bundle — re-apply from any shell to pick it up"
-_has jq   || _missing "jq" "arrives with brew bundle — re-apply from any shell to pick it up"
-_has duti || _missing "duti" "arrives with brew bundle — re-apply from any shell to pick it up"
-_has pipx || _missing "pipx" "arrives with brew bundle — re-apply from any shell to pick it up"
-_has claude || _missing "claude cli" "arrives with brew bundle (npm globals) — re-apply from any shell to pick it up"
-_has herdr || _missing "herdr" "brew (darwin) or remote-tools (linux) — re-apply once present"
-_has taxhelper || _missing "taxhelper" "arrives with pipx — re-apply from any shell to pick it up"
-
-if _has fish && ! fish -c 'type -q omf' >/dev/null 2>&1; then
-    _missing "oh-my-fish" "re-runs once fish is present (run_onchange_after_60)"
-fi
-
-[ -f "$HOME/.ssh/id_github" ] || _missing "github ssh key" "re-apply in a terminal, or run scripts/seed-github-ssh.sh"
-
-if [ -f "$HOME/.env" ] && grep -q '^CORTI_BEARER=' "$HOME/.env" 2>/dev/null; then
-    :
-else
-    _missing "CORTI_BEARER" "add to ~/.env, then re-apply — the models wiring re-runs once the bearer is present"
-fi
-
-{{ if eq .chezmoi.os "darwin" -}}
-# Cask GUI apps — installed to ~/Applications (appdir); /Applications is
-# checked for pre-appdir installs. Missing means the cask layer has not landed yet.
-for _app in "Slack.app" "Obsidian.app" "Zotero.app" "Hermes.app"; do
-    if [ ! -d "/Applications/$_app" ] && [ ! -d "$HOME/Applications/$_app" ]; then
-        _missing "$_app" "brew bundle cask — run: brew bundle install --file chezmoi/manifests/Brewfile"
-    fi
-done
-if [ ! -d "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian" ]; then
-    _missing "obsidian vault" "sign into iCloud, let the vault sync, then re-apply"
-fi
-{{ end -}}
-
-# 3. Verdict + log path. The clean line keeps the quiet-when-clean
-# principle: one line including the log path.
-if [ "$_pending" -eq 0 ] && [ "$_issues" -eq 0 ]; then
+# Verdict + log path. The clean line keeps the quiet-when-clean
+# principle: one line including the log path. Each defer carries its
+# own fix, so no closing hint is needed.
+if [ "$_issues" -eq 0 ] && [ "$_defers" -eq 0 ]; then
     log_ok "clean — no warnings or failures, no pending layers · log: $_SESSION_LOG"
 else
-    if [ "$_pending" -eq 1 ]; then
-        log_warn "pending layers above — brew-provided tools self-heal once Homebrew lands; a failed brew-bundle entry needs a manual 'brew bundle install --file chezmoi/manifests/Brewfile'"
-    fi
     log_info "log: $_SESSION_LOG"
 fi
