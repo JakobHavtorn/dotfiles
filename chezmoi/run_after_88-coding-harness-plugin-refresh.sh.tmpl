@@ -49,7 +49,7 @@ if command -v omp >/dev/null 2>&1; then
         log_run --non-fatal "aft-pi plugin install" \
             omp plugin install --force @cortexkit/aft-pi </dev/null || true
     else
-        log_warn "bun not found — skipping AFT plugin install for OMP. Install with: brew install bun"
+        log_skip "aft-pi plugin install (bun not installed)"
     fi
 else
     log_skip "aft-pi plugin install (omp not installed)"
@@ -67,7 +67,7 @@ if command -v npx >/dev/null 2>&1; then
     log_run --non-fatal "aft binary pre-warm" \
         npx --yes @cortexkit/aft@latest doctor --harness omp </dev/null || true
 else
-    log_warn "npx not found — skipping aft binary pre-warm"
+    log_skip "aft binary pre-warm (npx not installed)"
 fi
 
 log_ok "coding harness plugin refresh done"

@@ -17,7 +17,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 log_section "setting VS Code as default app for dev file types"
 
 if ! command -v duti >/dev/null 2>&1; then
-    log_warn "duti not found — arrives with brew bundle; re-apply from any shell to pick it up"
+    log_skip "vscode default app (duti not installed)"
     exit 0
 fi
 

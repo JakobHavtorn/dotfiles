@@ -47,7 +47,7 @@ if [[ ! -f "$SETTINGS" ]]; then
         "$DEFAULT_PROVIDER" "$DEFAULT_MODEL" > "$SETTINGS"
     log_ok "created pi settings.json (default: $DEFAULT_PROVIDER/$DEFAULT_MODEL)"
 elif ! command -v jq >/dev/null 2>&1; then
-    log_warn "jq not found — pi default model not set"
+    log_skip "pi default model (jq not installed)"
 else
     tmp="$(mktemp)"
     if jq --arg provider "$DEFAULT_PROVIDER" --arg model "$DEFAULT_MODEL" \

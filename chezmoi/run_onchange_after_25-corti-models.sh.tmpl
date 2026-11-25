@@ -28,7 +28,7 @@ if is_ci; then
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
-    log_warn "npx not found — skipping corti models init"
+    log_skip "corti models init (npx not installed)"
     exit 0
 fi
 

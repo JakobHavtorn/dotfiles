@@ -23,9 +23,10 @@ fi
 # run_before_00-init-session-log rotates and truncates $_SESSION_LOG at
 # apply start, so every line in it belongs to the current apply by
 # construction. Line format (a contract — the end-of-apply report reads
-# warn/error lines back):
-#   HH:MM:SS LEVEL message            levels: section ok info skip warn error
+# warn/error/defer lines back):
+#   HH:MM:SS LEVEL message            levels: section ok info skip warn error defer
 #       <indented output lines>       4-space indent, from log_run/log_tee
+# Message slice: warn at offset 14, error and defer at offset 15.
 # All writes are fail-safe: an unusable $_SESSION_STATE_DIR degrades
 # logging to terminal-only; no write path can fail the calling script.
 _SESSION_STATE_DIR="$HOME/.local/state/dotfiles"
@@ -101,6 +102,15 @@ log_info() {
 log_skip() {
     echo -e "  ${_DIM}⊘ $1${_RESET}"
     _session_write skip "$1"
+}
+
+# Deferred — a layer could not run because something it needs is missing;
+# the fix hint says what unblocks it. Distinct from skip: a skip is
+# routine, a defer is unfinished work. Recorded by the every-apply layer
+# probes (run_after_98-layer-defers) so the defer window is always fresh.
+log_defer() {
+    echo -e "  ${_YELLOW}⊘${_RESET} $1"
+    _session_write defer "$1"
 }
 
 # Run a command, capture its output, and log the result.

@@ -37,7 +37,7 @@ Headless applies skip the interactive steps and print the manual commands instea
 
 **After the run:**
 
-- Read the report's summary: warnings and failures from the run, pending layers with their fixes, and the log path. Fix, then re-apply — deferred layers self-heal.
+- Read the report's summary: warnings and failures from the run, deferred layers with their fixes, and the log path. Fix, then re-apply — deferred layers self-heal.
 - Apply logs live at `~/.local/state/dotfiles/last-apply.log`; the previous apply sits alongside as `previous-apply.log`.
 - Added `CORTI_BEARER` to `~/.env` after the run? Re-apply — the models wiring re-runs once the bearer is present.
 - Sign into iCloud and let the Obsidian vault sync, then re-apply.
