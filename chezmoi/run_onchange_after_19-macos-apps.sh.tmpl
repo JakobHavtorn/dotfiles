@@ -76,9 +76,9 @@ copy_app_from_download() {
     if [[ "$(od -An -N2 -tx1 "$download" | tr -d ' \n')" == "504b" ]]; then
         local extract="$WORK_DIR/extract"
         rm -rf "$extract"
-        ditto -x -k "$download" "$extract" || return 1
+        ditto -x -k "$download" "$extract" 2>&1 | log_tee || return 1
         [[ -d "$extract/$app" ]] || return 1
-        ditto "$extract/$app" "$dest_dir/$app"
+        ditto "$extract/$app" "$dest_dir/$app" 2>&1 | log_tee
         rm -rf "$extract"
         return 0
     fi
@@ -91,7 +91,7 @@ copy_app_from_download() {
     fi
     local rc=0
     if [[ -d "$MOUNT_POINT/$app" ]]; then
-        ditto "$MOUNT_POINT/$app" "$dest_dir/$app" || rc=$?
+        ditto "$MOUNT_POINT/$app" "$dest_dir/$app" 2>&1 | log_tee || rc=$?
     else
         rc=1
     fi
@@ -129,7 +129,7 @@ install_macos_app() {
         local dest_dir download="$WORK_DIR/download"
         dest_dir="$(install_dir)"
         log_info "installing $app into $dest_dir..."
-        if ! curl -fsSL "$url" -o "$download"; then
+        if ! curl -fsSL "$url" -o "$download" 2>&1 | log_tee; then
             log_warn "$app: download failed ($url)"
             return 0
         fi

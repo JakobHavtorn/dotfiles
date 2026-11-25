@@ -77,7 +77,7 @@ configs=(
 
 for f in "${configs[@]}"; do
     if [ -f "$SRC/$f" ]; then
-        cp "$SRC/$f" "$OBS_DIR/$f"
+        cp "$SRC/$f" "$OBS_DIR/$f" 2>&1 | log_tee
         log_ok "copied $f"
     fi
 done
@@ -93,7 +93,7 @@ for d in "$SRC/plugins/"*/; do
     mkdir -p "$OBS_DIR/plugins/$plugin"
     for pf in manifest.json data.json; do
         if [ -f "$d/$pf" ]; then
-            cp "$d/$pf" "$OBS_DIR/plugins/$plugin/$pf"
+            cp "$d/$pf" "$OBS_DIR/plugins/$plugin/$pf" 2>&1 | log_tee
             log_ok "copied plugins/$plugin/$pf"
         fi
     done
