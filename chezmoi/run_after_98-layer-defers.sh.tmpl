@@ -49,7 +49,7 @@ fi
 if [ -f "$HOME/.env" ] && grep -q '^CORTI_BEARER=' "$HOME/.env" 2>/dev/null; then
     :
 else
-    log_defer "CORTI_BEARER — add to ~/.env, then re-apply — the models wiring re-runs once the bearer is present"
+    log_defer "CORTI_BEARER — add to ~/.env, then re-apply and restart the opencode service — the models wiring re-runs once the bearer is present; a service started before it keeps a stale environment"
 fi
 
 {{ if eq .chezmoi.os "darwin" -}}
@@ -60,6 +60,11 @@ for _app in "Slack.app" "Obsidian.app" "Zotero.app" "Hermes.app"; do
         log_defer "$_app — brew bundle cask — run: brew bundle install --file chezmoi/manifests/Brewfile"
     fi
 done
+# Font file probe: a present file says the cask ran. It cannot see CoreText
+# registration — a file present but invisible to the picker needs a reboot.
+if [ ! -f "$HOME/Library/Fonts/FiraCodeNerdFontMono-Regular.ttf" ]; then
+    log_defer "fira code nerd font mono — brew bundle font cask; when installed but invisible to the font picker, a reboot re-registers"
+fi
 if [ ! -d "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/Zettelkasten/.obsidian" ]; then
     log_defer "obsidian vault — sign into iCloud, let the vault sync, then re-apply"
 fi
