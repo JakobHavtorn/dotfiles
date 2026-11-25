@@ -10,15 +10,17 @@
 # here and the report never changes. Silent when clean: no section
 # header, zero output when nothing defers. Defers cover machine state
 # only — a layer that runs and fails records warn/error itself.
+#
+# The probes run with env.sh's PATH corrections, like the layer scripts
+# they mirror — they find tools on disk regardless of the invoking
+# shell's PATH. A defer means the tool is genuinely absent, not merely
+# outside a stale PATH: an apply from launchd or a pre-brew shell
+# records no false defers on a healthy machine.
 set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
-# env.sh is deliberately not sourced: it prepends the Homebrew and
-# ~/.local/bin dirs to PATH, which would mask exactly the gaps these
-# probes exist to report — a probe must see the environment the apply was
-# launched with, not a repaired one. The CI check is inline for the same
-# reason — is_ci lives in env.sh.
-if [ -n "${CI:-}" ]; then
+if is_ci; then
     log_skip "layer defers (CI environment)"
     exit 0
 fi
