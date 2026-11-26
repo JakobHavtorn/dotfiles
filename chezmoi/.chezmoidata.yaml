@@ -69,11 +69,6 @@ coding_agents:
       slack:
         url: "https://mcp.slack.com/mcp"
         scope: "search:read.public search:read.private search:read.mpim search:read.im search:read.files files:read search:read.users chat:write users:read users:read.email channels:history groups:history mpim:history im:history"
-        # 19876 (Slack's documented default) is permanently held by Zotero 9/10's
-        # internal localhost sockets (zotero/zotero#5999), so the OAuth callback
-        # can never bind there while Zotero runs. 29876 is our own port; the
-        # matching redirect URL must be registered on the Slack app at
-        # api.slack.com/apps → OAuth & Permissions → Redirect URLs.
         callback_port: 29876
         redirect_uri: "http://127.0.0.1:29876/mcp/oauth/callback"
         auth_token_url: "https://slack.com/api/oauth.v2.user.access"
