@@ -18,20 +18,13 @@ if command -v go >/dev/null
     fish_add_path (go env GOPATH)/bin
 end
 
-# >>> corti-cli >>>
-# managed by corti-cli - safe to remove; loads CORTI_* from ~/.env into new shells
+# ~/.env — machine-local KEY=value secrets (API keys, MCP tokens), exported
+# into every new shell. Blank lines and comments are ignored; any NAME=value
+# line is exported, so a new var needs only a line in ~/.env — no per-var
+# loader blocks here. (corti-cli may re-add its managed CORTI_* block on
+# updates; that is harmless, this loader already covers it.)
 if test -f ~/.env
-    for corti_line in (string match -r '^CORTI_[A-Za-z0-9_]*=.*' < ~/.env)
-        set -gx (string split -m 1 = -- $corti_line)
+    for env_line in (string match -r '^[A-Za-z_][A-Za-z0-9_]*=.*' < ~/.env)
+        set -gx (string split -m 1 = -- $env_line)
     end
 end
-# <<< corti-cli <<<
-
-# >>> obsidian-mcp >>>
-# loads OBSIDIAN_LOCAL_REST_MCP_TOKEN from ~/.env into new shells (for OMP MCP config)
-if test -f ~/.env
-    for obs_line in (string match -r '^OBSIDIAN_LOCAL_REST_MCP_TOKEN=.*' < ~/.env)
-        set -gx (string split -m 1 = -- $obs_line)
-    end
-end
-# <<< obsidian-mcp <<<
