@@ -18,6 +18,11 @@ if command -v go >/dev/null
     fish_add_path (go env GOPATH)/bin
 end
 
+# Claude Code self-healing wrapper — prepended so it shadows the npm-global
+# claude symlink while the auto-updater postinstall bug exists
+# (anthropics/claude-code#88091, #86941). Remove with ~/.claude/bin/claude.
+fish_add_path $HOME/.claude/bin
+
 # ~/.env — machine-local KEY=value secrets (API keys, MCP tokens), exported
 # into every new shell. Blank lines and comments are ignored; any NAME=value
 # line is exported, so a new var needs only a line in ~/.env — no per-var

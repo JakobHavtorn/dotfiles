@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Self-healing launcher for Claude Code (npm-global install).
+#
+# claude-code's background auto-updater sometimes leaves bin/claude.exe as the
+# 500-byte placeholder stub, so every launch fails with "Error: claude native
+# binary not installed" until the postinstall is run again
+# (anthropics/claude-code#62684, #88091, #86941).
+#
+# This wrapper detects the stub — a "#!" script where the real binary starts
+# with Mach-O or ELF magic — reruns the postinstall once, then execs the real
+# binary.
+#
+# REMOVE when claude-code's auto-updater reliably runs its postinstall
+# (watch github.com/anthropics/claude-code issues #88091 and #86941).
+# Removal: delete this file and the fish_add_path line for ~/.claude/bin
+# in ~/.config/fish/config.fish. Steps: "Temporary workarounds" in the
+# dotfiles README.
+set -u
+
+pkg="/opt/homebrew/lib/node_modules/@anthropic-ai/claude-code"
+exe="$pkg/bin/claude.exe"
+
+if [ ! -d "$pkg" ]; then
+    echo "claude-code is not installed at $pkg" >&2
+    exit 127
+fi
+
+if head -c 2 "$exe" 2>/dev/null | grep -q '#!'; then
+    node "$pkg/install.cjs" >/dev/null 2>&1
+fi
+
+if [ -x "$exe" ]; then
+    exec "$exe" "$@"
+fi
+
+# Postinstall failed: use the official fallback wrapper, which locates the
+# platform binary and spawns it directly.
+exec node "$pkg/cli-wrapper.cjs" "$@"
