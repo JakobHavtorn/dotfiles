@@ -153,30 +153,6 @@ brew bundle check --file chezmoi/manifests/Brewfile
 chezmoi diff && chezmoi apply
 ```
 
-## Temporary workarounds
-
-### Claude Code self-healing wrapper
-
-**TODO: remove when the upstream bug is fixed.**
-
-Claude Code's background auto-updater sometimes leaves a 500-byte placeholder
-stub in `bin/claude.exe`. Every launch then fails with
-`Error: claude native binary not installed` until the postinstall runs again
-(anthropics/claude-code#62684, #88091, #86941).
-
-The wrapper `~/.claude/bin/claude` detects the stub by its first two bytes (the stub is a `#!` script; the real binary starts with Mach-O or ELF magic), reruns the
-postinstall once, then runs the real binary. `config.fish` prepends
-`~/.claude/bin` to `PATH`, so the wrapper shadows the npm-global symlink.
-
-Remove the workaround when those issues close, or when release notes state
-the fix:
-
-1. Delete `chezmoi/dot_claude/bin/executable_claude`.
-2. Delete the `fish_add_path $HOME/.claude/bin` block in
-   `chezmoi/dot_config/fish/config.fish`.
-3. Run `chezmoi apply`.
-4. Remove this section.
-
 ## Identity
 
 | Identity | Git author |
@@ -207,3 +183,27 @@ The ci-local.sh checks, runnable on demand; pre-commit adds hygiene hooks on top
 ## Layout
 
 See [AGENTS.md](AGENTS.md) for the repo layout, conventions, and agent guidelines.
+
+## Temporary workarounds
+
+### Claude Code self-healing wrapper
+
+**TODO: remove when the upstream bug is fixed.**
+
+Claude Code's background auto-updater sometimes leaves a 500-byte placeholder
+stub in `bin/claude.exe`. Every launch then fails with
+`Error: claude native binary not installed` until the postinstall runs again
+(anthropics/claude-code#62684, #88091, #86941).
+
+The wrapper `~/.claude/bin/claude` detects the stub by its first two bytes (the stub is a `#!` script; the real binary starts with Mach-O or ELF magic), reruns the
+postinstall once, then runs the real binary. `config.fish` prepends
+`~/.claude/bin` to `PATH`, so the wrapper shadows the npm-global symlink.
+
+Remove the workaround when those issues close, or when release notes state
+the fix:
+
+1. Delete `chezmoi/dot_claude/bin/executable_claude`.
+2. Delete the `fish_add_path $HOME/.claude/bin` block in
+   `chezmoi/dot_config/fish/config.fish`.
+3. Run `chezmoi apply`.
+4. Remove this section.
