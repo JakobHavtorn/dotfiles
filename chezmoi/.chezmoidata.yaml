@@ -77,12 +77,14 @@ coding_agents:
         url: "https://mcp.synapse.corti.app/mcp"
         oauth_client_id: "synapse-mcp"
         oauth_scope: "openid email profile offline_access"
+        identity: "work"
       notion:
         url: "https://mcp.notion.com/mcp"
       # Mintlify-hosted docs MCP — tools: search_corti_api_documentation,
       # query_docs_filesystem_corti_api_documentation. No auth.
       corti_docs:
         url: "https://docs.corti.ai/mcp"
+        identity: "work"
       obsidian:
         url: "http://127.0.0.1:27123/mcp"
       # handle-mcp — grocery shopping at nemlig.com, BilkaToGo and REMA 1000
@@ -94,6 +96,7 @@ coding_agents:
 
   # Corti model list — single source of truth for models.yml.tmpl,
   # opencode.jsonc, and the pi config run script (default model).
+  # Work identity only.
   corti:
     default_model: "corti-s1"
     models:

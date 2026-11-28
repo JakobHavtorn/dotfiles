@@ -35,6 +35,7 @@ mkdir -p "$PI_AGENT_DIR"
 "$CHEZMOI" execute-template < "$BASE_CONFIG" > "$LIVE_CONFIG"
 log_ok "applied pi mcp.json"
 
+{{ if eq .identity "work" }}
 # ── settings.json: default model ─────────────────────────────────────────────
 
 # Pi writes settings.json itself (the /model Ctrl+S default, changelog
@@ -66,5 +67,8 @@ else
         log_warn "pi settings.json is not valid JSON — default model not set"
     fi
 fi
+{{ else }}
+log_skip "pi default model (corti is work-only)"
+{{ end }}
 
 log_ok "pi config done"
