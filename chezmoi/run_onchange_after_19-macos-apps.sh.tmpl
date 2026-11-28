@@ -8,8 +8,10 @@ source "{{ .chezmoi.sourceDir }}/shared/manifest.sh"
 {{ if eq .chezmoi.os "darwin" -}}
 
 # Install self-updating apps from vendor downloads when missing, and link
-# their CLIs into ~/.local/bin. Runs before brew bundle (20) because the
-# Brewfile's `vscode` lines need the `code` CLI linked here.
+# their CLIs into ~/.local/bin. A `squirrel:` manifest URL is an update feed
+# (RELEASES.json): the newest release zip is resolved from it before download.
+# Runs before brew bundle (20) because the Brewfile's `vscode` lines need
+# the `code` CLI linked here.
 # Re-runs when this script or macos-apps.txt changes.
 
 # macos-apps.txt hash: {{ include "manifests/macos-apps.txt" | sha256sum }}
@@ -126,6 +128,21 @@ install_macos_app() {
     if [[ -n "$app_path" ]]; then
         log_ok "$app: already installed at $(dirname "$app_path") (updates itself)"
     else
+        # A squirrel: url names an update feed (RELEASES.json), not a
+        # download: resolve the newest release zip from it. For vendors
+        # that serve no curl-friendly latest-release URL. Feeds list the
+        # newest release first and the app self-updates after first launch,
+        # so resolving a slightly older entry stays harmless.
+        if [[ "$url" == squirrel:* ]]; then
+            local resolved
+            resolved="$(curl -fsSL "${url#squirrel:}" 2>/dev/null | grep -o '"url": *"[^"]*"' | head -n1 | sed 's/^"url": *"//; s/"$//')" || true
+            if [[ "$resolved" != http://* && "$resolved" != https://* ]]; then
+                log_warn "$app: no release url in ${url#squirrel:}"
+                return 0
+            fi
+            url="$resolved"
+            log_info "$app: latest release $url"
+        fi
         local dest_dir download="$WORK_DIR/download"
         dest_dir="$(install_dir)"
         log_info "installing $app into $dest_dir..."

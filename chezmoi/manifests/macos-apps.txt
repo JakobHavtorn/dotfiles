@@ -2,7 +2,10 @@
 # Format: app_bundle|url|bin_in_bundle
 # app_bundle:    the .app name at the root of the DMG or zip
 # url:           a vendor URL that always serves the latest release (DMG or zip;
-#                the format is detected from the file, not the URL)
+#                the format is detected from the file, not the URL), or
+#                squirrel:<feed-url> — an Electron/Squirrel update feed
+#                (RELEASES.json); the installer resolves the newest release
+#                zip from the feed before downloading
 # bin_in_bundle: path inside the bundle to a CLI to link into ~/.local/bin,
 #                or - for none
 # Installed only when missing from /Applications and ~/Applications; the
@@ -11,10 +14,9 @@
 # which breaks `brew upgrade --cask` for a non-admin user.
 # Lines starting with # are comments
 
-# Claude: version-pinned vendor URL (claude.com's latest link sits behind a
-# Cloudflare challenge curl cannot pass; downloads.claude.ai serves only
-# versioned zips. The app self-updates and this layer only installs when missing)
-Claude.app|https://downloads.claude.ai/releases/darwin/universal/7.37095.0/Claude-bc368c812ec26d3a5740519cc4d5cb69bbe43025.zip|-
+# Claude: claude.com's latest link sits behind a Cloudflare challenge curl
+# cannot pass; downloads.claude.ai serves versioned zips and this feed
+Claude.app|squirrel:https://downloads.claude.ai/releases/darwin/universal/RELEASES.json|-
 Google Chrome.app|https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg|-
 Visual Studio Code.app|https://update.code.visualstudio.com/latest/darwin-universal/stable|Contents/Resources/app/bin/code
 iTerm.app|https://iterm2.com/downloads/stable/latest|-
