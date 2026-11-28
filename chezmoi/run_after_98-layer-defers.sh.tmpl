@@ -38,7 +38,10 @@ _has pipx || log_defer "pipx — arrives with brew bundle — re-apply from any 
 _has bun  || log_defer "bun — arrives with brew bundle — re-apply from any shell to pick it up"
 _has claude || log_defer "claude cli — arrives with brew bundle (npm globals) — re-apply from any shell to pick it up"
 _has herdr || log_defer "herdr — brew (darwin) or remote-tools (linux) — re-apply once present"
+{{ if eq .identity "personal" -}}
 _has taxhelper || log_defer "taxhelper — arrives with pipx — re-apply from any shell to pick it up"
+{{ end -}}
+_has uv || log_defer "uv — brew (darwin) or remote-tools (linux) — re-apply once present"
 
 if _has fish && ! fish -c 'type -q omf' >/dev/null 2>&1; then
     log_defer "oh-my-fish — re-runs once fish is present (run_onchange_after_60)"

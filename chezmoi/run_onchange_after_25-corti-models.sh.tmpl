@@ -8,6 +8,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 # changes, so a guard-skip never permanently silences this layer:
 #   npx: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v npx >/dev/null 2>&1 && echo present || echo absent" | trim }}
 #   bearer: {{ output "sh" "-c" "test -f $HOME/.env && grep -q ^CORTI_BEARER= $HOME/.env && echo present || echo absent" | trim }}
+#   identity: {{ .identity }}
 # Wire Corti models into all supported coding agent harnesses via the
 # corti CLI. Centralized here so all harnesses stay in sync from a
 # single invocation. The model list + default come from .chezmoidata.yaml.
@@ -26,6 +27,11 @@ if is_ci; then
     log_skip "corti models init (CI environment)"
     exit 0
 fi
+
+{{ if ne .identity "work" }}
+log_skip "corti models init (work identity only)"
+exit 0
+{{ end }}
 
 if ! command -v npx >/dev/null 2>&1; then
     log_skip "corti models init (npx not installed)"

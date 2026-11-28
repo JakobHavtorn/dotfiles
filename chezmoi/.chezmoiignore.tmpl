@@ -7,6 +7,11 @@ Library/
 .claude/bin
 {{ end }}
 
+{{ if ne .identity "work" }}
+# corti models wiring is work-only (models.yml.tmpl renders corti providers)
+.omp/agent/models.yml
+{{ end }}
+
 # Files inside the chezmoi root that aren't home targets
 .chezmoi.toml.tmpl
 .chezmoidata.yaml

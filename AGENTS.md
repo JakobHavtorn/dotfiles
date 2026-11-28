@@ -33,7 +33,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | Path | Description |
 |---|---|
 | `chezmoi/.chezmoi.toml.tmpl` | Prompts on init (identity: work/personal); `IDENTITY` env var skips the prompt |
-| `chezmoi/.chezmoiignore.tmpl` | Excludes non-home-target files + platform-specific paths (k9s, Library on linux) |
+| `chezmoi/.chezmoiignore.tmpl` | Excludes non-home-target files, platform-specific paths (k9s, Library on linux), and identity-scoped files (models.yml off non-work machines) |
 | `chezmoi/.chezmoidata.yaml` | Non-secret shared facts (identities, notion deny-list, MCP servers, corti models) — single source of truth for templates |
 | `chezmoi/dot_config/` | Maps to `~/.config/` |
 | `chezmoi/dot_config/fish/config.fish` | PATH setup, corti-cli env, gpu/oc abbreviations (interactive only) |
@@ -48,7 +48,7 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/dot_config/k9s/config.yaml` | Minimal k9s config |
 | `chezmoi/private_dot_ssh/config.d/github.tmpl` | github.com SSH host block (UseKeychain only on darwin) |
 | `chezmoi/dot_omp/private_agent/private_config.yml.tmpl` | omp settings (templated notion deny-list; `~/.omp/agent/config.yml`, 0600; no trailing newline — omp rewrites the file via `omp config set` and the template must stay byte-identical to its output) |
-| `chezmoi/dot_omp/private_agent/models.yml.tmpl` | omp custom providers: corti (key via CORTI_BEARER env; model list from .chezmoidata) |
+| `chezmoi/dot_omp/private_agent/models.yml.tmpl` | omp custom providers: corti (key via CORTI_BEARER env; model list from .chezmoidata); work identity only |
 | `chezmoi/dot_omp/private_agent/mcp.json.tmpl` | omp MCP servers (templated from .chezmoidata) |
 | `chezmoi/dot_omp/private_agent/hooks/post/title-gen.ts` | omp session-title hook — same shared title spec and direct Corti API call as the opencode plugin |
 | `chezmoi/dot_config/cortexkit/aft.jsonc` | AFT (CortexKit) config — semantic search backend; shared across opencode + omp |
@@ -78,17 +78,18 @@ Guidance for AI agents working **on** this repository. Not a skill — no harnes
 | `chezmoi/run_onchange_after_20-brew-bundle.sh.tmpl` | Darwin only — installs the Brewfile; resolves brew by direct path (works in the same apply as the install); non-fatal: one failed entry never halts the apply |
 | `chezmoi/run_onchange_after_20-opencode-config.sh.tmpl` | Renders opencode.jsonc + cli.json from templates; Corti model wiring lives in 25-corti-models |
 | `chezmoi/run_onchange_after_22-pi-config.sh.tmpl` | Renders Pi mcp.json from .chezmoidata (Pi models.json is owned by the corti CLI) |
-| `chezmoi/run_onchange_after_25-corti-models.sh.tmpl` | Wires Corti models into opencode + Pi via the corti CLI (npx @corti/cli models init) |
+| `chezmoi/run_onchange_after_25-corti-models.sh.tmpl` | Wires Corti models into opencode + Pi via the corti CLI (npx @corti/cli models init); work identity only |
 | `chezmoi/run_after_30-agent-skills.sh.tmpl` | Clones/updates agent-skills, runs skillctl link (every apply — idempotent) |
 | `chezmoi/run_onchange_after_60-omf.sh.tmpl` | Installs OMF packages from manifest |
 | `chezmoi/run_onchange_after_70-pipx.sh.tmpl` | Installs pipx packages from manifest |
 | `chezmoi/run_onchange_after_80-launchd-load.sh.tmpl` | Darwin only — loads dump.sh launchd job |
-| `chezmoi/run_onchange_after_80-taxhelper.sh.tmpl` | Installs taxhelper agent skills into ~/.agents/skills (universal agent-skills store) |
+| `chezmoi/run_onchange_after_80-taxhelper.sh.tmpl` | Installs taxhelper agent skills into ~/.agents/skills (universal agent-skills store); personal identity only |
 | `chezmoi/run_onchange_after_81-archify.sh.tmpl` | Installs archify skill (diagrams as HTML) via `npx skills` CLI into ~/.agents/skills |
 | `chezmoi/run_onchange_after_85-herdr-plugins.sh.tmpl` | Installs herdr-annotate plugin (Full variant) across opencode, omp, claude, codex, hermes |
 | `chezmoi/run_onchange_after_88-hermes-config.sh.tmpl` | Installs/updates Corti Hermes profile distribution from hermes-profile repo; injects CORTI_BEARER, sets corti as sticky default profile |
 | `chezmoi/run_after_88-coding-harness-plugin-refresh.sh.tmpl` | Keeps declared harness plugins current every apply: targetless `opencode plugin update` for all configured package plugins, `omp plugin install --force` for @cortexkit/aft-pi (OMP npm plugins have no config surface); pre-warms AFT binary |
 | `chezmoi/run_onchange_after_86-obsidian-mcp.sh.tmpl` | Registers the Obsidian Local REST API MCP server with Claude Code (`claude mcp add --scope user`) and Codex (`~/.codex/config.toml`). Reads the API key from the plugin's `data.json` |
+| `chezmoi/run_onchange_after_86-handle-mcp.sh.tmpl` | Registers the handle-mcp grocery server (nemlig/BilkaToGo/REMA 1000, personal identity only) with Claude Code and Codex; opencode/OMP/Pi get it from the MCP templates. Removes registrations on work machines |
 | `chezmoi/run_after_87-iterm2-config.sh.tmpl` | Darwin only — every apply: installs the iTerm2 settings manifest via `defaults import` when the machine has no iTerm2 settings; existing settings are never overwritten (dump.sh observes them) |
 | `chezmoi/run_after_87-karabiner-config.sh.tmpl` | Darwin only — every apply: installs the Karabiner-Elements config manifest when the machine has none; existing config is never overwritten (dump.sh observes it) |
 | `chezmoi/run_onchange_after_89-obsidian-config.sh.tmpl` | Darwin only — copies Obsidian vault config from manifests/obsidian/ into the live vault (excludes workspace state + plugin binaries) |

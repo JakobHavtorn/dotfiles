@@ -1,3 +1,9 @@
+{{- $mcpVisible := dict -}}
+{{- range $name, $srv := .coding_agents.mcp.servers }}
+{{- if or (eq (dig "identity" "" $srv) "") (eq (dig "identity" "" $srv) $.identity) }}
+{{- $mcpVisible = set $mcpVisible $name true }}
+{{- end }}
+{{- end -}}
 {
   "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
   "mcpServers": {
@@ -22,7 +28,7 @@
         "clientId": "${SLACK_CLIENT_ID}",
         "clientSecret": "${SLACK_CLIENT_SECRET}"
       }
-    },
+    }{{ if index $mcpVisible "synapse" }},
     "synapse": {
       "type": "http",
       "url": "{{ .coding_agents.mcp.servers.synapse.url }}",
@@ -30,22 +36,27 @@
         "clientId": "{{ .coding_agents.mcp.servers.synapse.oauth_client_id }}",
         "scope": "{{ .coding_agents.mcp.servers.synapse.oauth_scope }}"
       }
-    },
+    }{{ end }},
     "notion": {
       "type": "http",
       "url": "{{ .coding_agents.mcp.servers.notion.url }}",
       "oauth": {}
-    },
+    }{{ if index $mcpVisible "corti_docs" }},
     "corti_docs": {
       "type": "http",
       "url": "{{ .coding_agents.mcp.servers.corti_docs.url }}"
-    },
+    }{{ end }},
     "obsidian": {
       "type": "http",
       "url": "{{ .coding_agents.mcp.servers.obsidian.url }}",
       "headers": {
         "Authorization": "Bearer ${OBSIDIAN_LOCAL_REST_MCP_TOKEN}"
       }
-    }
+    }{{ if index $mcpVisible "handle" }},
+    "handle": {
+      "type": "stdio",
+      "command": "{{ $.coding_agents.mcp.servers.handle.command }}",
+      "args": [{{ range $i, $arg := $.coding_agents.mcp.servers.handle.args }}"{{ $arg }}"{{ if lt $i (sub (len $.coding_agents.mcp.servers.handle.args) 1) }}, {{ end }}{{ end }}]
+    }{{ end }}
   }
 }

@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# run_onchange_after_86-handle-mcp.sh.tmpl
+#
+# Registers the handle-mcp grocery server (nemlig.com, BilkaToGo, REMA 1000;
+# github.com/NJohansen/handle-mcp) with Claude Code (~/.claude.json) and Codex
+# (~/.codex/config.toml). opencode, OMP and Pi get it from the MCP templates.
+# Personal identity only — work machines remove stale registrations.
+# Store login is manual, outside the apply: uvx handle-mcp@latest login <store>
+#
+# Re-runs when this script or the chezmoidata source changes:
+# chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# presence facts:
+#   claude cli: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v claude >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   uv: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v uv >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   identity: {{ .identity }}
+
+if is_ci; then
+    log_skip "handle mcp (CI environment)"
+    exit 0
+fi
+
+CODEX_CONFIG="$HOME/.codex/config.toml"
+MACHINE_IDENTITY="{{ .identity }}"
+
+if [[ -f "$CODEX_CONFIG" ]] && grep -q '\[mcp_servers\.handle\]' "$CODEX_CONFIG"; then
+    # delete the handle block: its header to the next header or EOF
+    tmp="$(mktemp)"
+    awk '/^\[/{inblock=0} /^\[mcp_servers\.handle\]/{inblock=1; next} !inblock{print}' \
+        "$CODEX_CONFIG" > "$tmp"
+    mv "$tmp" "$CODEX_CONFIG"
+    log_ok "codex: handle mcp block removed"
+fi
+
+if [[ "$MACHINE_IDENTITY" != "personal" ]]; then
+    if command -v claude >/dev/null 2>&1; then
+        claude mcp remove handle --scope user >/dev/null 2>&1 || true
+    fi
+    log_skip "handle mcp (work identity — server is personal-only)"
+    exit 0
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+    log_skip "handle mcp (uv not installed — server cannot start)"
+    exit 0
+fi
+
+log_section "handle mcp"
+
+HANDLE_CMD=(
+    "{{ .coding_agents.mcp.servers.handle.command }}"
+{{- range $arg := $.coding_agents.mcp.servers.handle.args }}
+    "{{ $arg }}"
+{{- end }}
+)
+
+# ── Claude Code (~/.claude.json → mcpServers.handle) ──────────────────────────
+
+if command -v claude >/dev/null 2>&1; then
+    claude mcp remove handle --scope user >/dev/null 2>&1 || true
+    if claude mcp add --scope user handle -- "${HANDLE_CMD[@]}" >/dev/null 2>&1; then
+        log_ok "claude code: handle mcp registered"
+    else
+        log_warn "claude code: failed to register handle mcp"
+    fi
+else
+    log_skip "claude code (not installed)"
+fi
+
+# ── Codex (~/.codex/config.toml → [mcp_servers.handle]) ───────────────────────
+
+if [[ ! -d "$HOME/.codex" ]]; then
+    log_skip "codex (~/.codex not found)"
+else
+    cat >> "$CODEX_CONFIG" <<EOF
+
+[mcp_servers.handle]
+command = "{{ .coding_agents.mcp.servers.handle.command }}"
+args = [{{ range $i, $arg := $.coding_agents.mcp.servers.handle.args }}"{{ $arg }}"{{ if lt $i (sub (len $.coding_agents.mcp.servers.handle.args) 1) }}, {{ end }}{{ end }}]
+EOF
+    log_ok "codex: handle mcp added to config.toml"
+fi
+
+log_ok "handle mcp done"

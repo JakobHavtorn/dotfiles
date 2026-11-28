@@ -6,6 +6,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 # opencode.jsonc.tmpl hash: {{ include "dot_config/opencode/opencode.jsonc.tmpl" | sha256sum }}
 # cli.json.tmpl hash: {{ include "dot_config/opencode/cli.json.tmpl" | sha256sum }}
 # chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+# identity fact: {{ .identity }}
 
 # Renders both opencode.jsonc and cli.json from templates.
 # cli.json base has user preferences but NOT the herdr plugin entry —

@@ -10,6 +10,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # mcp.json.tmpl hash: {{ include "dot_pi/agent/mcp.json.tmpl" | sha256sum }}
 # chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+# identity fact: {{ .identity }}
 
 # Renders ~/.pi/agent/mcp.json from the shared .chezmoidata MCP server list,
 # same data as opencode.jsonc and omp mcp.json. Rendered by script rather
@@ -34,6 +35,7 @@ mkdir -p "$PI_AGENT_DIR"
 "$CHEZMOI" execute-template < "$BASE_CONFIG" > "$LIVE_CONFIG"
 log_ok "applied pi mcp.json"
 
+{{ if eq .identity "work" }}
 # ── settings.json: default model ─────────────────────────────────────────────
 
 # Pi writes settings.json itself (the /model Ctrl+S default, changelog
@@ -65,5 +67,8 @@ else
         log_warn "pi settings.json is not valid JSON — default model not set"
     fi
 fi
+{{ else }}
+log_skip "pi default model (corti is work-only)"
+{{ end }}
 
 log_ok "pi config done"
