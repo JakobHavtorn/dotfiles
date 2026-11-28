@@ -2,16 +2,10 @@
 # run_onchange_after_86-handle-mcp.sh.tmpl
 #
 # Registers the handle-mcp grocery server (nemlig.com, BilkaToGo, REMA 1000;
-# github.com/NJohansen/handle-mcp) with the coding agents whose MCP config
-# is not templated by chezmoi: Claude Code (~/.claude.json) and Codex
-# (~/.codex/config.toml). opencode, OMP and Pi get it from the shared MCP
-# templates instead.
-#
-# Personal identity only. A work machine removes any stale registration,
-# so an identity flip leaves no personal server behind.
-#
-# Stdio server via uvx. Log in to each store once, outside the apply:
-#   uvx handle-mcp@latest login nemlig
+# github.com/NJohansen/handle-mcp) with Claude Code (~/.claude.json) and Codex
+# (~/.codex/config.toml). opencode, OMP and Pi get it from the MCP templates.
+# Personal identity only — work machines remove stale registrations.
+# Store login is manual, outside the apply: uvx handle-mcp@latest login <store>
 #
 # Re-runs when this script or the chezmoidata source changes:
 # chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
@@ -19,8 +13,7 @@ set -euo pipefail
 source "{{ .chezmoi.sourceDir }}/shared/log.sh"
 source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
-# presence facts — flip this script's content hash when preconditions change,
-# so a guard-skip never permanently silences this layer:
+# presence facts:
 #   claude cli: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v claude >/dev/null 2>&1 && echo present || echo absent" | trim }}
 #   uv: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v uv >/dev/null 2>&1 && echo present || echo absent" | trim }}
 #   identity: {{ .identity }}
@@ -33,13 +26,8 @@ fi
 CODEX_CONFIG="$HOME/.codex/config.toml"
 MACHINE_IDENTITY="{{ .identity }}"
 
-# ── Remove stale registrations (identity flip or command change) ──────────────
-#
-# Codex: drop the [mcp_servers.handle] block — from its header to the next
-# header or EOF. The personal branch below re-adds it, so a command change
-# (e.g. a version bump in .chezmoidata.yaml) rewrites the block.
-
 if [[ -f "$CODEX_CONFIG" ]] && grep -q '\[mcp_servers\.handle\]' "$CODEX_CONFIG"; then
+    # delete the handle block: its header to the next header or EOF
     tmp="$(mktemp)"
     awk '/^\[/{inblock=0} /^\[mcp_servers\.handle\]/{inblock=1; next} !inblock{print}' \
         "$CODEX_CONFIG" > "$tmp"
@@ -56,7 +44,6 @@ if [[ "$MACHINE_IDENTITY" != "personal" ]]; then
 fi
 
 if ! command -v uv >/dev/null 2>&1; then
-    # The uv presence fact above re-runs this layer once uv lands.
     log_skip "handle mcp (uv not installed — server cannot start)"
     exit 0
 fi
@@ -73,7 +60,6 @@ HANDLE_CMD=(
 # ── Claude Code (~/.claude.json → mcpServers.handle) ──────────────────────────
 
 if command -v claude >/dev/null 2>&1; then
-    # Remove first so command changes re-register; add is otherwise idempotent.
     claude mcp remove handle --scope user >/dev/null 2>&1 || true
     if claude mcp add --scope user handle -- "${HANDLE_CMD[@]}" >/dev/null 2>&1; then
         log_ok "claude code: handle mcp registered"

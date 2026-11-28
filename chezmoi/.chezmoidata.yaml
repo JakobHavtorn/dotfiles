@@ -62,8 +62,7 @@ coding_agents:
   # MCP server definitions shared across opencode.jsonc and mcp.json.
   # Stores format-agnostic data; each template renders its own key names and
   # env-var syntax ({env:...} for opencode, ${...} for omp).
-  # A server with `identity: work|personal` renders only on machines with
-  # that identity; without the field it renders everywhere.
+  # A server with `identity: <work|personal>` renders only on machines with that identity.
   mcp:
     servers:
       linear:
@@ -87,9 +86,7 @@ coding_agents:
       obsidian:
         url: "http://127.0.0.1:27123/mcp"
       # handle-mcp — grocery shopping at nemlig.com, BilkaToGo and REMA 1000
-      # (github.com/NJohansen/handle-mcp). stdio server run by uvx; log in
-      # once per store: `uvx handle-mcp@latest login <store>`. Personal
-      # identity only — templates skip it on work machines.
+      # (github.com/NJohansen/handle-mcp). Personal identity only.
       handle:
         command: "uvx"
         args: ["handle-mcp@latest"]

@@ -10,9 +10,7 @@ source "{{ .chezmoi.sourceDir }}/shared/env.sh"
 
 # mcp.json.tmpl hash: {{ include "dot_pi/agent/mcp.json.tmpl" | sha256sum }}
 # chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
-# identity fact — the mcp server list is identity-scoped (handle-mcp is
-# personal-only); an identity flip must re-render:
-#   identity: {{ .identity }}
+# identity fact: {{ .identity }}
 
 # Renders ~/.pi/agent/mcp.json from the shared .chezmoidata MCP server list,
 # same data as opencode.jsonc and omp mcp.json. Rendered by script rather
