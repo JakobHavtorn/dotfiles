@@ -3,6 +3,8 @@
 .config/k9s
 # Library/LaunchAgents is macOS-only
 Library/
+# Claude Code self-healing wrapper targets the Homebrew npm prefix (darwin only)
+.claude/bin
 {{ end }}
 
 # Files inside the chezmoi root that aren't home targets
