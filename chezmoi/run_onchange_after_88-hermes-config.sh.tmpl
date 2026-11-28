@@ -95,8 +95,9 @@ fi
 # ── .env: ensure SLACK_CLIENT_ID / SLACK_CLIENT_SECRET ────────────────────────
 
 # Slack MCP is DCR-less — needs a pre-registered OAuth app. Credentials live
-# in fish_variables (shell env), but Hermes reads .env. Same pattern as
-# CORTI_BEARER: pull from shell, write to profile .env if missing.
+# in ~/.env (config.fish loads them into new shells); Hermes reads .env
+# directly. Same pattern as CORTI_BEARER: pull from shell, write to profile
+# .env if missing.
 for slack_var in SLACK_CLIENT_ID SLACK_CLIENT_SECRET; do
     env_val="${!slack_var:-}"
     if [[ -n "$env_val" ]] && ! grep -q "^${slack_var}=" "$ENV_TARGET" 2>/dev/null; then
