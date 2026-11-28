@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# run_onchange_after_86-handle-mcp.sh.tmpl
+#
+# Registers the handle-mcp grocery server (nemlig.com, BilkaToGo, REMA 1000;
+# github.com/NJohansen/handle-mcp) with the coding agents whose MCP config
+# is not templated by chezmoi: Claude Code (~/.claude.json) and Codex
+# (~/.codex/config.toml). opencode, OMP and Pi get it from the shared MCP
+# templates instead.
+#
+# Personal identity only. A work machine removes any stale registration,
+# so an identity flip leaves no personal server behind.
+#
+# Stdio server via uvx. Log in to each store once, outside the apply:
+#   uvx handle-mcp@latest login nemlig
+#
+# Re-runs when this script or the chezmoidata source changes:
+# chezmoidata hash: {{ include ".chezmoidata.yaml" | sha256sum }}
+set -euo pipefail
+source "{{ .chezmoi.sourceDir }}/shared/log.sh"
+source "{{ .chezmoi.sourceDir }}/shared/env.sh"
+
+# presence facts — flip this script's content hash when preconditions change,
+# so a guard-skip never permanently silences this layer:
+#   claude cli: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v claude >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   uv: {{ output "sh" "-c" "PATH=/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH command -v uv >/dev/null 2>&1 && echo present || echo absent" | trim }}
+#   identity: {{ .identity }}
+
+if is_ci; then
+    log_skip "handle mcp (CI environment)"
+    exit 0
+fi
+
+CODEX_CONFIG="$HOME/.codex/config.toml"
+MACHINE_IDENTITY="{{ .identity }}"
+
+# ── Remove stale registrations (identity flip or command change) ──────────────
+#
+# Codex: drop the [mcp_servers.handle] block — from its header to the next
+# header or EOF. The personal branch below re-adds it, so a command change
+# (e.g. a version bump in .chezmoidata.yaml) rewrites the block.
+
+if [[ -f "$CODEX_CONFIG" ]] && grep -q '\[mcp_servers\.handle\]' "$CODEX_CONFIG"; then
+    tmp="$(mktemp)"
+    awk '/^\[/{inblock=0} /^\[mcp_servers\.handle\]/{inblock=1; next} !inblock{print}' \
+        "$CODEX_CONFIG" > "$tmp"
+    mv "$tmp" "$CODEX_CONFIG"
+    log_ok "codex: handle mcp block removed"
+fi
+
+if [[ "$MACHINE_IDENTITY" != "personal" ]]; then
+    if command -v claude >/dev/null 2>&1; then
+        claude mcp remove handle --scope user >/dev/null 2>&1 || true
+    fi
+    log_skip "handle mcp (work identity — server is personal-only)"
+    exit 0
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+    # The uv presence fact above re-runs this layer once uv lands.
+    log_skip "handle mcp (uv not installed — server cannot start)"
+    exit 0
+fi
+
+log_section "handle mcp"
+
+HANDLE_CMD=(
+    "{{ .coding_agents.mcp.servers.handle.command }}"
+{{- range $arg := $.coding_agents.mcp.servers.handle.args }}
+    "{{ $arg }}"
+{{- end }}
+)
+
+# ── Claude Code (~/.claude.json → mcpServers.handle) ──────────────────────────
+
+if command -v claude >/dev/null 2>&1; then
+    # Remove first so command changes re-register; add is otherwise idempotent.
+    claude mcp remove handle --scope user >/dev/null 2>&1 || true
+    if claude mcp add --scope user handle -- "${HANDLE_CMD[@]}" >/dev/null 2>&1; then
+        log_ok "claude code: handle mcp registered"
+    else
+        log_warn "claude code: failed to register handle mcp"
+    fi
+else
+    log_skip "claude code (not installed)"
+fi
+
+# ── Codex (~/.codex/config.toml → [mcp_servers.handle]) ───────────────────────
+
+if [[ ! -d "$HOME/.codex" ]]; then
+    log_skip "codex (~/.codex not found)"
+else
+    cat >> "$CODEX_CONFIG" <<EOF
+
+[mcp_servers.handle]
+command = "{{ .coding_agents.mcp.servers.handle.command }}"
+args = [{{ range $i, $arg := $.coding_agents.mcp.servers.handle.args }}"{{ $arg }}"{{ if lt $i (sub (len $.coding_agents.mcp.servers.handle.args) 1) }}, {{ end }}{{ end }}]
+EOF
+    log_ok "codex: handle mcp added to config.toml"
+fi
+
+log_ok "handle mcp done"
