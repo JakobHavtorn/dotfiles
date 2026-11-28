@@ -35,3 +35,15 @@ if test -f ~/.env
     end
 end
 # <<< obsidian-mcp <<<
+
+# >>> slack-mcp >>>
+# loads SLACK_CLIENT_ID / SLACK_CLIENT_SECRET from ~/.env into new shells.
+# Slack MCP is DCR-less: the opencode/omp/pi MCP configs pass these to
+# mcp.slack.com as the pre-registered OAuth client. ~/.env is the single
+# source of truth; never hardcode credentials here or in fish_variables.
+if test -f ~/.env
+    for slack_line in (string match -r '^SLACK_CLIENT_(ID|SECRET)=.*' < ~/.env)
+        set -gx (string split -m 1 = -- $slack_line)
+    end
+end
+# <<< slack-mcp <<<
