@@ -11,6 +11,10 @@
 # which breaks `brew upgrade --cask` for a non-admin user.
 # Lines starting with # are comments
 
+# Claude: version-pinned vendor URL (claude.com's latest link sits behind a
+# Cloudflare challenge curl cannot pass; downloads.claude.ai serves only
+# versioned zips. The app self-updates and this layer only installs when missing)
+Claude.app|https://downloads.claude.ai/releases/darwin/universal/7.37095.0/Claude-bc368c812ec26d3a5740519cc4d5cb69bbe43025.zip|-
 Google Chrome.app|https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg|-
 Visual Studio Code.app|https://update.code.visualstudio.com/latest/darwin-universal/stable|Contents/Resources/app/bin/code
 iTerm.app|https://iterm2.com/downloads/stable/latest|-
